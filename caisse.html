@@ -107,7 +107,7 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
 </div>
 
 <div class="nav-tabs no-print">
-  <div class="nav-tab active" onclick="switchTab('commandes',this)">📋 Commandes</div>
+  <div class="nav-tab active" onclick="switchTab('commandes',this)">📋 Commandes <span class="badge-rouge" id="badgeCmd">0</span></div>
   <div class="nav-tab" onclick="switchTab('additions',this)">🧾 Additions <span class="badge-rouge" id="badgeAdd">0</span></div>
   <div class="nav-tab" onclick="switchTab('historique',this)">📚 Historique</div>
   <div class="nav-tab" onclick="switchTab('ca',this)">💰 CA</div>
@@ -120,7 +120,12 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
 
 <!-- COMMANDES -->
 <div id="tabCommandes" class="content">
-  <div class="status-bar"><div class="dot"></div>Commandes en temps réel — cliquez "Vu" puis glissez dans Addition</div>
+  <div class="status-bar"><div class="dot"></div>Toutes les commandes — nouvelles en haut, réglées en bas</div>
+  <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+    <button onclick="filtrerCommandes('toutes')" id="filtreToutes" style="background:#D4AF37;color:#1A1A1A;border:none;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:bold;cursor:pointer">Toutes</button>
+    <button onclick="filtrerCommandes('actives')" id="filtreActives" style="background:#2A2A2A;color:#aaa;border:1px solid #333;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:bold;cursor:pointer">Actives seulement</button>
+    <button onclick="resetJour()" style="background:#2A2A2A;color:#C0392B;border:1px solid #C0392B;padding:6px 12px;border-radius:20px;font-size:11px;cursor:pointer">🗑 Tout effacer</button>
+  </div>
   <div id="alertesContainer" style="margin-bottom:12px"></div>
   <div id="commandesGrid" class="commandes-grid">
     <div class="empty"><div class="em">🐚</div><p>En attente de commandes...</p></div>
@@ -242,19 +247,46 @@ async function acquitterAlerte(id){
 // ============================================================
 // RENDER COMMANDES
 // ============================================================
+let filtreCourant='toutes';
+function filtrerCommandes(mode){
+  filtreCourant=mode;
+  document.getElementById('filtreToutes').style.background=mode==='toutes'?'#D4AF37':'#2A2A2A';
+  document.getElementById('filtreToutes').style.color=mode==='toutes'?'#1A1A1A':'#aaa';
+  document.getElementById('filtreActives').style.background=mode==='actives'?'#D4AF37':'#2A2A2A';
+  document.getElementById('filtreActives').style.color=mode==='actives'?'#1A1A1A':'#aaa';
+  renderCommandes();
+}
+
+function getCommandesFiltrees(){
+  const ordre={nouvelle:0,vue:1,en_addition:2,regle:3};
+  let cmds=Object.values(allCommandes);
+  if(filtreCourant==='actives') cmds=cmds.filter(c=>c.statut!=='regle');
+  return cmds.sort((a,b)=>{
+    const os=(ordre[a.statut]||0)-(ordre[b.statut]||0);
+    if(os!==0) return os;
+    return (a.table||0)-(b.table||0);
+  });
+}
+
 function renderCommandes(){
+  const cmds=getCommandesFiltrees();
   const grid=document.getElementById('commandesGrid');
-  const cmds=Object.values(allCommandes).filter(c=>c.statut!=='regle').sort((a,b)=>(a.table||0)-(b.table||0));
+
   if(!cmds.length){
     grid.innerHTML='<div class="empty"><div class="em">🐚</div><p>En attente de commandes...</p></div>';
     return;
   }
   grid.innerHTML=cmds.map(cmd=>{
     const items=cmd.items||[];
+    const estRegle=cmd.statut==='regle';
+    const statutLabel={nouvelle:'🟡 Nouvelle',vue:'✅ Vue',en_addition:'📋 En addition',regle:'💰 Réglée'}[cmd.statut]||'';
     return `<div class="cmd-card ${cmd.statut||'nouvelle'}" id="card_${cmd.id}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
         <div class="cmd-table">Table ${cmd.table}</div>
-        <div class="cmd-heure">🕐 ${cmd.heure||'--:--'}</div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">
+          <div class="cmd-heure">🕐 ${cmd.heure||'--:--'}</div>
+          <div style="font-size:10px;color:${estRegle?'#1A7A50':cmd.statut==='nouvelle'?'#D4AF37':'#888'}">${statutLabel}</div>
+        </div>
       </div>
       ${items.map(item=>`
         <div class="cmd-item-row">
@@ -263,9 +295,10 @@ function renderCommandes(){
         </div>`).join('')}
       <div class="cmd-total">Total : ${(cmd.total||0).toFixed(2).replace('.',',')} €</div>
       <div class="cmd-actions">
-        <button class="btn-vu" onclick="marquerVue('${cmd.id}',${cmd.table})">✓ Vu</button>
-        <button class="btn-addition" onclick="basculerAddition('${cmd.id}',${cmd.table})">→ Addition</button>
-        <button class="btn-regle" onclick="marquerRegle('${cmd.id}')">✕ Suppr.</button>
+        ${!estRegle?`
+          <button class="btn-vu" onclick="marquerVue('${cmd.id}',${cmd.table})">✓ Vu → Addition</button>
+        `:`<div style="color:#1A7A50;font-size:12px;font-weight:bold;padding:6px">✅ Réglée</div>`}
+        <button class="btn-regle" onclick="archiverCommande('${cmd.id}',${cmd.table})" style="background:#444;font-size:11px">🗑 Archiver</button>
       </div>
     </div>`;
   }).join('');
@@ -275,13 +308,16 @@ function renderCommandes(){
 // ACTIONS COMMANDES
 // ============================================================
 async function marquerVue(id, tableNum){
-  await db.collection('commandes').doc(id).update({statut:'vue'});
+  // Marquer vue + basculer directement en addition (plus besoin du bouton séparé)
+  await db.collection('commandes').doc(id).update({statut:'en_addition'});
+  // Recalculer l'addition
+  await recalcAddition(tableNum);
   // Notifier le téléphone client
   await db.collection('notifications').doc(`table_${tableNum}`).set({
     message:'✅ Votre commande est prise en charge — un serveur arrive !',
     ts:firebase.firestore.FieldValue.serverTimestamp()
   });
-  showToast(`✅ Table ${tableNum} notifiée`);
+  showToast(`✅ Table ${tableNum} → Addition`);
 }
 
 async function basculerAddition(cmdId, tableNum){
@@ -315,6 +351,32 @@ async function recalcAddition(tableNum){
 
 async function marquerRegle(id){
   await db.collection('commandes').doc(id).update({statut:'regle'});
+}
+
+async function archiverCommande(id, tableNum){
+  if(!confirm('Archiver cette commande ? Elle sera déplacée dans l'historique.')) return;
+  try{
+    const doc=await db.collection('commandes').doc(id).get();
+    if(doc.exists){
+      const data=doc.data();
+      // Archiver dans historique commandes individuelles
+      await db.collection('historique').add({
+        table:tableNum,
+        total:data.total||0,
+        commandes:[{heure:data.heure||'--:--',items:data.items||[],total:data.total||0}],
+        heureReglement:new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}),
+        archiveeUnitairement:true,
+        timestamp:firebase.firestore.FieldValue.serverTimestamp()
+      });
+      // Supprimer de Firestore
+      await db.collection('commandes').doc(id).delete();
+    }
+    showToast('✅ Commande archivée');
+    chargerHistorique();
+  }catch(e){
+    showToast('❌ Erreur archivage');
+    console.error(e);
+  }
 }
 
 // ============================================================
@@ -517,7 +579,12 @@ function updateStats(){
   const nbAlertes=alertes.filter(a=>a.statut==='nouvelle').length;
   document.getElementById('statNouv').textContent=nbNouv;
   document.getElementById('statAdditions').textContent=nbAdds+nbAlertes;
-  document.getElementById('badgeAdd').textContent=nbAdds+nbAlertes;
+  // Badge commandes (nouvelles uniquement)
+  const badgeCmd=document.getElementById('badgeCmd');
+  if(badgeCmd){badgeCmd.textContent=nbNouv;badgeCmd.style.display=nbNouv>0?'inline':'none';}
+  // Badge additions
+  const badgeAdd=document.getElementById('badgeAdd');
+  if(badgeAdd){badgeAdd.textContent=nbAdds+nbAlertes;badgeAdd.style.display=(nbAdds+nbAlertes)>0?'inline':'none';}
   const total=cmds.reduce((s,c)=>s+(c.total||0),0);
   document.getElementById('statCA').textContent=total.toFixed(0)+'€';
 }

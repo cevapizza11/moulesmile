@@ -372,11 +372,28 @@ function ecouterNotifications(){
   });
 }
 
+function jouerSon(freq, duree, delai=0){
+  setTimeout(()=>{
+    try{
+      const ctx=new (window.AudioContext||window.webkitAudioContext)();
+      const osc=ctx.createOscillator();
+      const gain=ctx.createGain();
+      osc.connect(gain);gain.connect(ctx.destination);
+      osc.frequency.value=freq;
+      gain.gain.setValueAtTime(0.5,ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+duree/1000);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime+duree/1000);
+    }catch(e){}
+  }, delai);
+}
+
 function afficherNotification(msg){
-  // Vibration
-  if(navigator.vibrate) navigator.vibrate([200,100,200]);
-  // Son
-  try{const ctx=new AudioContext();const osc=ctx.createOscillator();osc.connect(ctx.destination);osc.frequency.value=660;osc.start();setTimeout(()=>osc.stop(),300);}catch(e){}
+  // Vibration (Android)
+  if(navigator.vibrate) navigator.vibrate([200,100,200,100,200]);
+  // Double son (marche sur iPhone aussi)
+  jouerSon(880, 300, 0);
+  jouerSon(660, 300, 400);
   // Bandeau
   const banner=document.getElementById('notifBanner');
   document.getElementById('notifText').textContent=msg;
@@ -659,22 +676,53 @@ async function retrouverCommande(){
   tableNum=val;
   document.getElementById('tableNumHeader').textContent=tableNum;
   document.getElementById('tableBadge').style.display='inline-block';
+  if(!catActive) catActive=(carte||carteDefaut).categories[0]?.id;
+  if(!carte) carte=carteDefaut;
+  renderTabs();renderProduits(catActive);
 
   try{
-    const snap=await db.collection('commandes').where('table','==',tableNum).get();
+    // 1. Chercher dans les commandes actives
+    const snapCmd=await db.collection('commandes').where('table','==',tableNum).get();
     let commandes=[];
-    snap.forEach(doc=>{
+    snapCmd.forEach(doc=>{
       const d=doc.data();
       if(d.statut!=='regle'&&(d.items||[]).length) commandes.push(d);
     });
-    commandes.sort((a,b)=>(a.heure||'').localeCompare(b.heure||''));
 
-    if(!commandes.length){
-      showToast('ℹ️ Aucune commande en cours pour cette table');
-      return;
+    // 2. Chercher aussi dans l'addition (commandes déjà traitées mais pas encaissées)
+    const snapAdd=await db.collection('additions').doc(`table_${tableNum}`).get();
+    let fromAddition=false;
+    if(snapAdd.exists&&snapAdd.data().statut!=='regle'){
+      const addData=snapAdd.data();
+      // Si addition existe et non encaissée → afficher depuis addition
+      if(addData.commandes&&addData.commandes.length){
+        fromAddition=true;
+        let html=addData.commandes.map(cmd=>`
+          <div class="commande-groupe">
+            <div class="cmd-heure">🕐 ${cmd.heure||'--:--'}</div>
+            ${(cmd.items||[]).map(item=>`
+              <div class="cmd-item">
+                <span>${item.nom}</span>
+                <span style="color:#D4AF37;font-weight:bold">${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span>
+              </div>`).join('')}
+            <div style="text-align:right;color:#D4AF37;font-size:12px;margin-top:6px;padding-top:6px;border-top:1px solid #333">Sous-total : ${(cmd.total||0).toFixed(2).replace('.',',')} €</div>
+          </div>`).join('');
+        document.getElementById('additionTable').textContent=tableNum;
+        document.getElementById('commandesDetail').innerHTML=html;
+        document.getElementById('totalAmount').textContent=(addData.total||0).toFixed(2).replace('.',',')+' €';
+        showScreen('screenAddition');
+        showToast('✅ Commandes retrouvées !');
+        return;
+      }
     }
 
-    // Afficher le récapitulatif
+    // 3. Afficher depuis commandes actives
+    commandes.sort((a,b)=>(a.heure||'').localeCompare(b.heure||''));
+    if(!commandes.length){
+      showToast('ℹ️ Aucune commande en cours — scannez le QR code pour commander');
+      showScreen('screenCarte');
+      return;
+    }
     let total=commandes.reduce((s,c)=>s+(c.total||0),0);
     let html=commandes.map(cmd=>`
       <div class="commande-groupe">
@@ -686,16 +734,9 @@ async function retrouverCommande(){
           </div>`).join('')}
         <div style="text-align:right;color:#D4AF37;font-size:12px;margin-top:6px;padding-top:6px;border-top:1px solid #333">Sous-total : ${(cmd.total||0).toFixed(2).replace('.',',')} €</div>
       </div>`).join('');
-
     document.getElementById('additionTable').textContent=tableNum;
     document.getElementById('commandesDetail').innerHTML=html;
     document.getElementById('totalAmount').textContent=total.toFixed(2).replace('.',',')+' €';
-
-    // Initialiser la carte si pas encore fait
-    if(!catActive) catActive=(carte||carteDefaut).categories[0]?.id;
-    if(!carte) carte=carteDefaut;
-    renderTabs();renderProduits(catActive);
-
     showScreen('screenAddition');
     showToast(`✅ ${commandes.length} commande(s) retrouvée(s) !`);
   }catch(e){
