@@ -135,10 +135,11 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
 
 <!-- ===== ONGLET COMMANDES ===== -->
 <div class="tab-content actif" id="tab-commandes">
-  <div class="status-bar"><div class="dot"></div>Commandes en temps réel — "✓ Vu" bascule automatiquement dans Addition</div>
+  <div class="status-bar"><div class="dot"></div>🚨 Mode rush : cliquez "Nouvelles uniquement" pour ne voir que les commandes non traitées — "✓ Vu" les bascule en Addition</div>
   <div class="filtre-bar">
     <button class="btn-filtre actif" id="filtreToutes" onclick="setFiltre('toutes',this)">Toutes</button>
     <button class="btn-filtre" id="filtreActives" onclick="setFiltre('actives',this)">Actives seulement</button>
+    <button class="btn-filtre" id="filtreNouv" onclick="setFiltre('nouvelles',this)">🚨 Nouvelles uniquement</button>
     <button class="btn-sm" onclick="resetJour()">🗑 Tout effacer</button>
   </div>
   <div id="alertesContainer"></div>
@@ -360,10 +361,19 @@ function setFiltre(mode,el){
   renderCommandes();
 }
 
+// Basculer automatiquement en "nouvelles uniquement" quand on marque vu
+// pour rester en mode rush sans changer manuellement
+function passerEnModeRush(){
+  if(filtreCourant==='nouvelles') return; // déjà en mode rush
+  // Ne pas forcer — laisser l'utilisateur choisir
+}
+
 function getCommandesFiltrees(){
   const ordre={nouvelle:0,en_addition:1,vue:2,regle:3};
   let cmds=Object.values(allCommandes);
   if(filtreCourant==='actives') cmds=cmds.filter(c=>c.statut!=='regle');
+  // "nouvelles" = seulement les commandes pas encore traitées (pas en_addition, pas réglées)
+  if(filtreCourant==='nouvelles') cmds=cmds.filter(c=>c.statut==='nouvelle');
   return cmds.sort((a,b)=>{
     const s=(ordre[a.statut]||0)-(ordre[b.statut]||0);
     return s!==0?s:(a.table||0)-(b.table||0);
