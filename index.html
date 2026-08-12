@@ -175,7 +175,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   <div style="color:#888;font-size:14px;line-height:1.8;margin-bottom:30px">
     Pour commander, vous devez être<br>
     <strong style="color:#D4AF37">connecté au WiFi du restaurant</strong><br><br>
-    📶 Réseau : <strong style="color:#D4AF37">Moule & Smile</strong><br>
+    📶 Réseau : <strong style="color:#D4AF37" class="wifi-nom-dynamique">Moule & Smile</strong><br>
     🔑 Mot de passe disponible sur votre table<br><br>
     Une fois connecté, rescannez le QR code.
   </div>
@@ -794,15 +794,29 @@ async function verifierAcces() {
   const token = params.get('token');
   const table = params.get('table');
 
-  // 1. Vérifier le token
-  if (token !== TOKEN_SECRET) {
-    afficherBloquer('Token invalide — scannez le QR code de votre table.');
+  // 1. Vérifier le token (depuis Firebase ou valeur locale)
+  let tokenAttendu = TOKEN_SECRET;
+  try {
+    const doc = await db.collection('config').doc('securite').get();
+    if (doc.exists && doc.data().token) tokenAttendu = doc.data().token;
+  } catch(e) {}
+
+  if (token !== tokenAttendu) {
+    afficherBloquer('QR code invalide — scannez le QR code de votre table dans le restaurant.');
     return;
   }
 
   // 2. Vérifier IP locale (réseau WiFi restaurant)
   const estLocal = await verifierIPLocale();
   if (!estLocal) {
+    // Charger le nom WiFi depuis Firebase
+    try {
+      const doc = await db.collection('config').doc('securite').get();
+      if (doc.exists && doc.data().wifiNom) {
+        const wifiNom = doc.data().wifiNom;
+        document.querySelectorAll('.wifi-nom-dynamique').forEach(el => el.textContent = wifiNom);
+      }
+    } catch(e) {}
     document.getElementById('blockedOverlay').classList.add('show');
     return;
   }
