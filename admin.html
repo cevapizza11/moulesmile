@@ -6,169 +6,348 @@
 <title>Moule & Smile — Admin Carte</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh}
+body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh;padding-bottom:40px}
 .header{background:#111;padding:12px 20px;border-bottom:2px solid #D4AF37;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
-.header h1{color:#D4AF37;font-size:16px}
-.save-btn{background:#D4AF37;color:#1A1A1A;border:none;padding:8px 18px;border-radius:8px;font-weight:bold;font-size:13px;cursor:pointer}
-.content{padding:16px;max-width:600px;margin:0 auto}
-.cat-tabs{display:flex;overflow-x:auto;gap:8px;padding:0 0 12px;scrollbar-width:none;margin-bottom:16px}
+.header h1{color:#D4AF37;font-size:15px}
+.save-btn{background:#D4AF37;color:#1A1A1A;border:none;padding:8px 16px;border-radius:8px;font-weight:bold;font-size:12px;cursor:pointer}
+.nav-tabs{display:flex;background:#111;border-bottom:2px solid #D4AF37}
+.nav-tab{flex:1;padding:12px 8px;text-align:center;cursor:pointer;font-size:11px;color:#888;border-bottom:3px solid transparent;transition:all .2s;font-weight:bold}
+.nav-tab.active{color:#D4AF37;border-bottom-color:#D4AF37}
+.content{padding:16px;max-width:620px;margin:0 auto}
+.status-bar{background:#1A3A2A;border:1px solid #1A7A50;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#4ABA80;display:flex;align-items:center;gap:8px}
+.dot{width:8px;height:8px;background:#4ABA80;border-radius:50%;animation:blink 1.5s infinite;flex-shrink:0}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.cat-tabs{display:flex;overflow-x:auto;gap:8px;padding:0 0 12px;scrollbar-width:none;margin-bottom:12px}
 .cat-tabs::-webkit-scrollbar{display:none}
-.cat-tab{flex-shrink:0;padding:8px 14px;background:#2A2A2A;border:2px solid #333;border-radius:20px;font-size:12px;font-weight:bold;cursor:pointer;color:#aaa;white-space:nowrap}
+.cat-tab{flex-shrink:0;padding:7px 12px;background:#2A2A2A;border:2px solid #333;border-radius:20px;font-size:11px;font-weight:bold;cursor:pointer;color:#aaa;white-space:nowrap}
 .cat-tab.active{background:#D4AF37;color:#1A1A1A;border-color:#D4AF37}
-.section{background:#222;border-radius:14px;padding:16px;margin-bottom:16px}
-.section h2{color:#D4AF37;font-size:14px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #333}
-.item-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #2A2A2A}
+.section{background:#222;border-radius:12px;padding:14px;margin-bottom:14px}
+.section h2{color:#D4AF37;font-size:13px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #333;display:flex;justify-content:space-between;align-items:center}
+.item-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #2A2A2A}
 .item-row:last-child{border-bottom:none}
 .item-info{flex:1}
 .item-nom{font-size:13px;font-weight:bold}
 .item-detail{font-size:11px;color:#888;margin-top:2px}
-.toggle{position:relative;width:50px;height:26px;flex-shrink:0}
+.toggle{position:relative;width:46px;height:24px;flex-shrink:0}
 .toggle input{opacity:0;width:0;height:0}
-.toggle-slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#444;border-radius:26px;transition:.3s}
-.toggle-slider:before{position:absolute;content:"";height:18px;width:18px;left:4px;bottom:4px;background:white;border-radius:50%;transition:.3s}
+.toggle-slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#444;border-radius:24px;transition:.3s}
+.toggle-slider:before{position:absolute;content:"";height:16px;width:16px;left:4px;bottom:4px;background:white;border-radius:50%;transition:.3s}
 .toggle input:checked+.toggle-slider{background:#D4AF37}
-.toggle input:checked+.toggle-slider:before{transform:translateX(24px)}
-.prix-input{background:#333;border:1px solid #D4AF37;border-radius:6px;color:#D4AF37;font-weight:bold;font-size:13px;padding:4px 8px;width:75px;text-align:center;margin-left:8px}
-.status-bar{background:#1A3A2A;border:1px solid #1A7A50;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#4ABA80;display:flex;align-items:center;gap:8px}
-.dot{width:8px;height:8px;background:#4ABA80;border-radius:50%;animation:blink 1.5s infinite;flex-shrink:0}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#D4AF37;color:#1A1A1A;padding:10px 22px;border-radius:30px;font-weight:bold;font-size:13px;z-index:999;opacity:0;transition:opacity .3s}
+.toggle input:checked+.toggle-slider:before{transform:translateX(22px)}
+.prix-input{background:#333;border:1px solid #D4AF37;border-radius:6px;color:#D4AF37;font-weight:bold;font-size:12px;padding:3px 6px;width:68px;text-align:center;margin-left:6px}
+.del-prod-btn{background:none;border:none;color:#C0392B;font-size:16px;cursor:pointer;padding:0 4px;margin-left:4px}
+.add-form{background:#1E2A1E;border:2px solid #1A7A50;border-radius:12px;padding:16px;margin-bottom:14px}
+.add-form h3{color:#4ABA80;font-size:14px;margin-bottom:12px}
+.form-row{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.form-group{display:flex;flex-direction:column;gap:4px;flex:1;min-width:100px}
+.form-group label{font-size:11px;color:#888;font-weight:bold}
+.form-group input,.form-group select{background:#2A2A2A;border:1px solid #444;border-radius:8px;color:#fff;padding:9px 10px;font-size:13px;width:100%}
+.form-group input:focus,.form-group select:focus{border-color:#D4AF37;outline:none}
+.btn-add-prod{background:#1A7A50;color:white;border:none;padding:11px 20px;border-radius:8px;font-weight:bold;font-size:13px;cursor:pointer;width:100%}
+.import-zone{background:#1A1A2E;border:2px dashed #444;border-radius:12px;padding:24px;text-align:center;margin-bottom:16px;cursor:pointer;transition:all .2s}
+.import-zone:hover,.import-zone.dragover{border-color:#D4AF37;background:#1E1A2E}
+.import-zone .ez{font-size:36px;margin-bottom:8px}
+.import-zone h3{color:#D4AF37;font-size:15px;margin-bottom:4px}
+.import-zone p{color:#888;font-size:12px;margin-bottom:12px;line-height:1.5}
+.import-btn{background:#D4AF37;color:#1A1A1A;border:none;padding:10px 24px;border-radius:8px;font-weight:bold;font-size:13px;cursor:pointer}
+.import-input{display:none}
+.import-preview{background:#222;border-radius:12px;padding:14px;margin-bottom:14px;display:none}
+.import-preview h3{color:#D4AF37;font-size:14px;margin-bottom:10px}
+.preview-item{padding:5px 0;border-bottom:1px solid #2A2A2A;font-size:12px;display:flex;justify-content:space-between}
+.preview-item:last-child{border-bottom:none}
+.btn-confirm{background:#D4AF37;color:#1A1A1A;border:none;padding:12px;border-radius:8px;font-weight:bold;font-size:14px;cursor:pointer;width:100%;margin-top:12px}
+.btn-cancel{background:#333;color:#aaa;border:none;padding:10px;border-radius:8px;font-size:13px;cursor:pointer;width:100%;margin-top:6px}
+.excel-format{background:#2A2A2A;border-radius:10px;padding:12px;margin-bottom:14px;font-size:11px;color:#aaa;line-height:1.8}
+.excel-format strong{color:#D4AF37}
+.actions-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn-vert{background:#1A7A50;color:white;border:none;padding:12px;border-radius:10px;font-weight:bold;cursor:pointer;font-size:12px}
+.btn-rouge{background:#C0392B;color:white;border:none;padding:12px;border-radius:10px;font-weight:bold;cursor:pointer;font-size:12px}
+.btn-full{grid-column:1/-1}
+.lien-card{background:#2A2A2A;border-radius:8px;padding:10px 14px;color:#D4AF37;text-decoration:none;font-size:13px;font-weight:bold;display:block;margin-bottom:8px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#D4AF37;color:#1A1A1A;padding:10px 22px;border-radius:30px;font-weight:bold;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
-.actions{display:flex;flex-direction:column;gap:10px;margin-top:16px}
-.btn-vert{background:#1A7A50;color:white;border:none;padding:12px;border-radius:10px;font-weight:bold;cursor:pointer;font-size:13px}
-.btn-rouge{background:#C0392B;color:white;border:none;padding:12px;border-radius:10px;font-weight:bold;cursor:pointer;font-size:13px}
+.badge{background:#D4AF37;color:#1A1A1A;font-size:10px;font-weight:bold;padding:2px 6px;border-radius:10px;margin-left:6px}
 .version{text-align:center;padding:16px;color:#333;font-size:10px}
 </style>
 </head>
 <body>
-
 <div class="header">
   <h1>⚙️ Admin — Moule & Smile</h1>
   <button class="save-btn" onclick="sauvegarder()">💾 Publier</button>
 </div>
-
+<div class="nav-tabs">
+  <div class="nav-tab active" onclick="switchNav('Carte',this)">📋 Carte</div>
+  <div class="nav-tab" onclick="switchNav('Ajouter',this)">➕ Ajouter</div>
+  <div class="nav-tab" onclick="switchNav('Importer',this)">📥 Excel</div>
+  <div class="nav-tab" onclick="switchNav('Actions',this)">⚡ Actions</div>
+</div>
 <div class="toast" id="toast"></div>
 
-<div class="content">
-  <div class="status-bar"><div class="dot"></div>Modifications publiées instantanément sur tous les téléphones clients</div>
+<!-- CARTE -->
+<div id="navCarte" class="content">
+  <div class="status-bar"><div class="dot"></div>Modifications instantanées sur tous les téléphones</div>
   <div class="cat-tabs" id="catTabs"></div>
   <div id="catContent"></div>
-  <div class="actions">
-    <button class="btn-vert" onclick="toutActiver()">✅ Tout activer (début de service)</button>
-    <button class="btn-rouge" onclick="resetJour()">🗑️ Réinitialiser commandes du jour</button>
+</div>
+
+<!-- AJOUTER -->
+<div id="navAjouter" class="content" style="display:none">
+  <div class="add-form">
+    <h3>➕ Ajouter un produit</h3>
+    <div class="form-row">
+      <div class="form-group" style="flex:2"><label>Catégorie *</label><select id="newCat"></select></div>
+      <div class="form-group" style="flex:1;min-width:80px"><label>Emoji</label><input type="text" id="newEmoji" placeholder="🍺" maxlength="4"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="flex:2"><label>Nom du produit *</label><input type="text" id="newNom" placeholder="Ex: Kronenbourg 1664"></div>
+      <div class="form-group" style="flex:1;min-width:90px"><label>Prix (€)</label><input type="number" id="newPrix" placeholder="4.50" step="0.10" min="0"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Description (optionnel)</label><input type="text" id="newDesc" placeholder="Ex: 33cl — Bière blonde"></div>
+    </div>
+    <button class="btn-add-prod" onclick="ajouterProduit()">✅ Ajouter à la carte maintenant</button>
+  </div>
+  <div class="section">
+    <h2>💡 Conseils</h2>
+    <div style="color:#aaa;font-size:13px;line-height:1.8">
+      • Le produit apparaît <strong style="color:#4ABA80">immédiatement</strong> sur les téléphones clients<br>
+      • Prix 0 € = produit inclus (ex: sauces)<br>
+      • Pour ajouter plusieurs produits → onglet Excel<br>
+      • Pour masquer temporairement → onglet Carte → toggle OFF
+    </div>
+  </div>
+</div>
+
+<!-- IMPORTER EXCEL -->
+<div id="navImporter" class="content" style="display:none">
+  <div class="excel-format">
+    <strong>Format attendu — colonnes dans l'ordre :</strong><br>
+    A: ID · B: Catégorie · C: Nom · D: Description · E: Emoji · F: Prix EUR · G: Actif (OUI/NON)<br><br>
+    <strong>Catégories valides :</strong> formules · sauces · softs · bieres · vins_blancs · vins_roses · vins_rouges · cocktails · sangria · desserts · digestifs · chauds<br><br>
+    ⚠️ <strong style="color:#C0392B">L'import remplace toute la carte.</strong> Utilisez MouleSmile_Carte_Admin.xlsx comme base.
+  </div>
+  <div class="import-zone" id="importZone" onclick="document.getElementById('importInput').click()"
+    ondragover="event.preventDefault();this.classList.add('dragover')"
+    ondragleave="this.classList.remove('dragover')"
+    ondrop="handleDrop(event)">
+    <div class="ez">📥</div>
+    <h3>Glissez votre fichier ici</h3>
+    <p>ou cliquez pour sélectionner<br>Formats acceptés : .xlsx · .xls · .csv</p>
+    <button class="import-btn" onclick="event.stopPropagation();document.getElementById('importInput').click()">Choisir le fichier</button>
+    <input type="file" id="importInput" class="import-input" accept=".xlsx,.xls,.csv" onchange="handleFile(this.files[0])">
+  </div>
+  <div class="import-preview" id="importPreview">
+    <h3>👀 Aperçu — <span id="previewCount">0</span> produits détectés</h3>
+    <div id="previewList"></div>
+    <button class="btn-confirm" onclick="confirmerImport()">✅ Confirmer et publier sur la carte</button>
+    <button class="btn-cancel" onclick="annulerImport()">✕ Annuler</button>
+  </div>
+</div>
+
+<!-- ACTIONS -->
+<div id="navActions" class="content" style="display:none">
+  <div class="section">
+    <h2>⚡ Actions rapides</h2>
+    <div class="actions-grid">
+      <button class="btn-vert" onclick="toutActiver()">✅ Tout activer</button>
+      <button class="btn-rouge" onclick="toutDesactiver('sauces')">❌ Désactiver sauces</button>
+      <button class="btn-vert" onclick="activerCat('sauces')">🥘 Activer sauces</button>
+      <button class="btn-vert" onclick="activerCat('desserts')">🍮 Activer desserts</button>
+      <button class="btn-rouge btn-full" onclick="resetJour()">🗑️ Réinitialiser commandes du jour</button>
+    </div>
+  </div>
+  <div class="section" style="margin-top:14px">
+    <h2>📊 CA du jour</h2>
+    <div id="statsJour" style="color:#aaa;font-size:13px;margin-top:8px">Chargement...</div>
+  </div>
+  <div class="section" style="margin-top:14px">
+    <h2>🔗 Liens</h2>
+    <a href="index.html" target="_blank" class="lien-card">🐚 App client</a>
+    <a href="caisse.html" target="_blank" class="lien-card">💰 Écran caisse</a>
+    <a href="qrcodes.html" target="_blank" class="lien-card">📱 QR codes tables</a>
   </div>
 </div>
 
 <div class="version">v.12/08/2026 14:00 — Moule & Smile Admin</div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyDUb3LtVsMAq986DgtHwkMBeQFr8A8A2nU",
-  authDomain: "commandemoulesmile.firebaseapp.com",
-  projectId: "commandemoulesmile",
-  storageBucket: "commandemoulesmile.firebasestorage.app",
-  messagingSenderId: "303564394584",
-  appId: "1:303564394584:web:cbde6960f99cac83517a2d"
-};
+const firebaseConfig={apiKey:"AIzaSyDUb3LtVsMAq986DgtHwkMBeQFr8A8A2nU",authDomain:"commandemoulesmile.firebaseapp.com",projectId:"commandemoulesmile",storageBucket:"commandemoulesmile.firebasestorage.app",messagingSenderId:"303564394584",appId:"1:303564394584:web:cbde6960f99cac83517a2d"};
 firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+const db=firebase.firestore();
+let carte=null,catActive=null,importedData=null;
 
-let carte = null;
-let catActive = null;
+const CATS=[
+  {id:"formules",nom:"🐚 Formules"},{id:"sauces",nom:"🥘 Sauces"},{id:"softs",nom:"🥤 Softs"},
+  {id:"bieres",nom:"🍺 Bières"},{id:"vins_blancs",nom:"🥂 Vins Blancs"},{id:"vins_roses",nom:"🍷 Vins Rosés"},
+  {id:"vins_rouges",nom:"🍷 Vins Rouges"},{id:"cocktails",nom:"🍹 Cocktails"},{id:"sangria",nom:"🍷 Sangria"},
+  {id:"desserts",nom:"🍮 Desserts"},{id:"digestifs",nom:"✨ Digestifs"},{id:"chauds",nom:"☕ Chauds"},
+];
 
-db.collection('config').doc('carte_v2').onSnapshot(doc => {
-  if (doc.exists && doc.data().categories) {
-    carte = doc.data();
-    if (!catActive && carte.categories.length) catActive = carte.categories[0].id;
-    render();
-  }
+// Remplir select catégorie
+const sel=document.getElementById('newCat');
+CATS.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.nom;sel.appendChild(o);});
+
+db.collection('config').doc('carte_v2').onSnapshot(doc=>{
+  if(doc.exists&&doc.data().categories){carte=doc.data();if(!catActive)catActive=carte.categories[0]?.id;render();loadStats();}
 });
 
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 2500);
+function switchNav(tab,el){
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  ['navCarte','navAjouter','navImporter','navActions'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('nav'+tab).style.display='block';
 }
 
-function render() {
-  if (!carte) return;
-  // Tabs
-  document.getElementById('catTabs').innerHTML = carte.categories.map(c =>
-    `<div class="cat-tab ${c.id===catActive?'active':''}" onclick="selectCat('${c.id}')">${c.nom}</div>`
-  ).join('');
-  // Content
-  const cat = carte.categories.find(c => c.id === catActive);
-  if (!cat) return;
-  document.getElementById('catContent').innerHTML = `
-    <div class="section">
-      <h2>${cat.nom}</h2>
-      ${(cat.produits||[]).map((p, idx) => `
-        <div class="item-row">
-          <div class="item-info">
-            <div class="item-nom">${p.emoji||''} ${p.nom}</div>
-            <div class="item-detail">${p.desc||''}</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:6px">
-            ${p.prix > 0 ? `<input type="number" class="prix-input" value="${p.prix}" step="0.10" onchange="updatePrix('${catActive}',${idx},this.value)"> €` : '<span style="color:#1A7A50;font-size:11px;font-weight:bold">Inclus</span>'}
-            <label class="toggle" style="margin-left:8px">
-              <input type="checkbox" ${p.actif?'checked':''} onchange="toggleItem('${catActive}',${idx},this.checked)">
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-        </div>
-      `).join('')}
-    </div>`;
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+function render(){
+  if(!carte)return;
+  document.getElementById('catTabs').innerHTML=carte.categories.map(c=>`<div class="cat-tab ${c.id===catActive?'active':''}" onclick="selectCat('${c.id}')">${c.nom}</div>`).join('');
+  const cat=carte.categories.find(c=>c.id===catActive);
+  if(!cat)return;
+  const nb=(cat.produits||[]).filter(p=>p.actif).length;
+  document.getElementById('catContent').innerHTML=`<div class="section"><h2>${cat.nom} <span class="badge">${nb} actifs</span></h2>${(cat.produits||[]).map((p,idx)=>`
+    <div class="item-row">
+      <div class="item-info"><div class="item-nom">${p.emoji||''} ${p.nom}</div><div class="item-detail">${p.desc||''}</div></div>
+      <div style="display:flex;align-items:center;gap:4px">
+        ${p.prix>0?`<input type="number" class="prix-input" value="${p.prix}" step="0.10" onchange="updatePrix('${catActive}',${idx},this.value)"> €`:'<span style="color:#1A7A50;font-size:10px;font-weight:bold">Inclus</span>'}
+        <label class="toggle"><input type="checkbox" ${p.actif?'checked':''} onchange="toggleItem('${catActive}',${idx},this.checked)"><span class="toggle-slider"></span></label>
+        <button class="del-prod-btn" onclick="supprimerProduit('${catActive}',${idx})">🗑</button>
+      </div>
+    </div>`).join('')}</div>`;
 }
 
-function selectCat(id) {
-  catActive = id;
-  render();
+function selectCat(id){catActive=id;render();}
+function toggleItem(catId,idx,val){const cat=carte.categories.find(c=>c.id===catId);if(!cat)return;cat.produits[idx].actif=val;showToast(`${cat.produits[idx].nom} ${val?'✅ activé':'❌ désactivé'}`);sauvegarder();}
+function updatePrix(catId,idx,val){const cat=carte.categories.find(c=>c.id===catId);if(!cat)return;cat.produits[idx].prix=parseFloat(val)||0;sauvegarder();}
+function supprimerProduit(catId,idx){
+  const cat=carte.categories.find(c=>c.id===catId);if(!cat)return;
+  const nom=cat.produits[idx].nom;
+  if(!confirm(`Supprimer "${nom}" ?`))return;
+  cat.produits.splice(idx,1);sauvegarder();render();showToast(`🗑️ ${nom} supprimé`);
 }
 
-function toggleItem(catId, idx, val) {
-  const cat = carte.categories.find(c => c.id === catId);
-  if (!cat) return;
-  cat.produits[idx].actif = val;
-  const nom = cat.produits[idx].nom;
-  showToast(`${nom} ${val?'✅ activé':'❌ désactivé'}`);
-  sauvegarder();
+function ajouterProduit(){
+  const catId=document.getElementById('newCat').value;
+  const nom=document.getElementById('newNom').value.trim();
+  const prix=parseFloat(document.getElementById('newPrix').value)||0;
+  const desc=document.getElementById('newDesc').value.trim();
+  const emoji=document.getElementById('newEmoji').value.trim();
+  if(!nom){showToast('⚠️ Nom obligatoire');return;}
+  if(!carte){showToast('⚠️ Carte non chargée');return;}
+  const cat=carte.categories.find(c=>c.id===catId);
+  if(!cat){showToast('⚠️ Catégorie introuvable');return;}
+  cat.produits=cat.produits||[];
+  cat.produits.push({id:catId+'_'+Date.now(),nom,desc,emoji,prix,actif:true});
+  document.getElementById('newNom').value='';document.getElementById('newPrix').value='';
+  document.getElementById('newDesc').value='';document.getElementById('newEmoji').value='';
+  sauvegarder();catActive=catId;render();
+  showToast(`✅ "${nom}" ajouté !`);
 }
 
-function updatePrix(catId, idx, val) {
-  const cat = carte.categories.find(c => c.id === catId);
-  if (!cat) return;
-  cat.produits[idx].prix = parseFloat(val) || 0;
-  sauvegarder();
+function handleDrop(e){e.preventDefault();document.getElementById('importZone').classList.remove('dragover');const f=e.dataTransfer.files[0];if(f)handleFile(f);}
+
+function handleFile(file){
+  if(!file)return;
+  const ext=file.name.split('.').pop().toLowerCase();
+  if(ext==='csv'){const r=new FileReader();r.onload=e=>parseRows(csvToRows(e.target.result));r.readAsText(file,'UTF-8');}
+  else if(['xlsx','xls'].includes(ext)){
+    const r=new FileReader();
+    r.onload=e=>{
+      try{
+        const wb=XLSX.read(e.target.result,{type:'array'});
+        // Parcourir tous les onglets sauf INSTRUCTIONS et Export Firebase
+        let allRows=[];
+        wb.SheetNames.filter(n=>!['INSTRUCTIONS','Export Firebase'].includes(n)).forEach(n=>{
+          const ws=wb.Sheets[n];
+          const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+          // Chercher la ligne header
+          let start=0;
+          for(let i=0;i<Math.min(rows.length,10);i++){
+            if(rows[i].map(c=>String(c).toLowerCase()).some(c=>c.includes('nom'))){start=i+1;break;}
+          }
+          allRows=allRows.concat(rows.slice(start));
+        });
+        parseRows(allRows);
+      }catch(err){showToast('❌ Erreur lecture Excel');console.error(err);}
+    };
+    r.readAsArrayBuffer(file);
+  }else{showToast('⚠️ Format non supporté');}
 }
 
-async function sauvegarder() {
-  try {
-    await db.collection('config').doc('carte_v2').set(carte);
-    showToast('✅ Carte publiée !');
-  } catch(e) {
-    showToast('❌ Erreur de connexion');
-  }
+function csvToRows(text){return text.split('\n').filter(l=>l.trim()).map(l=>l.split(',').map(c=>c.replace(/^"|"$/g,'').trim()));}
+
+function parseRows(rows){
+  const produits=[];
+  rows.forEach((row,i)=>{
+    if(!row||!row[2]||String(row[2]).trim()==='')return;
+    const nom=String(row[2]||'').trim();
+    if(!nom||nom.toLowerCase()==='nom')return;
+    const id=String(row[0]||'').trim()||'p_'+i;
+    const cat=String(row[1]||'formules').trim().toLowerCase().replace(/\s+/g,'_').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const desc=String(row[3]||'').trim();
+    const emoji=String(row[4]||'').trim();
+    const prix=parseFloat(String(row[5]||'0').replace(',','.'))||0;
+    const actif=String(row[6]||'OUI').trim().toUpperCase()!=='NON';
+    produits.push({id,cat,nom,desc,emoji,prix,actif});
+  });
+  if(!produits.length){showToast('⚠️ Aucun produit trouvé');return;}
+  importedData=produits;
+  document.getElementById('previewCount').textContent=produits.length;
+  document.getElementById('previewList').innerHTML=produits.slice(0,25).map(p=>`
+    <div class="preview-item">
+      <span style="color:#888;font-size:10px">[${p.cat}]</span>
+      <span style="color:#ddd;margin-left:6px">${p.emoji||''} ${p.nom}</span>
+      <span style="color:#D4AF37;font-weight:bold">${p.prix===0?'Inclus':p.prix.toFixed(2).replace('.',',')+' €'} ${p.actif?'✅':'❌'}</span>
+    </div>`).join('')+(produits.length>25?`<div style="color:#888;font-size:11px;padding:6px">...et ${produits.length-25} autres</div>`:'');
+  document.getElementById('importPreview').style.display='block';
 }
 
-function toutActiver() {
-  carte.categories.forEach(c => (c.produits||[]).forEach(p => p.actif = true));
-  sauvegarder();
-  render();
-  showToast('✅ Tous les produits activés !');
+function annulerImport(){importedData=null;document.getElementById('importPreview').style.display='none';document.getElementById('importInput').value='';}
+
+function confirmerImport(){
+  if(!importedData||!importedData.length)return;
+  const newCarte={categories:[]};
+  CATS.forEach(catDef=>{
+    const prods=importedData.filter(p=>p.cat===catDef.id||catDef.id.includes(p.cat)).map(p=>({id:p.id,nom:p.nom,desc:p.desc,emoji:p.emoji,prix:p.prix,actif:p.actif}));
+    if(prods.length)newCarte.categories.push({id:catDef.id,nom:catDef.nom,produits:prods});
+  });
+  const knownIds=CATS.map(c=>c.id);
+  const others=importedData.filter(p=>!knownIds.includes(p.cat));
+  if(others.length)newCarte.categories.push({id:'autres',nom:'📦 Autres',produits:others.map(p=>({id:p.id,nom:p.nom,desc:p.desc,emoji:p.emoji,prix:p.prix,actif:p.actif}))});
+  carte=newCarte;catActive=newCarte.categories[0]?.id;
+  sauvegarder();render();annulerImport();
+  showToast(`✅ ${importedData?importedData.length:0} produits importés !`);
+  importedData=null;
 }
 
-async function resetJour() {
-  if (!confirm('Supprimer toutes les commandes du jour ? Action irréversible.')) return;
-  const snap = await db.collection('commandes').get();
-  const batch = db.batch();
-  snap.forEach(d => batch.delete(d.ref));
-  const snap2 = await db.collection('additions').get();
-  snap2.forEach(d => batch.delete(d.ref));
-  await batch.commit();
-  showToast('🗑️ Commandes supprimées');
+async function sauvegarder(){try{await db.collection('config').doc('carte_v2').set(carte);showToast('✅ Publié !');}catch(e){showToast('❌ Erreur');}}
+
+function toutActiver(){if(!carte)return;carte.categories.forEach(c=>(c.produits||[]).forEach(p=>p.actif=true));sauvegarder();render();showToast('✅ Tout activé !');}
+function toutDesactiver(catId){if(!carte)return;const cat=carte.categories.find(c=>c.id===catId);if(!cat)return;(cat.produits||[]).forEach(p=>p.actif=false);sauvegarder();render();showToast('❌ Désactivé');}
+function activerCat(catId){if(!carte)return;const cat=carte.categories.find(c=>c.id===catId);if(!cat)return;(cat.produits||[]).forEach(p=>p.actif=true);sauvegarder();render();showToast('✅ Activé');}
+
+async function resetJour(){
+  if(!confirm('Supprimer toutes les commandes ? Irréversible.'))return;
+  const snap=await db.collection('commandes').get();const b=db.batch();snap.forEach(d=>b.delete(d.ref));
+  const snap2=await db.collection('additions').get();snap2.forEach(d=>b.delete(d.ref));
+  await b.commit();showToast('🗑️ Commandes supprimées');loadStats();
+}
+
+async function loadStats(){
+  try{
+    const snap=await db.collection('commandes').get();
+    let total=0,nb=0;snap.forEach(d=>{const x=d.data();total+=x.total||0;nb++;});
+    document.getElementById('statsJour').innerHTML=`
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+        <div style="text-align:center"><div style="font-size:22px;font-weight:bold;color:#D4AF37">${nb}</div><div style="font-size:10px;color:#888">Commandes</div></div>
+        <div style="text-align:center"><div style="font-size:22px;font-weight:bold;color:#D4AF37">${total.toFixed(0)} €</div><div style="font-size:10px;color:#888">CA</div></div>
+        <div style="text-align:center"><div style="font-size:22px;font-weight:bold;color:#D4AF37">${nb?(total/nb).toFixed(0):0} €</div><div style="font-size:10px;color:#888">Ticket moy.</div></div>
+      </div>`;
+  }catch(e){document.getElementById('statsJour').textContent='Erreur chargement stats';}
 }
 </script>
 </body>
