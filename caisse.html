@@ -69,27 +69,7 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
 .table-ca th{background:#1A1A1A;color:#D4AF37;padding:8px;text-align:left;font-size:12px}
 .table-ca td{padding:7px 8px;border-bottom:1px solid #2A2A2A;font-size:12px;color:#ddd}
 
-/* TICKET IMPRESSION */
-@media print{
-  body *{display:none!important}
-  body,html{background:white!important;margin:0!important;padding:0!important}
-  .ticket-print,
-  .ticket-print *{display:block!important}
-  .ticket-print{
-    display:block!important;
-    position:fixed!important;
-    top:0!important;left:0!important;
-    width:80mm!important;
-    margin:0!important;
-    padding:8mm!important;
-    font-family:'Courier New',monospace!important;
-    font-size:12px!important;
-    color:black!important;
-    background:white!important;
-  }
-  .ticket-print .t-ligne,
-  .ticket-print .t-total{display:flex!important}
-}
+/* TICKET IMPRESSION — impression dans fenêtre dédiée, pas de CSS print nécessaire ici */
 .ticket-print{display:none;width:80mm;margin:0 auto;font-family:'Courier New',monospace;font-size:12px;color:black;background:white;padding:8mm}
 .ticket-print .t-title{text-align:center;font-size:16px;font-weight:bold;margin-bottom:4px}
 .ticket-print .t-sub{text-align:center;font-size:10px;margin-bottom:8px;border-bottom:1px dashed black;padding-bottom:6px}
@@ -130,8 +110,7 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
 
 <div class="toast" id="toast"></div>
 
-<!-- TICKET IMPRESSION -->
-<div class="ticket-print" id="ticketPrint"></div>
+
 
 <!-- COMMANDES -->
 <div id="tabCommandes" class="content">
