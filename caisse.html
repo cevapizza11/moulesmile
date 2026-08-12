@@ -121,6 +121,7 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
 <!-- COMMANDES -->
 <div id="tabCommandes" class="content">
   <div class="status-bar"><div class="dot"></div>Commandes en temps réel — cliquez "Vu" puis glissez dans Addition</div>
+  <div id="alertesContainer" style="margin-bottom:12px"></div>
   <div id="commandesGrid" class="commandes-grid">
     <div class="empty"><div class="em">🐚</div><p>En attente de commandes...</p></div>
   </div>
@@ -200,6 +201,43 @@ db.collection('additions').onSnapshot(snap=>{
   renderAdditions();
   updateStats();
 });
+
+// ============================================================
+// ÉCOUTE ALERTES (demandes d'addition client)
+// ============================================================
+let allAlertes={};
+db.collection('alertes').onSnapshot(snap=>{
+  let hasNew=false;
+  snap.docChanges().forEach(change=>{
+    if(change.type==='added'&&allAlertes[change.doc.id]===undefined){hasNew=true;}
+    allAlertes[change.doc.id]={id:change.doc.id,...change.doc.data()};
+    if(change.type==='removed') delete allAlertes[change.doc.id];
+  });
+  if(hasNew){playBeep();playBeep();playBeep();}
+  renderAlertes();
+  updateStats();
+});
+
+function renderAlertes(){
+  // Afficher les alertes addition dans l'onglet commandes (en haut)
+  const alertes=Object.values(allAlertes).filter(a=>a.statut==='nouvelle');
+  const container=document.getElementById('alertesContainer');
+  if(!container) return;
+  if(!alertes.length){container.innerHTML='';return;}
+  container.innerHTML=alertes.map(a=>`
+    <div style="background:#2A1A1A;border:2px solid #C0392B;border-radius:12px;padding:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;animation:pulse 1.5s infinite">
+      <div>
+        <div style="color:#C0392B;font-size:18px;font-weight:bold">🔔 Table ${a.table} demande l'addition</div>
+        <div style="color:#888;font-size:12px;margin-top:2px">🕐 ${a.heure||'--:--'} — Total : <strong style="color:#D4AF37">${(a.total||0).toFixed(2).replace('.',',')} €</strong></div>
+      </div>
+      <button onclick="acquitterAlerte('${a.id}')" style="background:#C0392B;border:none;border-radius:8px;color:white;padding:10px 16px;font-weight:bold;cursor:pointer;font-size:13px">✓ Vu</button>
+    </div>`).join('');
+}
+
+async function acquitterAlerte(id){
+  await db.collection('alertes').doc(id).update({statut:'vue'});
+  showToast('✅ Alerte acquittée');
+}
 
 // ============================================================
 // RENDER COMMANDES
@@ -324,32 +362,47 @@ function renderAdditions(){
 // ============================================================
 async function encaisser(tableNum, addId){
   if(!confirm(`Encaisser la table ${tableNum} ?`)) return;
-  // Récupérer les données avant suppression pour historique
-  const addSnap=await db.collection('additions').doc(addId.replace('table_',`table_`)).get();
-  const addData=addSnap.exists?addSnap.data():allAdditions[addId]||{};
-  // Archiver dans historique
-  await db.collection('historique').add({
-    table:tableNum,
-    total:addData.total||0,
-    commandes:addData.commandes||[],
-    heureReglement:new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}),
-    timestamp:firebase.firestore.FieldValue.serverTimestamp()
-  });
-  // Marquer toutes commandes réglées
-  const snap=await db.collection('commandes').where('table','==',tableNum).get();
-  const batch=db.batch();
-  snap.forEach(d=>batch.update(d.ref,{statut:'regle'}));
-  // Supprimer addition
-  const addRef=db.collection('additions').doc(`table_${tableNum}`);
-  batch.delete(addRef);
-  await batch.commit();
-  // Notifier le client
-  await db.collection('notifications').doc(`table_${tableNum}`).set({
-    message:'💳 Paiement enregistré — merci et à bientôt !',
-    ts:firebase.firestore.FieldValue.serverTimestamp()
-  });
-  showToast(`✅ Table ${tableNum} encaissée`);
-  chargerHistorique();
+  try {
+    // Récupérer données pour historique
+    const addRef=db.collection('additions').doc(`table_${tableNum}`);
+    const addSnap=await addRef.get();
+    const addData=addSnap.exists?addSnap.data():allAdditions[`table_${tableNum}`]||{};
+
+    // Archiver dans historique
+    await db.collection('historique').add({
+      table:tableNum,
+      total:addData.total||0,
+      commandes:addData.commandes||[],
+      heureReglement:new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}),
+      timestamp:firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    // Marquer toutes les commandes de la table comme réglées
+    const snap=await db.collection('commandes').where('table','==',tableNum).get();
+    const batch=db.batch();
+    snap.forEach(d=>batch.update(d.ref,{statut:'regle'}));
+
+    // Supprimer l'addition (table libérée)
+    batch.delete(addRef);
+
+    // Supprimer les alertes de cette table
+    const alertesSnap=await db.collection('alertes').doc(`addition_table_${tableNum}`).get();
+    if(alertesSnap.exists) batch.delete(alertesSnap.ref);
+
+    await batch.commit();
+
+    // Notifier le client
+    await db.collection('notifications').doc(`table_${tableNum}`).set({
+      message:'💳 Paiement enregistré — merci et à bientôt ! 🐚',
+      ts:firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    showToast(`✅ Table ${tableNum} encaissée !`);
+    chargerHistorique();
+  } catch(e) {
+    showToast('❌ Erreur encaissement');
+    console.error(e);
+  }
 }
 
 // ============================================================
@@ -458,9 +511,13 @@ function renderCA(){
 function updateStats(){
   const cmds=Object.values(allCommandes);
   const adds=Object.values(allAdditions);
-  document.getElementById('statNouv').textContent=cmds.filter(c=>c.statut==='nouvelle').length;
-  document.getElementById('statAdditions').textContent=adds.filter(a=>a.statut!=='regle').length;
-  document.getElementById('badgeAdd').textContent=adds.filter(a=>a.statut!=='regle').length;
+  const alertes=Object.values(allAlertes||{});
+  const nbNouv=cmds.filter(c=>c.statut==='nouvelle').length;
+  const nbAdds=adds.filter(a=>a.statut!=='regle').length;
+  const nbAlertes=alertes.filter(a=>a.statut==='nouvelle').length;
+  document.getElementById('statNouv').textContent=nbNouv;
+  document.getElementById('statAdditions').textContent=nbAdds+nbAlertes;
+  document.getElementById('badgeAdd').textContent=nbAdds+nbAlertes;
   const total=cmds.reduce((s,c)=>s+(c.total||0),0);
   document.getElementById('statCA').textContent=total.toFixed(0)+'€';
 }
