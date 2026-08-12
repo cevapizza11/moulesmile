@@ -69,6 +69,20 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#D4AF37;color:#1A1A1A;padding:10px 22px;border-radius:30px;font-weight:bold;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
 .version{text-align:center;padding:16px;color:#333;font-size:10px}
+
+/* MODAL BOISSON INCLUSE */
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:500;display:none;align-items:flex-end;justify-content:center}
+.modal-overlay.visible{display:flex}
+.modal-box{background:#1E1E1E;border-radius:20px 20px 0 0;padding:24px 16px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto;border-top:3px solid #D4AF37}
+.modal-box h3{color:#D4AF37;font-size:18px;font-weight:bold;margin-bottom:4px;text-align:center}
+.modal-sub{color:#888;font-size:12px;text-align:center;margin-bottom:20px}
+.modal-boisson-list{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.modal-boisson-item{background:#2A2A2A;border:2px solid #333;border-radius:12px;padding:14px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:all .2s}
+.modal-boisson-item:active{border-color:#D4AF37;background:#2E2A1A}
+.modal-boisson-item .bnom{font-size:14px;font-weight:bold;color:#fff}
+.modal-boisson-item .bdesc{font-size:11px;color:#888;margin-top:2px}
+.modal-boisson-item .bprix{color:#1A7A50;font-size:14px;font-weight:bold;flex-shrink:0;margin-left:10px}
+.modal-close{background:#333;border:none;color:#aaa;padding:12px;border-radius:10px;width:100%;font-size:13px;cursor:pointer;margin-top:4px}
 </style>
 </head>
 <body>
@@ -335,10 +349,63 @@ function renderProduits(catId) {
 
 function esc(s){ return s.replace(/'/g,"\\'").replace(/"/g,'\\"'); }
 
+// Paliers avec boisson incluse
+const PALIERS_AVEC_BOISSON = ['p2', 'p3'];
+
 function ajouterPanier(id, nom, desc, prix) {
-  panier.push({id, nom, desc, prix, uid: Date.now()+Math.random()});
+  // Si c'est un palier avec boisson incluse → popup
+  if (PALIERS_AVEC_BOISSON.includes(id)) {
+    // Ajouter d'abord le palier
+    panier.push({id, nom, desc, prix, uid: Date.now()+Math.random()});
+    updatePanierBar();
+    // Puis ouvrir le popup boisson incluse
+    ouvrirModalBoisson(id);
+  } else {
+    panier.push({id, nom, desc, prix, uid: Date.now()+Math.random()});
+    updatePanierBar();
+    showToast('✅ Ajouté !');
+  }
+}
+
+function ouvrirModalBoisson(palierId) {
+  const c = carte || carteDefaut;
+  // Récupérer les boissons disponibles (softs + bières uniquement pour la boisson incluse)
+  const catsBoissonIncluse = ['softs', 'bieres'];
+  let boissons = [];
+  catsBoissonIncluse.forEach(catId => {
+    const cat = c.categories.find(x => x.id === catId);
+    if (cat) boissons = boissons.concat((cat.produits||[]).filter(b => b.actif));
+  });
+
+  const sub = palierId === 'p3'
+    ? 'Incluse dans votre Palier 3 — offerte !'
+    : 'Incluse dans votre Palier 2 — offerte !';
+  document.getElementById('modalSub').textContent = sub;
+
+  document.getElementById('modalBoissonList').innerHTML = boissons.map(b => `
+    <div class="modal-boisson-item" onclick="choisirBoissonIncluse('${b.id}','${esc(b.nom)}','${esc(b.desc||'')}')">
+      <div>
+        <div class="bnom">${b.emoji||'🥤'} ${b.nom}</div>
+        ${b.desc ? `<div class="bdesc">${b.desc}</div>` : ''}
+      </div>
+      <div class="bprix">OFFERTE</div>
+    </div>
+  `).join('');
+
+  document.getElementById('modalBoisson').classList.add('visible');
+}
+
+function choisirBoissonIncluse(id, nom, desc) {
+  // Ajouter la boisson à 0€
+  panier.push({id: id+'_inclus', nom: nom + ' (incluse)', desc, prix: 0, uid: Date.now()+Math.random()});
   updatePanierBar();
-  showToast('✅ Ajouté !');
+  fermerModal();
+  showToast('✅ Formule + boisson ajoutées !');
+}
+
+function fermerModal() {
+  document.getElementById('modalBoisson').classList.remove('visible');
+  showToast('✅ Formule ajoutée — boisson à choisir avec le serveur');
 }
 
 function supprimerPanier(uid) {
@@ -431,5 +498,16 @@ async function demanderAddition() {
   showScreen('screenAddition');
 }
 </script>
+
+<!-- MODAL BOISSON INCLUSE -->
+<div class="modal-overlay" id="modalBoisson">
+  <div class="modal-box">
+    <h3>🍺 Votre boisson incluse</h3>
+    <div class="modal-sub" id="modalSub">Choisissez votre boisson offerte avec cette formule</div>
+    <div class="modal-boisson-list" id="modalBoissonList"></div>
+    <button class="modal-close" onclick="fermerModal()">Plus tard — je choisirai avec le serveur</button>
+  </div>
+</div>
+
 </body>
 </html>
