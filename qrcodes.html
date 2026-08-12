@@ -42,11 +42,10 @@
 
 <div class="controls">
   <input type="number" id="nbTables" value="70" min="1" max="150" style="background:#2A2A2A;border:1px solid #D4AF37;border-radius:8px;color:#D4AF37;padding:10px;width:80px;text-align:center;font-weight:bold;" title="Nombre de tables">
-  <input type="text" id="tokenInput" value="MS2027" style="background:#2A2A2A;border:1px solid #D4AF37;border-radius:8px;color:#D4AF37;padding:10px;width:100px;text-align:center;font-weight:bold;font-size:12px;" title="Token de sécurité — à changer chaque saison" placeholder="Token">
-  <button class="btn btn-or" onclick="generer()">🔄 Générer</button>
+<button class="btn btn-or" onclick="generer()">🔄 Générer</button>
   <button class="btn btn-outline" onclick="window.print()">🖨️ Imprimer tout</button>
 </div>
-<p style="color:#C0392B;font-size:11px;margin-bottom:12px">⚠️ Token de sécurité : modifiez-le chaque saison dans index.html (TOKEN_SECRET) ET ici avant de générer les QR codes</p>
+
 
 <div class="qr-grid" id="qrGrid"></div>
 
@@ -59,8 +58,7 @@ function generer() {
   grid.innerHTML = '';
 
   for (let i = 1; i <= nb; i++) {
-    const token = document.getElementById('tokenInput').value.trim() || 'MS2027';
-    const url = `${baseUrl}?table=${i}&token=${token}`;
+    const url = `${baseUrl}?table=${i}`;
     const card = document.createElement('div');
     card.className = 'qr-card';
     card.innerHTML = `

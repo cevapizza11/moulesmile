@@ -122,17 +122,89 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#D4AF37;color:#1A1A1A;padding:10px 22px;border-radius:30px;font-weight:bold;font-size:13px;z-index:998;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
 .version{text-align:center;padding:16px;color:#333;font-size:10px}
-/* BARRE WIFI */
-.wifi-bar{background:#1A3A2A;border-bottom:1px solid #1A7A50;padding:6px 16px;text-align:center;font-size:11px;color:#4ABA80;display:none}
-.wifi-bar.show{display:block}
-.timer-bar{background:#2A2A1A;border-bottom:1px solid #D4AF37;padding:4px 16px;text-align:right;font-size:10px;color:#888;display:none}
-.timer-bar.show{display:block}
-
 </style>
 </head>
 <body>
 
-<!-- NOTIFICATION BANDEAU -->
+<div class="header">
+  <h1>🐚 MOULE & SMILE</h1>
+  <div id="tableBadge" style="display:none" class="table-badge">Table <span id="tableNumHeader"></span></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- PANIER FLOTTANT -->
+<div class="panier-bar" id="panierBar" onclick="showScreen('screenPanier')">
+  <div>
+    <div class="panier-nb" id="panierNb">0 article</div>
+    <div class="panier-total" id="panierTotalBar">0,00 €</div>
+  </div>
+  <button class="panier-btn">🛒 Mon panier →</button>
+</div>
+
+<!-- TABLE -->
+<div class="screen active" id="screenTable">
+  <div class="table-screen">
+    <div class="logo">🐚</div>
+    <h2>Bienvenue !</h2>
+    <p>Saisissez votre numéro de table pour commencer</p>
+    <input type="number" class="table-input" id="tableInput" placeholder="N° de table" min="1" max="150">
+    <button class="btn btn-or" onclick="validerTable()">Commencer →</button>
+  </div>
+</div>
+
+<!-- CARTE -->
+<div class="screen" id="screenCarte">
+  <div class="sec-title">Notre carte</div>
+  <div class="sec-sub">Commandez à tout moment — autant de fois que vous voulez</div>
+  <div class="cat-tabs" id="catTabs"></div>
+  <div id="productList"></div>
+</div>
+
+<!-- PANIER -->
+<div class="screen" id="screenPanier">
+  <div class="sec-title">🛒 Mon panier</div>
+  <div class="sec-sub">Table <span id="panierTable"></span></div>
+  <div id="panierItems"></div>
+  <div class="info-banner">🚶 Après validation, un serveur apporte votre commande. Direction le passage pour les moules !</div>
+  <button class="btn btn-or" id="btnCommander" onclick="intercepterCommande()">✅ Commander maintenant</button>
+  <button class="btn btn-outline" onclick="showScreen('screenCarte')">← Continuer à commander</button>
+  <button class="btn btn-rouge" onclick="demanderAddition()">🧾 Demander l'addition</button>
+</div>
+
+<!-- LOADER -->
+<div class="loader" id="loader"><div class="spinner"></div><p style="color:#aaa">Envoi...</p></div>
+
+<!-- CONFIRMATION -->
+<div class="screen" id="screenConfirm">
+  <div class="confirm-screen">
+    <div class="big-emoji">✅</div>
+    <h2 style="color:#D4AF37;font-size:22px;margin-bottom:8px">Commande envoyée !</h2>
+    <p style="color:#aaa;font-size:13px;margin-bottom:16px">Table <strong id="confirmTable" style="color:#D4AF37"></strong></p>
+    <div class="steps-list">
+      <div class="step-item"><div class="step-num">1</div><div class="step-text">Un serveur prend en charge votre commande</div></div>
+      <div class="step-item"><div class="step-num">2</div><div class="step-text">Pour les moules → passage self-service : Moules → Sauce → Frites</div></div>
+      <div class="step-item"><div class="step-num">3</div><div class="step-text">C'est <strong>à volonté</strong> — revenez autant que vous voulez 😄</div></div>
+      <div class="step-item"><div class="step-num">4</div><div class="step-text">Recommandez depuis la carte à tout moment</div></div>
+    </div>
+    <button class="btn btn-or" onclick="commanderEncore()">🍺 Commander autre chose</button>
+    <button class="btn btn-rouge" onclick="demanderAddition()">🧾 Demander l'addition</button>
+  </div>
+</div>
+
+<!-- ADDITION -->
+<div class="screen" id="screenAddition">
+  <div style="text-align:center">
+    <h2 class="sec-title" style="text-align:center;margin-bottom:16px">🧾 Votre addition</h2>
+    <div class="total-box">
+      <div class="tlbl">TOTAL TABLE <span id="additionTable"></span></div>
+      <div class="tamt" id="totalAmount">0,00 €</div>
+    </div>
+    <div id="commandesDetail"></div>
+    <div class="info-banner" style="margin-top:12px">Un serveur arrive avec votre terminal de paiement 🙏<br>Merci de votre visite !</div>
+    <button class="btn btn-gris" onclick="showScreen('screenConfirm')">← Retour</button>
+  </div>
+</div>
+
 
 <!-- MODAL BOISSON INCLUSE -->
 <div class="modal-overlay" id="modalBoisson">
