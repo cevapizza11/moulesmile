@@ -83,6 +83,23 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 .modal-boisson-item .bdesc{font-size:11px;color:#888;margin-top:2px}
 .modal-boisson-item .bprix{color:#1A7A50;font-size:14px;font-weight:bold;flex-shrink:0;margin-left:10px}
 .modal-close{background:#333;border:none;color:#aaa;padding:12px;border-radius:10px;width:100%;font-size:13px;cursor:pointer;margin-top:4px}
+
+/* MODAL DESSERT */
+.modal-dessert{background:#1E1A0E;border-top:3px solid #D4AF37}
+.modal-dessert h3{color:#D4AF37}
+.upsell-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.9);z-index:600;display:none;align-items:flex-end;justify-content:center}
+.upsell-overlay.visible{display:flex}
+.upsell-box{background:#1E1E1E;border-radius:20px 20px 0 0;padding:24px 16px;width:100%;max-width:480px;border-top:3px solid #D4AF37;text-align:center}
+.upsell-box .upsell-emoji{font-size:48px;margin-bottom:12px}
+.upsell-box h3{color:#D4AF37;font-size:20px;font-weight:bold;margin-bottom:6px}
+.upsell-box p{color:#aaa;font-size:13px;margin-bottom:20px;line-height:1.5}
+.upsell-dessert-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;text-align:left}
+.upsell-dessert-item{background:#2A2A2A;border:2px solid #333;border-radius:10px;padding:12px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:all .2s}
+.upsell-dessert-item:active{border-color:#D4AF37;background:#2E2A1A}
+.upsell-dessert-item .dnom{font-size:14px;font-weight:bold;color:#fff}
+.upsell-dessert-item .ddesc{font-size:11px;color:#888;margin-top:2px}
+.upsell-dessert-item .dprix{color:#D4AF37;font-size:14px;font-weight:bold;flex-shrink:0;margin-left:10px}
+.upsell-non{background:#333;border:none;color:#aaa;padding:12px;border-radius:10px;width:100%;font-size:13px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -269,12 +286,26 @@ const carteDefaut = { categories: [
     {id:"b32",nom:"Café / Expresso",desc:"",emoji:"☕",prix:2.50,actif:true},
     {id:"b33",nom:"Thé / Infusion",desc:"",emoji:"🍵",prix:2.50,actif:true},
   ]},
+],
+// BOISSONS INCLUSES DANS LES MENUS (paliers 2 et 3)
+boissonsMenu: [
+  {id:"bm1", nom:"Coca-Cola", desc:"33cl", emoji:"🥤", actif:true},
+  {id:"bm2", nom:"Orangina", desc:"33cl", emoji:"🍊", actif:true},
+  {id:"bm3", nom:"Limonade", desc:"33cl", emoji:"🍋", actif:true},
+  {id:"bm4", nom:"Eau plate", desc:"50cl", emoji:"💧", actif:true},
+  {id:"bm5", nom:"Eau gazeuse", desc:"50cl", emoji:"💧", actif:true},
+  {id:"bm6", nom:"Jus de fruits", desc:"25cl", emoji:"🍹", actif:true},
+  {id:"bm7", nom:"Bière pression", desc:"25cl", emoji:"🍺", actif:true},
+  {id:"bm9", nom:"Verre de vin rosé", desc:"Codet 25cl — Corbières Rosé AOP", emoji:"🍷", actif:true},
+  {id:"bm10", nom:"Verre de vin blanc", desc:"Codet 25cl — Picpoul de Pinet AOP", emoji:"🥂", actif:true},
 ]};
 
 // Écouter carte Firebase
 db.collection('config').doc('carte_v2').onSnapshot(doc => {
   if (doc.exists && doc.data().categories && doc.data().categories.length) {
     carte = doc.data();
+    // Si boissonsMenu absent → utiliser la valeur par défaut
+    if (!carte.boissonsMenu) carte.boissonsMenu = carteDefaut.boissonsMenu;
   } else {
     carte = carteDefaut;
     db.collection('config').doc('carte_v2').set(carteDefaut).catch(()=>{});
@@ -368,14 +399,11 @@ function ajouterPanier(id, nom, desc, prix) {
 }
 
 function ouvrirModalBoisson(palierId) {
+  palierEnCours = palierId;
   const c = carte || carteDefaut;
   // Récupérer les boissons disponibles (softs + bières uniquement pour la boisson incluse)
-  const catsBoissonIncluse = ['softs', 'bieres'];
-  let boissons = [];
-  catsBoissonIncluse.forEach(catId => {
-    const cat = c.categories.find(x => x.id === catId);
-    if (cat) boissons = boissons.concat((cat.produits||[]).filter(b => b.actif));
-  });
+  // Lire les boissons depuis l'onglet "Boissons Menu" (géré dans l'Excel/admin)
+  const boissons = (c.boissonsMenu || []).filter(b => b.actif);
 
   const sub = palierId === 'p3'
     ? 'Incluse dans votre Palier 3 — offerte !'
@@ -395,17 +423,107 @@ function ouvrirModalBoisson(palierId) {
   document.getElementById('modalBoisson').classList.add('visible');
 }
 
+// Stocker le palier en cours pour savoir si on doit enchaîner avec le dessert
+let palierEnCours = null;
+
 function choisirBoissonIncluse(id, nom, desc) {
-  // Ajouter la boisson à 0€
   panier.push({id: id+'_inclus', nom: nom + ' (incluse)', desc, prix: 0, uid: Date.now()+Math.random()});
   updatePanierBar();
-  fermerModal();
-  showToast('✅ Formule + boisson ajoutées !');
+  document.getElementById('modalBoisson').classList.remove('visible');
+  // Si palier 3 → enchaîner avec le popup dessert inclus
+  if (palierEnCours === 'p3') {
+    setTimeout(() => ouvrirModalDessertInclus(), 300);
+  } else {
+    showToast('✅ Formule + boisson ajoutées !');
+  }
 }
 
 function fermerModal() {
   document.getElementById('modalBoisson').classList.remove('visible');
-  showToast('✅ Formule ajoutée — boisson à choisir avec le serveur');
+  // Si palier 3 → enchaîner avec dessert inclus même si boisson non choisie
+  if (palierEnCours === 'p3') {
+    setTimeout(() => ouvrirModalDessertInclus(), 300);
+  } else {
+    showToast('✅ Formule ajoutée — boisson à choisir avec le serveur');
+  }
+}
+
+// ============================================================
+// MODAL DESSERT INCLUS (Palier 3)
+// ============================================================
+function ouvrirModalDessertInclus() {
+  const c = carte || carteDefaut;
+  const catDessert = c.categories.find(x => x.id === 'desserts');
+  const desserts = catDessert ? (catDessert.produits||[]).filter(d => d.actif) : [];
+
+  document.getElementById('modalDessertList').innerHTML = desserts.map(d => `
+    <div class="modal-boisson-item" onclick="choisirDessertInclus('${d.id}','${esc(d.nom)}','${esc(d.desc||'')}')">
+      <div>
+        <div class="bnom">${d.emoji||'🍮'} ${d.nom}</div>
+        ${d.desc ? `<div class="bdesc">${d.desc}</div>` : ''}
+      </div>
+      <div class="bprix">OFFERT</div>
+    </div>
+  `).join('');
+
+  document.getElementById('modalDessert').classList.add('visible');
+}
+
+function choisirDessertInclus(id, nom, desc) {
+  panier.push({id: id+'_inclus', nom: nom + ' (inclus)', desc, prix: 0, uid: Date.now()+Math.random()});
+  updatePanierBar();
+  fermerModalDessert();
+  showToast('✅ Formule complète ajoutée !');
+}
+
+function fermerModalDessert() {
+  document.getElementById('modalDessert').classList.remove('visible');
+  palierEnCours = null;
+  showToast('✅ Formule ajoutée — dessert à choisir avec le serveur');
+}
+
+// ============================================================
+// UPSELL DESSERT (fin de commande — style McDonald's)
+// ============================================================
+function panierContientDessert() {
+  return panier.some(p =>
+    p.id.includes('dessert') || p.id.startsWith('d') ||
+    p.nom.toLowerCase().includes('dessert') || p.nom.toLowerCase().includes('glace') ||
+    p.nom.toLowerCase().includes('mousse') || p.nom.toLowerCase().includes('inclus')
+  );
+}
+
+function ouvrirUpsellDessert() {
+  const c = carte || carteDefaut;
+  const catDessert = c.categories.find(x => x.id === 'desserts');
+  const desserts = catDessert ? (catDessert.produits||[]).filter(d => d.actif && d.prix > 0) : [];
+
+  document.getElementById('upsellDessertList').innerHTML = desserts.map(d => `
+    <div class="upsell-dessert-item" onclick="ajouterDessertUpsell('${d.id}','${esc(d.nom)}','${esc(d.desc||'')}',${d.prix})">
+      <div>
+        <div class="dnom">${d.emoji||'🍮'} ${d.nom}</div>
+        ${d.desc ? `<div class="ddesc">${d.desc}</div>` : ''}
+      </div>
+      <div class="dprix">${d.prix.toFixed(2).replace('.',',')} €</div>
+    </div>
+  `).join('');
+
+  document.getElementById('upsellDessert').classList.add('visible');
+}
+
+function ajouterDessertUpsell(id, nom, desc, prix) {
+  panier.push({id, nom, desc, prix, uid: Date.now()+Math.random()});
+  updatePanierBar();
+  document.getElementById('upsellDessert').classList.remove('visible');
+  showToast('🍮 Dessert ajouté !');
+  // Lancer la commande maintenant
+  validerCommande();
+}
+
+function refuserDessert() {
+  document.getElementById('upsellDessert').classList.remove('visible');
+  // Continuer avec la commande sans dessert
+  validerCommande();
 }
 
 function supprimerPanier(uid) {
@@ -448,6 +566,11 @@ function renderPanierItems() {
 
 async function validerCommande() {
   if (!panier.length) { showToast('⚠️ Panier vide'); return; }
+  // UPSELL DESSERT — si pas de dessert dans le panier → popup McDonald's style
+  if (!panierContientDessert()) {
+    ouvrirUpsellDessert();
+    return; // On attend la décision client
+  }
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('loader').style.display = 'block';
   const total = panier.reduce((s,p)=>s+p.prix,0);
@@ -506,6 +629,28 @@ async function demanderAddition() {
     <div class="modal-sub" id="modalSub">Choisissez votre boisson offerte avec cette formule</div>
     <div class="modal-boisson-list" id="modalBoissonList"></div>
     <button class="modal-close" onclick="fermerModal()">Plus tard — je choisirai avec le serveur</button>
+  </div>
+</div>
+
+
+<!-- MODAL DESSERT INCLUS (Palier 3) -->
+<div class="modal-overlay" id="modalDessert">
+  <div class="modal-box modal-dessert">
+    <h3>🍮 Votre dessert inclus</h3>
+    <div class="modal-sub">Inclus dans votre Palier 3 — offert !</div>
+    <div class="modal-boisson-list" id="modalDessertList"></div>
+    <button class="modal-close" onclick="fermerModalDessert()">Plus tard — je déciderai à la fin du repas</button>
+  </div>
+</div>
+
+<!-- UPSELL DESSERT (fin de commande) -->
+<div class="upsell-overlay" id="upsellDessert">
+  <div class="upsell-box">
+    <div class="upsell-emoji">🍮</div>
+    <h3>Et un dessert ?</h3>
+    <p>Nos desserts maison pour finir en beauté...<br>À seulement <strong style="color:#D4AF37">3,50 €</strong> !</p>
+    <div class="upsell-dessert-list" id="upsellDessertList"></div>
+    <button class="upsell-non" onclick="refuserDessert()">Non merci, je commande sans dessert →</button>
   </div>
 </div>
 

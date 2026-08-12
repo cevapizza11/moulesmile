@@ -75,11 +75,12 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   <h1>⚙️ Admin — Moule & Smile</h1>
   <button class="save-btn" onclick="sauvegarder()">💾 Publier</button>
 </div>
-<div class="nav-tabs">
-  <div class="nav-tab active" onclick="switchNav('Carte',this)">📋 Carte</div>
-  <div class="nav-tab" onclick="switchNav('Ajouter',this)">➕ Ajouter</div>
-  <div class="nav-tab" onclick="switchNav('Importer',this)">📥 Excel</div>
-  <div class="nav-tab" onclick="switchNav('Actions',this)">⚡ Actions</div>
+<div class="nav-tabs" style="overflow-x:auto;display:flex">
+  <div class="nav-tab active" onclick="switchNav('Carte',this)" style="flex-shrink:0">📋 Carte</div>
+  <div class="nav-tab" onclick="switchNav('BoissonMenu',this)" style="flex-shrink:0">🍺 Menu</div>
+  <div class="nav-tab" onclick="switchNav('Ajouter',this)" style="flex-shrink:0">➕ Ajouter</div>
+  <div class="nav-tab" onclick="switchNav('Importer',this)" style="flex-shrink:0">📥 Excel</div>
+  <div class="nav-tab" onclick="switchNav('Actions',this)" style="flex-shrink:0">⚡ Actions</div>
 </div>
 <div class="toast" id="toast"></div>
 
@@ -88,6 +89,30 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   <div class="status-bar"><div class="dot"></div>Modifications instantanées sur tous les téléphones</div>
   <div class="cat-tabs" id="catTabs"></div>
   <div id="catContent"></div>
+</div>
+
+<!-- BOISSONS MENU -->
+<div id="navBoissonMenu" class="content" style="display:none">
+  <div class="status-bar"><div class="dot"></div>Boissons proposées <strong>gratuitement</strong> dans les paliers 2 et 3</div>
+  <div class="section">
+    <h2>🍺 Boissons incluses dans les menus</h2>
+    <div id="boissonMenuList"></div>
+  </div>
+  <div class="section" style="margin-top:14px">
+    <h2>➕ Ajouter une boisson au menu</h2>
+    <div class="form-row">
+      <div class="form-group" style="flex:1;min-width:80px"><label>Emoji</label><input type="text" id="bmEmoji" placeholder="🍷" maxlength="4"></div>
+      <div class="form-group" style="flex:2"><label>Nom *</label><input type="text" id="bmNom" placeholder="Ex: Verre de vin rosé"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Description</label><input type="text" id="bmDesc" placeholder="Ex: Codet 25cl — Corbières AOP"></div>
+    </div>
+    <button class="btn-add-prod" onclick="ajouterBoissonMenu()">✅ Ajouter au menu</button>
+  </div>
+  <div style="background:#2A2A2A;border-radius:10px;padding:12px;margin-top:14px;font-size:12px;color:#888;line-height:1.7">
+    💡 Ces boissons apparaissent <strong style="color:#D4AF37">gratuitement</strong> dans le popup du client quand il choisit le palier 2 ou 3.<br>
+    Les autres boissons restent sur la carte et sont <strong style="color:#D4AF37">facturées normalement</strong>.
+  </div>
 </div>
 
 <!-- AJOUTER -->
@@ -190,15 +215,33 @@ const CATS=[
 const sel=document.getElementById('newCat');
 CATS.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.nom;sel.appendChild(o);});
 
+const boissonsMenuDefaut = [
+  {id:"bm1", nom:"Coca-Cola", desc:"33cl", emoji:"🥤", actif:true},
+  {id:"bm2", nom:"Orangina", desc:"33cl", emoji:"🍊", actif:true},
+  {id:"bm3", nom:"Limonade", desc:"33cl", emoji:"🍋", actif:true},
+  {id:"bm4", nom:"Eau plate", desc:"50cl", emoji:"💧", actif:true},
+  {id:"bm5", nom:"Eau gazeuse", desc:"50cl", emoji:"💧", actif:true},
+  {id:"bm6", nom:"Jus de fruits", desc:"25cl", emoji:"🍹", actif:true},
+  {id:"bm7", nom:"Bière pression", desc:"25cl", emoji:"🍺", actif:true},
+  {id:"bm9", nom:"Verre de vin rosé", desc:"Codet 25cl — Corbières Rosé AOP", emoji:"🍷", actif:true},
+  {id:"bm10", nom:"Verre de vin blanc", desc:"Codet 25cl — Picpoul de Pinet AOP", emoji:"🥂", actif:true},
+];
+
 db.collection('config').doc('carte_v2').onSnapshot(doc=>{
-  if(doc.exists&&doc.data().categories){carte=doc.data();if(!catActive)catActive=carte.categories[0]?.id;render();loadStats();}
+  if(doc.exists&&doc.data().categories){
+    carte=doc.data();
+    if(!carte.boissonsMenu) carte.boissonsMenu = boissonsMenuDefaut;
+    if(!catActive)catActive=carte.categories[0]?.id;
+    render();loadStats();
+  }
 });
 
 function switchNav(tab,el){
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
-  ['navCarte','navAjouter','navImporter','navActions'].forEach(id=>document.getElementById(id).style.display='none');
+  ['navCarte','navBoissonMenu','navAjouter','navImporter','navActions'].forEach(id=>document.getElementById(id).style.display='none');
   document.getElementById('nav'+tab).style.display='block';
+  if(tab==='BoissonMenu') renderBoissonMenu();
 }
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
@@ -335,6 +378,70 @@ async function resetJour(){
   const snap=await db.collection('commandes').get();const b=db.batch();snap.forEach(d=>b.delete(d.ref));
   const snap2=await db.collection('additions').get();snap2.forEach(d=>b.delete(d.ref));
   await b.commit();showToast('🗑️ Commandes supprimées');loadStats();
+}
+
+// ============================================================
+// BOISSONS MENU
+// ============================================================
+function renderBoissonMenu() {
+  if (!carte) return;
+  const bm = carte.boissonsMenu || [];
+  const container = document.getElementById('boissonMenuList');
+  if (!bm.length) {
+    container.innerHTML = '<div style="color:#888;text-align:center;padding:20px">Aucune boisson configurée</div>';
+    return;
+  }
+  container.innerHTML = bm.map((b, idx) => `
+    <div class="item-row">
+      <div class="item-info">
+        <div class="item-nom">${b.emoji||'🥤'} ${b.nom}</div>
+        <div class="item-detail">${b.desc||''}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <label class="toggle">
+          <input type="checkbox" ${b.actif?'checked':''} onchange="toggleBoissonMenu(${idx},this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+        <button class="del-prod-btn" onclick="supprimerBoissonMenu(${idx})">🗑</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleBoissonMenu(idx, val) {
+  if (!carte.boissonsMenu) return;
+  carte.boissonsMenu[idx].actif = val;
+  showToast(`${carte.boissonsMenu[idx].nom} ${val?'✅ activée':'❌ désactivée'} du menu`);
+  sauvegarder();
+}
+
+function supprimerBoissonMenu(idx) {
+  if (!carte.boissonsMenu) return;
+  const nom = carte.boissonsMenu[idx].nom;
+  if (!confirm(`Retirer "${nom}" du menu ?`)) return;
+  carte.boissonsMenu.splice(idx, 1);
+  sauvegarder();
+  renderBoissonMenu();
+  showToast(`🗑️ ${nom} retirée du menu`);
+}
+
+function ajouterBoissonMenu() {
+  const nom = document.getElementById('bmNom').value.trim();
+  const desc = document.getElementById('bmDesc').value.trim();
+  const emoji = document.getElementById('bmEmoji').value.trim();
+  if (!nom) { showToast('⚠️ Nom obligatoire'); return; }
+  if (!carte) { showToast('⚠️ Carte non chargée'); return; }
+  if (!carte.boissonsMenu) carte.boissonsMenu = [];
+  carte.boissonsMenu.push({
+    id: 'bm_' + Date.now(),
+    nom, desc, emoji, actif: true
+  });
+  document.getElementById('bmNom').value = '';
+  document.getElementById('bmDesc').value = '';
+  document.getElementById('bmEmoji').value = '';
+  sauvegarder();
+  renderBoissonMenu();
+  showToast(`✅ "${nom}" ajoutée au menu !`);
 }
 
 async function loadStats(){
