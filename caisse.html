@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moule & Smile — Caisse / Passage</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #111; color: #fff; min-height: 100vh; }
+
+  .header { background: #1A1A1A; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #D4AF37; position: sticky; top: 0; z-index: 100; }
+  .header h1 { color: #D4AF37; font-size: 18px; }
+  .header .stats { display: flex; gap: 16px; }
+  .stat { text-align: center; }
+  .stat .num { color: #D4AF37; font-size: 22px; font-weight: bold; }
+  .stat .lbl { color: #888; font-size: 10px; }
+
+  .tabs { display: flex; background: #1A1A1A; border-bottom: 1px solid #333; }
+  .tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; font-size: 13px; color: #888; border-bottom: 3px solid transparent; transition: all 0.2s; }
+  .tab.active { color: #D4AF37; border-bottom-color: #D4AF37; font-weight: bold; }
+
+  .content { padding: 16px; max-width: 900px; margin: 0 auto; }
+
+  /* COMMANDES GRID */
+  .commandes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+
+  .cmd-card { background: #1E1E1E; border: 2px solid #333; border-radius: 14px; padding: 16px; position: relative; transition: all 0.3s; }
+  .cmd-card.nouvelle { border-color: #D4AF37; animation: pulse 2s infinite; }
+  .cmd-card.vue { border-color: #1A7A50; }
+  .cmd-card.regle { border-color: #333; opacity: 0.4; }
+
+  @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(212,175,55,0.4)} 50%{box-shadow:0 0 0 8px rgba(212,175,55,0)} }
+
+  .cmd-table { font-size: 28px; font-weight: bold; color: #D4AF37; margin-bottom: 8px; }
+  .cmd-heure { position: absolute; top: 14px; right: 14px; font-size: 11px; color: #888; background: #2A2A2A; padding: 2px 8px; border-radius: 20px; }
+  .cmd-detail { margin-bottom: 12px; }
+  .cmd-detail .row { display: flex; gap: 8px; align-items: center; padding: 4px 0; font-size: 13px; color: #ddd; }
+  .cmd-detail .emoji { font-size: 16px; }
+  .cmd-detail .bold { font-weight: bold; color: #fff; }
+  .badge-dessert { display: inline-block; background: #8B4513; color: #FFD700; font-size: 10px; font-weight: bold; padding: 2px 8px; border-radius: 20px; margin-top: 6px; }
+  .badge-special { display: inline-block; background: #C0392B; color: white; font-size: 10px; font-weight: bold; padding: 2px 8px; border-radius: 20px; margin-top: 4px; }
+
+  .cmd-prix { font-size: 20px; font-weight: bold; color: #D4AF37; margin-bottom: 12px; }
+
+  .cmd-actions { display: flex; gap: 8px; }
+  .btn-vue { flex: 1; padding: 8px; background: #1A7A50; border: none; border-radius: 8px; color: white; font-size: 12px; font-weight: bold; cursor: pointer; }
+  .btn-regle { flex: 1; padding: 8px; background: #333; border: none; border-radius: 8px; color: #aaa; font-size: 12px; cursor: pointer; }
+  .btn-regle.actif { background: #C0392B; color: white; }
+
+  /* ADDITION ALERT */
+  .addition-alert { background: #2A1A1A; border: 2px solid #C0392B; border-radius: 12px; padding: 16px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+  .addition-alert .info { }
+  .addition-alert .table-lbl { color: #C0392B; font-weight: bold; font-size: 16px; }
+  .addition-alert .montant { color: #D4AF37; font-size: 22px; font-weight: bold; }
+  .btn-encaisse { padding: 10px 20px; background: #C0392B; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; }
+
+  /* EMPTY STATE */
+  .empty { text-align: center; padding: 60px 20px; color: #444; }
+  .empty .emoji { font-size: 48px; margin-bottom: 16px; }
+
+  /* CA TEMPS REEL */
+  .ca-box { background: #1E1E1E; border: 2px solid #D4AF37; border-radius: 14px; padding: 20px; margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; text-align: center; }
+  .ca-item .num { font-size: 28px; font-weight: bold; color: #D4AF37; }
+  .ca-item .lbl { font-size: 11px; color: #888; margin-top: 4px; }
+
+  .version { text-align: center; padding: 10px; color: #333; font-size: 10px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🐚 CAISSE — Moule & Smile</h1>
+  <div class="stats">
+    <div class="stat"><div class="num" id="statNouvelles">0</div><div class="lbl">Nouvelles</div></div>
+    <div class="stat"><div class="num" id="statEnCours">0</div><div class="lbl">En cours</div></div>
+    <div class="stat"><div class="num" id="statAdditions">0</div><div class="lbl">Additions</div></div>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('commandes', this)">📋 Commandes</div>
+  <div class="tab" onclick="switchTab('additions', this)">🧾 Additions</div>
+  <div class="tab" onclick="switchTab('ca', this)">💰 CA du jour</div>
+</div>
+
+<div class="content">
+
+  <!-- TAB COMMANDES -->
+  <div id="tabCommandes">
+    <div id="commandesGrid" class="commandes-grid">
+      <div class="empty"><div class="emoji">🐚</div><p>En attente de commandes...</p></div>
+    </div>
+  </div>
+
+  <!-- TAB ADDITIONS -->
+  <div id="tabAdditions" style="display:none">
+    <div id="additionsList">
+      <div class="empty"><div class="emoji">🧾</div><p>Aucune addition demandée</p></div>
+    </div>
+  </div>
+
+  <!-- TAB CA -->
+  <div id="tabCA" style="display:none">
+    <div class="ca-box">
+      <div class="ca-item"><div class="num" id="caTotal">0 €</div><div class="lbl">CA Total</div></div>
+      <div class="ca-item"><div class="num" id="nbCouverts">0</div><div class="lbl">Couverts</div></div>
+      <div class="ca-item"><div class="num" id="ticketMoyen">0 €</div><div class="lbl">Ticket moyen</div></div>
+    </div>
+    <div id="caParSauce"></div>
+    <div id="caParPalier"></div>
+  </div>
+
+</div>
+
+<div class="version">v.12/08/2026 14:00 — Moule & Smile Caisse</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDUb3LtVsMAq986DgtHwkMBeQFr8A8A2nU",
+  authDomain: "commandemoulesmile.firebaseapp.com",
+  projectId: "commandemoulesmile",
+  storageBucket: "commandemoulesmile.firebasestorage.app",
+  messagingSenderId: "303564394584",
+  appId: "1:303564394584:web:cbde6960f99cac83517a2d"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+let allCommandes = {};
+let allAdditions = {};
+let activeTab = 'commandes';
+
+// Son de notification
+function playBeep() {
+  try {
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    osc.connect(ctx.destination);
+    osc.frequency.value = 880;
+    osc.start();
+    setTimeout(() => osc.stop(), 200);
+  } catch(e) {}
+}
+
+// ============================================================
+// ÉCOUTE COMMANDES EN TEMPS RÉEL
+// ============================================================
+db.collection('commandes').orderBy('timestamp', 'desc').onSnapshot(snapshot => {
+  snapshot.docChanges().forEach(change => {
+    if (change.type === 'added' && allCommandes[change.doc.id] === undefined) {
+      playBeep();
+    }
+    allCommandes[change.doc.id] = { id: change.doc.id, ...change.doc.data() };
+    if (change.type === 'removed') delete allCommandes[change.doc.id];
+  });
+  renderCommandes();
+  updateStats();
+  updateCA();
+});
+
+// ============================================================
+// ÉCOUTE ADDITIONS EN TEMPS RÉEL
+// ============================================================
+db.collection('additions').onSnapshot(snapshot => {
+  snapshot.docChanges().forEach(change => {
+    if (change.type === 'added' && allAdditions[change.doc.id] === undefined) {
+      playBeep(); playBeep();
+    }
+    allAdditions[change.doc.id] = { id: change.doc.id, ...change.doc.data() };
+    if (change.type === 'removed') delete allAdditions[change.doc.id];
+  });
+  renderAdditions();
+  updateStats();
+});
+
+// ============================================================
+// RENDER COMMANDES
+// ============================================================
+function renderCommandes() {
+  const grid = document.getElementById('commandesGrid');
+  const cmds = Object.values(allCommandes).filter(c => c.statut !== 'regle');
+
+  if (!cmds.length) {
+    grid.innerHTML = '<div class="empty"><div class="emoji">🐚</div><p>En attente de commandes...</p></div>';
+    return;
+  }
+
+  // Trier par table puis par timestamp
+  cmds.sort((a, b) => (a.table || 0) - (b.table || 0));
+
+  grid.innerHTML = cmds.map(cmd => `
+    <div class="cmd-card ${cmd.statut || 'nouvelle'}" id="card_${cmd.id}">
+      <div class="cmd-table">Table ${cmd.table}</div>
+      <div class="cmd-heure">${cmd.heure || ''}</div>
+      <div class="cmd-detail">
+        <div class="row"><span class="emoji">🐚</span><span class="bold">${cmd.palier}</span></div>
+        <div class="row"><span class="emoji">🥘</span><span>Sauce : <strong>${cmd.sauce}</strong></span></div>
+        ${cmd.boisson ? `<div class="row"><span class="emoji">🍺</span><span>Boisson : <strong>${cmd.boisson}</strong></span></div>` : ''}
+        ${cmd.dessert ? '<span class="badge-dessert">🍮 TICKET DESSERT À DONNER</span>' : ''}
+      </div>
+      <div class="cmd-prix">${(cmd.palierPrix || 0).toFixed(2).replace('.', ',')} €</div>
+      <div class="cmd-actions">
+        <button class="btn-vue" onclick="marquerVue('${cmd.id}')">✓ Vu</button>
+        <button class="btn-regle ${cmd.statut === 'vue' ? 'actif' : ''}" onclick="marquerRegle('${cmd.id}')">💰 Réglé</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// RENDER ADDITIONS
+// ============================================================
+function renderAdditions() {
+  const container = document.getElementById('additionsList');
+  const adds = Object.values(allAdditions).filter(a => a.statut === 'demandee');
+
+  if (!adds.length) {
+    container.innerHTML = '<div class="empty"><div class="emoji">🧾</div><p>Aucune addition demandée</p></div>';
+    return;
+  }
+
+  container.innerHTML = adds.map(add => `
+    <div class="addition-alert">
+      <div class="info">
+        <div class="table-lbl">🔔 Table ${add.table} demande l'addition</div>
+        <div class="montant">${(add.total || 0).toFixed(2).replace('.', ',')} €</div>
+      </div>
+      <button class="btn-encaisse" onclick="encaisserTable('${add.id}', ${add.table})">💰 Encaissé</button>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// ACTIONS
+// ============================================================
+async function marquerVue(id) {
+  await db.collection('commandes').doc(id).update({ statut: 'vue' });
+}
+
+async function marquerRegle(id) {
+  await db.collection('commandes').doc(id).update({ statut: 'regle' });
+}
+
+async function encaisserTable(addId, tableNum) {
+  await db.collection('additions').doc(addId).update({ statut: 'regle' });
+  // Marquer toutes les commandes de cette table comme réglées
+  const snapshot = await db.collection('commandes').where('table', '==', tableNum).get();
+  const batch = db.batch();
+  snapshot.forEach(doc => batch.update(doc.ref, { statut: 'regle' }));
+  await batch.commit();
+}
+
+// ============================================================
+// STATS + CA
+// ============================================================
+function updateStats() {
+  const cmds = Object.values(allCommandes);
+  document.getElementById('statNouvelles').textContent = cmds.filter(c => c.statut === 'nouvelle').length;
+  document.getElementById('statEnCours').textContent = cmds.filter(c => c.statut === 'vue').length;
+  document.getElementById('statAdditions').textContent = Object.values(allAdditions).filter(a => a.statut === 'demandee').length;
+}
+
+function updateCA() {
+  const cmds = Object.values(allCommandes);
+  const total = cmds.reduce((s, c) => s + (c.palierPrix || 0), 0);
+  const nb = cmds.length;
+  document.getElementById('caTotal').textContent = total.toFixed(2).replace('.', ',') + ' €';
+  document.getElementById('nbCouverts').textContent = nb;
+  document.getElementById('ticketMoyen').textContent = nb ? (total/nb).toFixed(2).replace('.', ',') + ' €' : '0 €';
+
+  // Stats par sauce
+  const sauces = {};
+  cmds.forEach(c => { if (c.sauce) sauces[c.sauce] = (sauces[c.sauce] || 0) + 1; });
+  const topSauces = Object.entries(sauces).sort((a,b) => b[1]-a[1]);
+  document.getElementById('caParSauce').innerHTML = `
+    <div style="background:#1E1E1E;border-radius:12px;padding:16px;margin-bottom:16px">
+      <div style="color:#D4AF37;font-weight:bold;margin-bottom:12px">🥘 Sauces populaires</div>
+      ${topSauces.map(([s,n]) => `
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #333;font-size:13px">
+          <span>${s}</span><span style="color:#D4AF37;font-weight:bold">${n} commandes</span>
+        </div>`).join('')}
+    </div>`;
+
+  // Stats par palier
+  const paliers = {};
+  cmds.forEach(c => { if (c.palier) paliers[c.palier] = (paliers[c.palier] || 0) + 1; });
+  document.getElementById('caParPalier').innerHTML = `
+    <div style="background:#1E1E1E;border-radius:12px;padding:16px">
+      <div style="color:#D4AF37;font-weight:bold;margin-bottom:12px">🐚 Répartition paliers</div>
+      ${Object.entries(paliers).map(([p,n]) => `
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #333;font-size:13px">
+          <span>${p}</span><span style="color:#D4AF37;font-weight:bold">${n} commandes</span>
+        </div>`).join('')}
+    </div>`;
+}
+
+// ============================================================
+// TABS
+// ============================================================
+function switchTab(tab, el) {
+  activeTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tabCommandes').style.display = tab === 'commandes' ? 'block' : 'none';
+  document.getElementById('tabAdditions').style.display = tab === 'additions' ? 'block' : 'none';
+  document.getElementById('tabCA').style.display = tab === 'ca' ? 'block' : 'none';
+}
+</script>
+</body>
+</html>

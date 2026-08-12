@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moule & Smile — Générateur QR Codes Tables</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #1A1A1A; color: #fff; padding: 20px; }
+
+  h1 { color: #D4AF37; text-align: center; margin-bottom: 8px; font-size: 20px; }
+  p { color: #888; text-align: center; font-size: 13px; margin-bottom: 20px; }
+
+  .controls { display: flex; gap: 12px; justify-content: center; margin-bottom: 24px; flex-wrap: wrap; }
+  .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 13px; }
+  .btn-or { background: #D4AF37; color: #1A1A1A; }
+  .btn-outline { background: transparent; border: 2px solid #D4AF37; color: #D4AF37; }
+
+  .input-url { background: #2A2A2A; border: 1px solid #D4AF37; border-radius: 8px; color: #fff; padding: 10px 14px; font-size: 13px; width: 100%; max-width: 500px; margin: 0 auto 20px; display: block; }
+
+  .qr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
+
+  .qr-card { background: #fff; border-radius: 12px; padding: 12px; text-align: center; }
+  .qr-card .table-num { color: #1A1A1A; font-size: 14px; font-weight: bold; margin-bottom: 8px; }
+  .qr-card canvas { display: block; margin: 0 auto; }
+  .qr-card .url { color: #888; font-size: 9px; margin-top: 6px; word-break: break-all; }
+
+  @media print {
+    body { background: white; }
+    .controls, h1, p, .input-url { display: none; }
+    .qr-grid { grid-template-columns: repeat(5, 1fr); gap: 8px; }
+    .qr-card { border: 1px solid #ccc; break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<h1>🐚 Générateur QR Codes — Moule & Smile</h1>
+<p>Un QR code par table — à imprimer et plastifier</p>
+
+<input type="text" class="input-url" id="baseUrl" value="https://VOTRE-USERNAME.github.io/moulessmile/index.html" placeholder="URL de votre app">
+
+<div class="controls">
+  <input type="number" id="nbTables" value="70" min="1" max="150" style="background:#2A2A2A;border:1px solid #D4AF37;border-radius:8px;color:#D4AF37;padding:10px;width:80px;text-align:center;font-weight:bold;">
+  <button class="btn btn-or" onclick="generer()">🔄 Générer</button>
+  <button class="btn btn-outline" onclick="window.print()">🖨️ Imprimer tout</button>
+</div>
+
+<div class="qr-grid" id="qrGrid"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+function generer() {
+  const baseUrl = document.getElementById('baseUrl').value.trim();
+  const nb = parseInt(document.getElementById('nbTables').value) || 70;
+  const grid = document.getElementById('qrGrid');
+  grid.innerHTML = '';
+
+  for (let i = 1; i <= nb; i++) {
+    const url = `${baseUrl}?table=${i}`;
+    const card = document.createElement('div');
+    card.className = 'qr-card';
+    card.innerHTML = `
+      <div class="table-num">🐚 Table ${i}</div>
+      <div id="qr_${i}"></div>
+      <div class="url">${url}</div>
+    `;
+    grid.appendChild(card);
+
+    new QRCode(document.getElementById(`qr_${i}`), {
+      text: url,
+      width: 120,
+      height: 120,
+      colorDark: "#1A1A1A",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.H
+    });
+  }
+}
+
+// Générer au chargement
+window.onload = generer;
+</script>
+</body>
+</html>
