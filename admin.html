@@ -5,87 +5,57 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Moule & Smile — Admin Carte</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, sans-serif; background: #1A1A1A; color: #fff; min-height: 100vh; }
-
-  .header { background: #111; padding: 14px 20px; border-bottom: 2px solid #D4AF37; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
-  .header h1 { color: #D4AF37; font-size: 16px; }
-  .header .save-btn { background: #D4AF37; color: #1A1A1A; border: none; padding: 8px 20px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; }
-
-  .content { padding: 16px; max-width: 600px; margin: 0 auto; }
-
-  .section { background: #222; border-radius: 14px; padding: 16px; margin-bottom: 20px; }
-  .section h2 { color: #D4AF37; font-size: 15px; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid #333; }
-
-  .item-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #2A2A2A; }
-  .item-row:last-child { border-bottom: none; }
-  .item-info { flex: 1; }
-  .item-nom { font-size: 14px; font-weight: bold; }
-  .item-detail { font-size: 12px; color: #888; margin-top: 2px; }
-
-  /* TOGGLE */
-  .toggle { position: relative; width: 52px; height: 28px; flex-shrink: 0; }
-  .toggle input { opacity: 0; width: 0; height: 0; }
-  .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #444; border-radius: 28px; transition: 0.3s; }
-  .toggle-slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background: white; border-radius: 50%; transition: 0.3s; }
-  .toggle input:checked + .toggle-slider { background: #D4AF37; }
-  .toggle input:checked + .toggle-slider:before { transform: translateX(24px); }
-
-  /* PRIX EDIT */
-  .prix-input { background: #333; border: 1px solid #D4AF37; border-radius: 6px; color: #D4AF37; font-weight: bold; font-size: 14px; padding: 4px 8px; width: 80px; text-align: center; margin-left: 10px; }
-
-  /* TOAST */
-  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #D4AF37; color: #1A1A1A; padding: 12px 24px; border-radius: 30px; font-weight: bold; font-size: 14px; z-index: 999; opacity: 0; transition: opacity 0.3s; }
-  .toast.show { opacity: 1; }
-
-  /* STATUS BAR */
-  .status-bar { background: #1A3A2A; border: 1px solid #1A7A50; border-radius: 10px; padding: 10px 16px; margin-bottom: 16px; font-size: 12px; color: #4ABA80; display: flex; align-items: center; gap: 8px; }
-  .dot { width: 8px; height: 8px; background: #4ABA80; border-radius: 50%; animation: blink 1.5s infinite; }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
-  .version { text-align: center; padding: 16px; color: #333; font-size: 10px; }
-
-  .btn-danger { background: #C0392B; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; cursor: pointer; margin-left: 8px; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh}
+.header{background:#111;padding:12px 20px;border-bottom:2px solid #D4AF37;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+.header h1{color:#D4AF37;font-size:16px}
+.save-btn{background:#D4AF37;color:#1A1A1A;border:none;padding:8px 18px;border-radius:8px;font-weight:bold;font-size:13px;cursor:pointer}
+.content{padding:16px;max-width:600px;margin:0 auto}
+.cat-tabs{display:flex;overflow-x:auto;gap:8px;padding:0 0 12px;scrollbar-width:none;margin-bottom:16px}
+.cat-tabs::-webkit-scrollbar{display:none}
+.cat-tab{flex-shrink:0;padding:8px 14px;background:#2A2A2A;border:2px solid #333;border-radius:20px;font-size:12px;font-weight:bold;cursor:pointer;color:#aaa;white-space:nowrap}
+.cat-tab.active{background:#D4AF37;color:#1A1A1A;border-color:#D4AF37}
+.section{background:#222;border-radius:14px;padding:16px;margin-bottom:16px}
+.section h2{color:#D4AF37;font-size:14px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #333}
+.item-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #2A2A2A}
+.item-row:last-child{border-bottom:none}
+.item-info{flex:1}
+.item-nom{font-size:13px;font-weight:bold}
+.item-detail{font-size:11px;color:#888;margin-top:2px}
+.toggle{position:relative;width:50px;height:26px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#444;border-radius:26px;transition:.3s}
+.toggle-slider:before{position:absolute;content:"";height:18px;width:18px;left:4px;bottom:4px;background:white;border-radius:50%;transition:.3s}
+.toggle input:checked+.toggle-slider{background:#D4AF37}
+.toggle input:checked+.toggle-slider:before{transform:translateX(24px)}
+.prix-input{background:#333;border:1px solid #D4AF37;border-radius:6px;color:#D4AF37;font-weight:bold;font-size:13px;padding:4px 8px;width:75px;text-align:center;margin-left:8px}
+.status-bar{background:#1A3A2A;border:1px solid #1A7A50;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#4ABA80;display:flex;align-items:center;gap:8px}
+.dot{width:8px;height:8px;background:#4ABA80;border-radius:50%;animation:blink 1.5s infinite;flex-shrink:0}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#D4AF37;color:#1A1A1A;padding:10px 22px;border-radius:30px;font-weight:bold;font-size:13px;z-index:999;opacity:0;transition:opacity .3s}
+.toast.show{opacity:1}
+.actions{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+.btn-vert{background:#1A7A50;color:white;border:none;padding:12px;border-radius:10px;font-weight:bold;cursor:pointer;font-size:13px}
+.btn-rouge{background:#C0392B;color:white;border:none;padding:12px;border-radius:10px;font-weight:bold;cursor:pointer;font-size:13px}
+.version{text-align:center;padding:16px;color:#333;font-size:10px}
 </style>
 </head>
 <body>
 
 <div class="header">
-  <h1>⚙️ Admin — Carte en temps réel</h1>
+  <h1>⚙️ Admin — Moule & Smile</h1>
   <button class="save-btn" onclick="sauvegarder()">💾 Publier</button>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <div class="content">
-  <div class="status-bar"><div class="dot"></div> Connecté — modifications publiées instantanément</div>
-
-  <!-- PALIERS -->
-  <div class="section">
-    <h2>🐚 Formules / Paliers</h2>
-    <div id="paliersList"></div>
-  </div>
-
-  <!-- SAUCES -->
-  <div class="section">
-    <h2>🥘 Sauces maison</h2>
-    <p style="font-size:12px;color:#888;margin-bottom:12px">Désactiver une sauce en cas de rupture — elle disparaît instantanément de la carte client</p>
-    <div id="saucesList"></div>
-  </div>
-
-  <!-- BOISSONS -->
-  <div class="section">
-    <h2>🍺 Boissons incluses</h2>
-    <div id="boissonsList"></div>
-  </div>
-
-  <!-- ACTIONS RAPIDES -->
-  <div class="section">
-    <h2>⚡ Actions rapides</h2>
-    <div style="display:flex;flex-direction:column;gap:10px">
-      <button class="save-btn" style="background:#1A7A50" onclick="toutActiver()">✅ Tout activer</button>
-      <button class="save-btn" style="background:#C0392B" onclick="resetJour()">🗑️ Réinitialiser commandes du jour</button>
-    </div>
+  <div class="status-bar"><div class="dot"></div>Modifications publiées instantanément sur tous les téléphones clients</div>
+  <div class="cat-tabs" id="catTabs"></div>
+  <div id="catContent"></div>
+  <div class="actions">
+    <button class="btn-vert" onclick="toutActiver()">✅ Tout activer (début de service)</button>
+    <button class="btn-rouge" onclick="resetJour()">🗑️ Réinitialiser commandes du jour</button>
   </div>
 </div>
 
@@ -105,122 +75,100 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-let carte = {
-  paliers: [
-    { id: 'p1', nom: 'Palier 1', desc: 'Moules-frites à volonté', emoji: '🐚', prix: 21.90, actif: true },
-    { id: 'p2', nom: 'Palier 2', desc: 'Moules-frites + boisson incluse', emoji: '🐚🍺', prix: 24.90, actif: true },
-    { id: 'p3', nom: 'Palier 3', desc: 'Moules-frites + boisson + dessert', emoji: '🐚🍺🍮', prix: 28.90, actif: true },
-  ],
-  sauces: [
-    { id: 's1', nom: 'Marinière', desc: 'Vin blanc, échalotes, persil', emoji: '🌿', actif: true },
-    { id: 's2', nom: 'Roquefort', desc: 'Roquefort, noix, cognac', emoji: '🧀', actif: true },
-    { id: 's3', nom: 'Curry', desc: 'Curry, lait de coco, citron vert', emoji: '🌶️', actif: true },
-    { id: 's4', nom: 'Crème-échalote', desc: 'Crème fraîche, échalotes confites', emoji: '🥛', actif: true },
-    { id: 's5', nom: 'Tomate-chorizo', desc: 'Tomates, chorizo, piment doux', emoji: '🍅', actif: true },
-    { id: 's6', nom: 'Provençale', desc: 'Tomates, herbes, ail, olives', emoji: '🌞', actif: true },
-  ],
-  boissons: [
-    { id: 'b1', nom: 'Coca-Cola', detail: '33cl', emoji: '🥤', actif: true },
-    { id: 'b2', nom: 'Orangina', detail: '33cl', emoji: '🍊', actif: true },
-    { id: 'b3', nom: 'Eau plate', detail: '50cl', emoji: '💧', actif: true },
-    { id: 'b4', nom: 'Eau gazeuse', detail: '50cl', emoji: '💧', actif: true },
-    { id: 'b5', nom: 'Bière pression', detail: '25cl', emoji: '🍺', actif: true },
-    { id: 'b6', nom: 'Jus de fruits', detail: '25cl', emoji: '🍹', actif: true },
-    { id: 'b7', nom: 'Vin rosé', detail: 'Pichet 25cl', emoji: '🍷', actif: true },
-    { id: 'b8', nom: 'Vin blanc', detail: 'Pichet 25cl', emoji: '🥂', actif: true },
-  ]
-};
+let carte = null;
+let catActive = null;
 
-// Charger la carte depuis Firebase
-db.collection('config').doc('carte').onSnapshot(doc => {
-  if (doc.exists) {
-    const data = doc.data();
-    if (data.paliers) carte.paliers = data.paliers;
-    if (data.sauces) carte.sauces = data.sauces;
-    if (data.boissons) carte.boissons = data.boissons;
+db.collection('config').doc('carte_v2').onSnapshot(doc => {
+  if (doc.exists && doc.data().categories) {
+    carte = doc.data();
+    if (!catActive && carte.categories.length) catActive = carte.categories[0].id;
+    render();
   }
-  render();
 });
 
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
+  setTimeout(()=>t.classList.remove('show'), 2500);
 }
 
-// ============================================================
-// RENDER
-// ============================================================
 function render() {
-  renderSection('paliersList', carte.paliers, true);
-  renderSection('saucesList', carte.sauces, false);
-  renderSection('boissonsList', carte.boissons, false);
+  if (!carte) return;
+  // Tabs
+  document.getElementById('catTabs').innerHTML = carte.categories.map(c =>
+    `<div class="cat-tab ${c.id===catActive?'active':''}" onclick="selectCat('${c.id}')">${c.nom}</div>`
+  ).join('');
+  // Content
+  const cat = carte.categories.find(c => c.id === catActive);
+  if (!cat) return;
+  document.getElementById('catContent').innerHTML = `
+    <div class="section">
+      <h2>${cat.nom}</h2>
+      ${(cat.produits||[]).map((p, idx) => `
+        <div class="item-row">
+          <div class="item-info">
+            <div class="item-nom">${p.emoji||''} ${p.nom}</div>
+            <div class="item-detail">${p.desc||''}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            ${p.prix > 0 ? `<input type="number" class="prix-input" value="${p.prix}" step="0.10" onchange="updatePrix('${catActive}',${idx},this.value)"> €` : '<span style="color:#1A7A50;font-size:11px;font-weight:bold">Inclus</span>'}
+            <label class="toggle" style="margin-left:8px">
+              <input type="checkbox" ${p.actif?'checked':''} onchange="toggleItem('${catActive}',${idx},this.checked)">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      `).join('')}
+    </div>`;
 }
 
-function renderSection(containerId, items, showPrix) {
-  const container = document.getElementById(containerId);
-  container.innerHTML = items.map((item, idx) => `
-    <div class="item-row">
-      <div class="item-info">
-        <div class="item-nom">${item.emoji} ${item.nom}</div>
-        <div class="item-detail">${item.desc || item.detail || ''}</div>
-      </div>
-      ${showPrix ? `<input type="number" class="prix-input" value="${item.prix}" step="0.10" onchange="updatePrix('${containerId}', ${idx}, this.value)" /> €` : ''}
-      <label class="toggle" style="margin-left:12px">
-        <input type="checkbox" ${item.actif ? 'checked' : ''} onchange="toggleItem('${containerId}', ${idx}, this.checked)">
-        <span class="toggle-slider"></span>
-      </label>
-    </div>
-  `).join('');
+function selectCat(id) {
+  catActive = id;
+  render();
 }
 
-function getList(containerId) {
-  if (containerId === 'paliersList') return carte.paliers;
-  if (containerId === 'saucesList') return carte.sauces;
-  if (containerId === 'boissonsList') return carte.boissons;
-}
-
-function toggleItem(containerId, idx, val) {
-  getList(containerId)[idx].actif = val;
-  const item = getList(containerId)[idx];
-  const status = val ? '✅ activé' : '❌ désactivé';
-  showToast(`${item.nom} ${status}`);
+function toggleItem(catId, idx, val) {
+  const cat = carte.categories.find(c => c.id === catId);
+  if (!cat) return;
+  cat.produits[idx].actif = val;
+  const nom = cat.produits[idx].nom;
+  showToast(`${nom} ${val?'✅ activé':'❌ désactivé'}`);
   sauvegarder();
 }
 
-function updatePrix(containerId, idx, val) {
-  getList(containerId)[idx].prix = parseFloat(val);
+function updatePrix(catId, idx, val) {
+  const cat = carte.categories.find(c => c.id === catId);
+  if (!cat) return;
+  cat.produits[idx].prix = parseFloat(val) || 0;
   sauvegarder();
 }
 
 async function sauvegarder() {
   try {
-    await db.collection('config').doc('carte').set(carte);
-    showToast('✅ Carte publiée instantanément !');
+    await db.collection('config').doc('carte_v2').set(carte);
+    showToast('✅ Carte publiée !');
   } catch(e) {
     showToast('❌ Erreur de connexion');
   }
 }
 
 function toutActiver() {
-  carte.sauces.forEach(s => s.actif = true);
-  carte.boissons.forEach(b => b.actif = true);
-  carte.paliers.forEach(p => p.actif = true);
+  carte.categories.forEach(c => (c.produits||[]).forEach(p => p.actif = true));
   sauvegarder();
   render();
-  showToast('✅ Tout activé !');
+  showToast('✅ Tous les produits activés !');
 }
 
 async function resetJour() {
-  if (!confirm('Réinitialiser toutes les commandes du jour ? Cette action est irréversible.')) return;
+  if (!confirm('Supprimer toutes les commandes du jour ? Action irréversible.')) return;
   const snap = await db.collection('commandes').get();
   const batch = db.batch();
-  snap.forEach(doc => batch.delete(doc.ref));
+  snap.forEach(d => batch.delete(d.ref));
   const snap2 = await db.collection('additions').get();
-  snap2.forEach(doc => batch.delete(doc.ref));
+  snap2.forEach(d => batch.delete(d.ref));
   await batch.commit();
-  showToast('🗑️ Commandes réinitialisées');
+  showToast('🗑️ Commandes supprimées');
 }
 </script>
 </body>

@@ -6,233 +6,159 @@
 <meta name="theme-color" content="#1A1A1A">
 <title>Moule & Smile — Commander</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, sans-serif; background: #1A1A1A; color: #fff; min-height: 100vh; }
-
-  /* HEADER */
-  .header { background: #1A1A1A; padding: 16px; text-align: center; border-bottom: 2px solid #D4AF37; position: sticky; top: 0; z-index: 100; }
-  .header h1 { color: #D4AF37; font-size: 22px; letter-spacing: 2px; }
-  .header .table-badge { background: #D4AF37; color: #1A1A1A; font-size: 12px; font-weight: bold; padding: 3px 12px; border-radius: 20px; display: inline-block; margin-top: 4px; }
-
-  /* ÉCRANS */
-  .screen { display: none; padding: 20px; max-width: 480px; margin: 0 auto; }
-  .screen.active { display: block; }
-
-  /* SCREEN TABLE */
-  .table-screen { text-align: center; padding-top: 60px; }
-  .table-screen .logo { font-size: 48px; margin-bottom: 20px; }
-  .table-screen h2 { color: #D4AF37; font-size: 24px; margin-bottom: 8px; }
-  .table-screen p { color: #aaa; font-size: 14px; margin-bottom: 40px; }
-  .table-input { width: 100%; padding: 20px; font-size: 32px; text-align: center; background: #2A2A2A; border: 2px solid #D4AF37; border-radius: 12px; color: #D4AF37; font-weight: bold; margin-bottom: 20px; }
-  .table-input::placeholder { color: #555; font-size: 16px; }
-
-  /* BOUTONS */
-  .btn { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; margin-bottom: 12px; transition: all 0.2s; }
-  .btn-or { background: #D4AF37; color: #1A1A1A; }
-  .btn-or:hover { background: #C49A2F; }
-  .btn-outline { background: transparent; border: 2px solid #D4AF37; color: #D4AF37; }
-  .btn-rouge { background: #C0392B; color: white; }
-  .btn-vert { background: #1A7A50; color: white; }
-  .btn-gris { background: #333; color: #aaa; }
-
-  /* PALIERS */
-  .palier-card { background: #2A2A2A; border: 2px solid #333; border-radius: 16px; padding: 20px; margin-bottom: 16px; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
-  .palier-card:hover, .palier-card.selected { border-color: #D4AF37; background: #2E2A1A; }
-  .palier-card .emoji { font-size: 36px; margin-bottom: 10px; }
-  .palier-card h3 { color: #D4AF37; font-size: 18px; margin-bottom: 6px; }
-  .palier-card p { color: #aaa; font-size: 13px; line-height: 1.4; margin-bottom: 10px; }
-  .palier-card .prix { font-size: 28px; font-weight: bold; color: #D4AF37; }
-  .palier-card .badge-promo { position: absolute; top: 12px; right: 12px; background: #D4AF37; color: #1A1A1A; font-size: 10px; font-weight: bold; padding: 3px 8px; border-radius: 20px; }
-
-  /* SAUCES */
-  .sauces-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-  .sauce-card { background: #2A2A2A; border: 2px solid #333; border-radius: 12px; padding: 16px; cursor: pointer; text-align: center; transition: all 0.2s; }
-  .sauce-card:hover, .sauce-card.selected { border-color: #D4AF37; background: #2E2A1A; }
-  .sauce-card.disabled { opacity: 0.3; pointer-events: none; }
-  .sauce-card .emoji { font-size: 28px; margin-bottom: 6px; }
-  .sauce-card h4 { color: #D4AF37; font-size: 13px; font-weight: bold; margin-bottom: 4px; }
-  .sauce-card p { color: #888; font-size: 11px; line-height: 1.3; }
-  .sauce-card.selected .checkmark { display: block; }
-  .checkmark { display: none; color: #D4AF37; font-size: 18px; margin-top: 6px; }
-
-  /* BOISSONS */
-  .boisson-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-  .boisson-item { background: #2A2A2A; border: 2px solid #333; border-radius: 10px; padding: 14px 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; }
-  .boisson-item:hover, .boisson-item.selected { border-color: #D4AF37; background: #2E2A1A; }
-  .boisson-item.disabled { opacity: 0.3; pointer-events: none; }
-  .boisson-item .nom { font-size: 14px; font-weight: bold; color: #fff; }
-  .boisson-item .detail { font-size: 11px; color: #888; }
-  .boisson-item .prix-boisson { color: #D4AF37; font-weight: bold; font-size: 14px; }
-
-  /* RÉCAP */
-  .recap-card { background: #2A2A2A; border: 2px solid #D4AF37; border-radius: 16px; padding: 20px; margin-bottom: 20px; }
-  .recap-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #333; }
-  .recap-row:last-child { border-bottom: none; font-weight: bold; font-size: 18px; color: #D4AF37; }
-  .recap-row .label { color: #aaa; font-size: 14px; }
-  .recap-row .value { color: #fff; font-size: 14px; font-weight: bold; }
-
-  /* CONFIRMATION */
-  .confirm-screen { text-align: center; padding-top: 40px; }
-  .confirm-screen .big-emoji { font-size: 72px; margin-bottom: 20px; }
-  .confirm-screen h2 { color: #D4AF37; font-size: 26px; margin-bottom: 12px; }
-  .confirm-screen p { color: #aaa; font-size: 14px; line-height: 1.6; margin-bottom: 30px; }
-  .steps-list { background: #2A2A2A; border-radius: 12px; padding: 16px; text-align: left; margin-bottom: 30px; }
-  .step-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #333; }
-  .step-item:last-child { border-bottom: none; }
-  .step-num { background: #D4AF37; color: #1A1A1A; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px; flex-shrink: 0; }
-  .step-text { color: #ddd; font-size: 13px; }
-
-  /* TITRE SECTION */
-  .section-title { color: #D4AF37; font-size: 18px; font-weight: bold; margin-bottom: 6px; }
-  .section-sub { color: #888; font-size: 13px; margin-bottom: 20px; }
-
-  /* ADDITION SCREEN */
-  .addition-screen { text-align: center; }
-  .total-box { background: #D4AF37; border-radius: 16px; padding: 30px; margin: 20px 0; }
-  .total-box .total-label { color: #1A1A1A; font-size: 14px; font-weight: bold; margin-bottom: 8px; }
-  .total-box .total-amount { color: #1A1A1A; font-size: 48px; font-weight: bold; }
-  .commandes-list { background: #2A2A2A; border-radius: 12px; padding: 16px; text-align: left; margin-bottom: 20px; }
-  .cmd-item { padding: 8px 0; border-bottom: 1px solid #333; font-size: 13px; color: #ddd; display: flex; justify-content: space-between; }
-  .cmd-item:last-child { border-bottom: none; }
-
-  /* LOADER */
-  .loader { display: none; text-align: center; padding: 40px; }
-  .spinner { width: 40px; height: 40px; border: 4px solid #333; border-top: 4px solid #D4AF37; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* TOAST */
-  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #D4AF37; color: #1A1A1A; padding: 12px 24px; border-radius: 30px; font-weight: bold; font-size: 14px; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
-  .toast.show { opacity: 1; }
-
-  /* BANNIÈRE INFOS */
-  .info-banner { background: #1A3A2A; border: 1px solid #1A7A50; border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px; color: #4ABA80; }
-
-  /* FOOTER */
-  .footer { text-align: center; padding: 20px; color: #444; font-size: 11px; }
-
-  /* VERSION */
-  .version { position: fixed; bottom: 4px; right: 8px; font-size: 9px; color: #333; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh;padding-bottom:80px}
+.header{background:#111;padding:12px 16px;text-align:center;border-bottom:2px solid #D4AF37;position:sticky;top:0;z-index:100}
+.header h1{color:#D4AF37;font-size:20px;letter-spacing:2px}
+.table-badge{background:#D4AF37;color:#1A1A1A;font-size:11px;font-weight:bold;padding:2px 10px;border-radius:20px;display:inline-block;margin-top:3px}
+.screen{display:none;padding:16px;max-width:480px;margin:0 auto}
+.screen.active{display:block}
+.table-screen{text-align:center;padding-top:50px}
+.table-screen .logo{font-size:56px;margin-bottom:16px}
+.table-screen h2{color:#D4AF37;font-size:22px;margin-bottom:6px}
+.table-screen p{color:#aaa;font-size:13px;margin-bottom:30px}
+.table-input{width:100%;padding:18px;font-size:36px;text-align:center;background:#2A2A2A;border:2px solid #D4AF37;border-radius:12px;color:#D4AF37;font-weight:bold;margin-bottom:16px}
+.cat-tabs{display:flex;overflow-x:auto;gap:8px;padding:0 0 12px;margin-bottom:4px;scrollbar-width:none}
+.cat-tabs::-webkit-scrollbar{display:none}
+.cat-tab{flex-shrink:0;padding:8px 14px;background:#2A2A2A;border:2px solid #333;border-radius:20px;font-size:12px;font-weight:bold;cursor:pointer;color:#aaa;white-space:nowrap;transition:all .2s}
+.cat-tab.active{background:#D4AF37;color:#1A1A1A;border-color:#D4AF37}
+.product-list{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
+.product-card{background:#2A2A2A;border:2px solid #333;border-radius:12px;padding:14px;display:flex;justify-content:space-between;align-items:center;transition:all .2s}
+.product-card.disabled{opacity:.3;pointer-events:none}
+.product-card .info{flex:1}
+.product-card .nom{font-size:14px;font-weight:bold;color:#fff;margin-bottom:3px}
+.product-card .desc{font-size:11px;color:#888;line-height:1.3}
+.product-card .prix{color:#D4AF37;font-size:16px;font-weight:bold;text-align:right;margin-left:12px;white-space:nowrap}
+.gratuit{color:#1A7A50;font-size:13px;font-weight:bold}
+.add-btn{background:#D4AF37;border:none;border-radius:8px;color:#1A1A1A;font-size:22px;font-weight:bold;width:38px;height:38px;cursor:pointer;flex-shrink:0;margin-left:10px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.add-btn:active{background:#C49A2F;transform:scale(.95)}
+.panier-bar{position:fixed;bottom:0;left:0;right:0;background:#D4AF37;padding:12px 20px;display:none;justify-content:space-between;align-items:center;z-index:200;cursor:pointer}
+.panier-bar.visible{display:flex}
+.panier-info .panier-nb{font-size:12px;font-weight:bold;color:#1A1A1A}
+.panier-info .panier-total{font-size:20px;font-weight:bold;color:#1A1A1A}
+.panier-btn{background:#1A1A1A;color:#D4AF37;border:none;padding:10px 18px;border-radius:8px;font-weight:bold;font-size:13px;cursor:pointer}
+.panier-item{background:#2A2A2A;border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.panier-item .pnom{font-size:13px;font-weight:bold}
+.panier-item .pdesc{font-size:11px;color:#888}
+.panier-item .pprix{color:#D4AF37;font-weight:bold;font-size:14px}
+.del-btn{background:#C0392B;border:none;border-radius:6px;color:white;padding:4px 10px;cursor:pointer;font-size:12px;margin-left:8px}
+.panier-total-row{display:flex;justify-content:space-between;padding:14px;background:#2A2A2A;border-radius:10px;margin-top:8px;border:2px solid #D4AF37}
+.confirm-screen{text-align:center;padding-top:30px}
+.big-emoji{font-size:64px;margin-bottom:16px}
+.steps-list{background:#2A2A2A;border-radius:12px;padding:14px;text-align:left;margin:16px 0}
+.step-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #333}
+.step-item:last-child{border-bottom:none}
+.step-num{background:#D4AF37;color:#1A1A1A;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:12px;flex-shrink:0}
+.step-text{color:#ddd;font-size:13px}
+.total-box{background:#D4AF37;border-radius:14px;padding:24px;margin:16px 0;text-align:center}
+.total-box .tlbl{color:#1A1A1A;font-size:13px;font-weight:bold;margin-bottom:6px}
+.total-box .tamt{color:#1A1A1A;font-size:44px;font-weight:bold}
+.cmd-item{padding:7px 0;border-bottom:1px solid #333;font-size:13px;color:#ddd;display:flex;justify-content:space-between}
+.cmd-item:last-child{border-bottom:none}
+.btn{width:100%;padding:15px;border:none;border-radius:12px;font-size:15px;font-weight:bold;cursor:pointer;margin-bottom:10px}
+.btn-or{background:#D4AF37;color:#1A1A1A}
+.btn-outline{background:transparent;border:2px solid #D4AF37;color:#D4AF37}
+.btn-rouge{background:#C0392B;color:white}
+.btn-gris{background:#333;color:#aaa}
+.info-banner{background:#1A3A2A;border:1px solid #1A7A50;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#4ABA80}
+.sec-title{color:#D4AF37;font-size:16px;font-weight:bold;margin-bottom:4px}
+.sec-sub{color:#888;font-size:12px;margin-bottom:14px}
+.loader{display:none;text-align:center;padding:50px}
+.spinner{width:40px;height:40px;border:4px solid #333;border-top:4px solid #D4AF37;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#D4AF37;color:#1A1A1A;padding:10px 22px;border-radius:30px;font-weight:bold;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+.version{text-align:center;padding:16px;color:#333;font-size:10px}
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <div class="header">
   <h1>🐚 MOULE & SMILE</h1>
   <div id="tableBadge" style="display:none" class="table-badge">Table <span id="tableNumHeader"></span></div>
 </div>
-
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<!-- ===== SCREEN 1 : NUMÉRO DE TABLE ===== -->
+<div class="panier-bar" id="panierBar" onclick="showScreen('screenPanier')">
+  <div class="panier-info">
+    <div class="panier-nb" id="panierNb">0 article</div>
+    <div class="panier-total" id="panierTotalBar">0,00 €</div>
+  </div>
+  <button class="panier-btn">🛒 Mon panier →</button>
+</div>
+
+<!-- TABLE -->
 <div class="screen active" id="screenTable">
   <div class="table-screen">
     <div class="logo">🐚</div>
     <h2>Bienvenue !</h2>
-    <p>Saisissez votre numéro de table<br>pour commencer à commander</p>
-    <input type="number" class="table-input" id="tableInput" placeholder="N° de table" min="1" max="100">
+    <p>Saisissez votre numéro de table pour commencer</p>
+    <input type="number" class="table-input" id="tableInput" placeholder="N° de table" min="1" max="150">
     <button class="btn btn-or" onclick="validerTable()">Commencer →</button>
   </div>
 </div>
 
-<!-- ===== SCREEN 2 : CHOIX PALIER ===== -->
-<div class="screen" id="screenPalier">
-  <div class="section-title">Choisissez votre formule</div>
-  <div class="section-sub">Moules de Bouzigues AOP · Frites fraîches maison · À volonté</div>
-
-  <div id="paliersList"></div>
-
-  <div style="margin-top: 8px;">
-    <button class="btn btn-outline" onclick="showScreen('screenTable')">← Retour</button>
-  </div>
+<!-- CARTE -->
+<div class="screen" id="screenCarte">
+  <div class="sec-title">Notre carte</div>
+  <div class="sec-sub">Ajoutez vos produits au panier — commandez autant de fois que vous voulez</div>
+  <div class="cat-tabs" id="catTabs"></div>
+  <div class="product-list" id="productList"></div>
 </div>
 
-<!-- ===== SCREEN 3 : CHOIX SAUCE ===== -->
-<div class="screen" id="screenSauce">
-  <div class="section-title">Votre sauce</div>
-  <div class="section-sub">Choisissez parmi nos 6 sauces maison</div>
-  <div class="sauces-grid" id="saucesList"></div>
-  <button class="btn btn-outline" onclick="showScreen('screenPalier')">← Retour</button>
+<!-- PANIER -->
+<div class="screen" id="screenPanier">
+  <div class="sec-title">🛒 Mon panier</div>
+  <div class="sec-sub">Table <span id="panierTable"></span></div>
+  <div id="panierItems"></div>
+  <div class="info-banner">🚶 Après validation, un serveur apporte vos boissons et votre cocotte, puis direction le passage pour les moules !</div>
+  <button class="btn btn-or" id="btnCommander" onclick="validerCommande()">✅ Commander maintenant</button>
+  <button class="btn btn-outline" onclick="showScreen('screenCarte')">← Continuer à commander</button>
+  <button class="btn btn-rouge" onclick="demanderAddition()" style="margin-top:4px">🧾 Demander l'addition</button>
 </div>
 
-<!-- ===== SCREEN 4 : CHOIX BOISSON (si palier 2 ou 3) ===== -->
-<div class="screen" id="screenBoisson">
-  <div class="section-title">Votre boisson incluse</div>
-  <div class="section-sub">Choisissez votre boisson offerte avec la formule</div>
-  <div class="boisson-list" id="boissonsList"></div>
-  <button class="btn btn-outline" onclick="showScreen('screenSauce')">← Retour</button>
-</div>
-
-<!-- ===== SCREEN 5 : RÉCAPITULATIF ===== -->
-<div class="screen" id="screenRecap">
-  <div class="section-title">Votre commande</div>
-  <div class="section-sub">Vérifiez avant de valider</div>
-  <div class="recap-card" id="recapContent"></div>
-  <div class="info-banner">🚶 Après validation, un serveur apportera vos boissons et votre cocotte. Rendez-vous ensuite au <strong>passage self-service</strong> pour vous servir !</div>
-  <button class="btn btn-or" onclick="validerCommande()">✅ Commander maintenant</button>
-  <button class="btn btn-outline" onclick="retourDepuisRecap()">← Modifier</button>
-</div>
-
-<!-- ===== LOADER ===== -->
+<!-- LOADER -->
 <div class="loader" id="loader">
   <div class="spinner"></div>
-  <p style="color:#aaa">Envoi de la commande...</p>
+  <p style="color:#aaa">Envoi en cours...</p>
 </div>
 
-<!-- ===== SCREEN 6 : CONFIRMATION ===== -->
+<!-- CONFIRMATION -->
 <div class="screen" id="screenConfirm">
   <div class="confirm-screen">
     <div class="big-emoji">✅</div>
-    <h2>Commande envoyée !</h2>
-    <p>Table <strong id="confirmTable" style="color:#D4AF37"></strong> — votre commande est enregistrée.</p>
+    <h2 style="color:#D4AF37;font-size:22px;margin-bottom:8px">Commande envoyée !</h2>
+    <p style="color:#aaa;font-size:13px;margin-bottom:16px">Table <strong id="confirmTable" style="color:#D4AF37"></strong></p>
     <div class="steps-list">
-      <div class="step-item">
-        <div class="step-num">1</div>
-        <div class="step-text">Un serveur apporte vos <strong>boissons</strong> et votre <strong>cocotte</strong></div>
-      </div>
-      <div class="step-item">
-        <div class="step-num">2</div>
-        <div class="step-text">Allez au <strong>passage self-service</strong> — Moules → Sauce → Frites</div>
-      </div>
-      <div class="step-item">
-        <div class="step-num">3</div>
-        <div class="step-text">Revenez autant que vous voulez — c'est <strong>à volonté !</strong> 😄</div>
-      </div>
-      <div class="step-item">
-        <div class="step-num">4</div>
-        <div class="step-text">Quand vous avez terminé, cliquez sur <strong>"Demander l'addition"</strong></div>
-      </div>
+      <div class="step-item"><div class="step-num">1</div><div class="step-text">Un serveur apporte vos <strong>boissons</strong> et votre <strong>cocotte</strong></div></div>
+      <div class="step-item"><div class="step-num">2</div><div class="step-text">Allez au <strong>passage self-service</strong> : Moules → Sauce → Frites</div></div>
+      <div class="step-item"><div class="step-num">3</div><div class="step-text">C'est <strong>à volonté</strong> — revenez autant que vous voulez 😄</div></div>
+      <div class="step-item"><div class="step-num">4</div><div class="step-text">Recommandez boissons ou desserts depuis la carte à tout moment</div></div>
     </div>
-    <button class="btn btn-or" onclick="nouvelleRonde()">🐚 Reprendre des moules</button>
-    <button class="btn btn-rouge" onclick="demanderAddition()" style="margin-top:8px">🧾 Demander l'addition</button>
+    <button class="btn btn-or" onclick="commanderEncore()">🍺 Commander autre chose</button>
+    <button class="btn btn-rouge" onclick="demanderAddition()" style="margin-top:4px">🧾 Demander l'addition</button>
   </div>
 </div>
 
-<!-- ===== SCREEN 7 : ADDITION ===== -->
+<!-- ADDITION -->
 <div class="screen" id="screenAddition">
-  <div class="addition-screen">
-    <h2 class="section-title" style="text-align:center;margin-bottom:20px">🧾 Votre addition</h2>
+  <div style="text-align:center">
+    <h2 class="sec-title" style="text-align:center;margin-bottom:16px">🧾 Votre addition</h2>
     <div class="total-box">
-      <div class="total-label">TOTAL TABLE <span id="additionTable"></span></div>
-      <div class="total-amount" id="totalAmount">0,00 €</div>
+      <div class="tlbl">TOTAL TABLE <span id="additionTable"></span></div>
+      <div class="tamt" id="totalAmount">0,00 €</div>
     </div>
-    <div class="commandes-list" id="commandesList"></div>
-    <div class="info-banner">Un serveur arrive avec votre terminal de paiement 🙏</div>
-    <button class="btn btn-gris" onclick="showScreen('screenConfirm')" style="margin-top:8px">← Retour</button>
+    <div style="background:#2A2A2A;border-radius:12px;padding:14px;text-align:left;margin-bottom:16px" id="commandesList"></div>
+    <div class="info-banner">Un serveur arrive avec votre terminal de paiement 🙏<br>Merci de votre visite — à bientôt !</div>
+    <button class="btn btn-gris" onclick="showScreen('screenConfirm')">← Retour</button>
   </div>
 </div>
 
-<div class="footer">Moule & Smile · Saint-Pierre-la-Mer · Ouverture Mars 2027</div>
-<div class="version">v.12/08/2026 14:00</div>
+<div class="version">v.12/08/2026 14:00 — Moule & Smile</div>
 
-<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <script>
-// ============================================================
-// CONFIG FIREBASE
-// ============================================================
 const firebaseConfig = {
   apiKey: "AIzaSyDUb3LtVsMAq986DgtHwkMBeQFr8A8A2nU",
   authDomain: "commandemoulesmile.firebaseapp.com",
@@ -244,281 +170,264 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// ============================================================
-// STATE
-// ============================================================
 let tableNum = null;
-let selectedPalier = null;
-let selectedSauce = null;
-let selectedBoisson = null;
-let commandesTable = [];
+let panier = [];
+let catActive = null;
+let carte = null;
 
-// Lire numéro de table depuis URL ?table=X
 const urlParams = new URLSearchParams(window.location.search);
-if (urlParams.get('table')) {
-  document.getElementById('tableInput').value = urlParams.get('table');
-}
+if (urlParams.get('table')) document.getElementById('tableInput').value = urlParams.get('table');
 
-// ============================================================
-// CARTE (chargée depuis Firebase en temps réel)
-// ============================================================
-let carte = {
-  paliers: [
-    { id: 'p1', nom: 'Palier 1', desc: 'Moules-frites à volonté', emoji: '🐚', prix: 21.90, actif: true },
-    { id: 'p2', nom: 'Palier 2', desc: 'Moules-frites + boisson incluse', emoji: '🐚🍺', prix: 24.90, actif: true },
-    { id: 'p3', nom: 'Palier 3', desc: 'Moules-frites + boisson + dessert inclus', emoji: '🐚🍺🍮', prix: 28.90, actif: true, badge: '⭐ Complet' },
-  ],
-  sauces: [
-    { id: 's1', nom: 'Marinière', desc: 'Vin blanc, échalotes, persil', emoji: '🌿', actif: true },
-    { id: 's2', nom: 'Roquefort', desc: 'Roquefort, noix, cognac', emoji: '🧀', actif: true },
-    { id: 's3', nom: 'Curry', desc: 'Curry, lait de coco, citron vert', emoji: '🌶️', actif: true },
-    { id: 's4', nom: 'Crème-échalote', desc: 'Crème fraîche, échalotes confites', emoji: '🥛', actif: true },
-    { id: 's5', nom: 'Tomate-chorizo', desc: 'Tomates, chorizo, piment doux', emoji: '🍅', actif: true },
-    { id: 's6', nom: 'Provençale', desc: 'Tomates, herbes, ail, olives', emoji: '🌞', actif: true },
-  ],
-  boissons: [
-    { id: 'b1', nom: 'Coca-Cola', detail: '33cl', emoji: '🥤', actif: true },
-    { id: 'b2', nom: 'Orangina', detail: '33cl', emoji: '🍊', actif: true },
-    { id: 'b3', nom: 'Eau plate', detail: '50cl', emoji: '💧', actif: true },
-    { id: 'b4', nom: 'Eau gazeuse', detail: '50cl', emoji: '💧', actif: true },
-    { id: 'b5', nom: 'Bière pression', detail: '25cl', emoji: '🍺', actif: true },
-    { id: 'b6', nom: 'Jus de fruits', detail: '25cl', emoji: '🍹', actif: true },
-    { id: 'b7', nom: 'Vin rosé', detail: 'Pichet 25cl', emoji: '🍷', actif: true },
-    { id: 'b8', nom: 'Vin blanc', detail: 'Pichet 25cl', emoji: '🥂', actif: true },
-  ]
-};
+const carteDefaut = { categories: [
+  { id:"formules", nom:"🐚 Formules", produits:[
+    {id:"p1",nom:"Palier 1 — Moules seules",desc:"Moules Bouzigues AOP + frites fraîches à volonté",emoji:"🐚",prix:21.90,actif:true},
+    {id:"p2",nom:"Palier 2 — Moules + boisson",desc:"Moules + frites + 1 boisson incluse",emoji:"🐚",prix:24.90,actif:true},
+    {id:"p3",nom:"Palier 3 — Complet",desc:"Moules + frites + boisson + dessert inclus",emoji:"🐚",prix:28.90,actif:true},
+    {id:"ca1",nom:"Calamars à volonté",desc:"Calamars frits maison + frites",emoji:"🦑",prix:19.90,actif:true},
+    {id:"fc1",nom:"Fish & chips maison",desc:"Cabillaud pané + frites fraîches",emoji:"🐟",prix:14.90,actif:true},
+    {id:"en1",nom:"Enfant 0-7 ans",desc:"1 enfant gratuit par adulte payant",emoji:"👧",prix:0.00,actif:true},
+    {id:"en2",nom:"Enfant / Ado 8-17 ans",desc:"À volonté — tarif unique",emoji:"🧒",prix:15.90,actif:true},
+  ]},
+  { id:"sauces", nom:"🥘 Sauces", produits:[
+    {id:"s1",nom:"Marinière",desc:"Vin blanc, échalotes, persil",emoji:"🌿",prix:0.00,actif:true},
+    {id:"s2",nom:"Roquefort",desc:"Roquefort, noix, cognac",emoji:"🧀",prix:0.00,actif:true},
+    {id:"s3",nom:"Curry",desc:"Curry, lait de coco, citron vert",emoji:"🌶️",prix:0.00,actif:true},
+    {id:"s4",nom:"Crème-échalote",desc:"Crème fraîche, échalotes confites",emoji:"🥛",prix:0.00,actif:true},
+    {id:"s5",nom:"Tomate-chorizo",desc:"Tomates, chorizo, piment doux",emoji:"🍅",prix:0.00,actif:true},
+    {id:"s6",nom:"Provençale",desc:"Tomates, herbes, ail, olives",emoji:"🌞",prix:0.00,actif:true},
+  ]},
+  { id:"softs", nom:"🥤 Softs", produits:[
+    {id:"b1",nom:"Coca-Cola",desc:"33cl",emoji:"🥤",prix:3.00,actif:true},
+    {id:"b2",nom:"Orangina",desc:"33cl",emoji:"🍊",prix:3.00,actif:true},
+    {id:"b3",nom:"Limonade",desc:"33cl",emoji:"🍋",prix:3.00,actif:true},
+    {id:"b4",nom:"Eau plate",desc:"50cl",emoji:"💧",prix:2.50,actif:true},
+    {id:"b5",nom:"Eau gazeuse",desc:"50cl",emoji:"💧",prix:2.50,actif:true},
+    {id:"b6",nom:"Jus de fruits",desc:"25cl",emoji:"🍹",prix:3.50,actif:true},
+  ]},
+  { id:"bieres", nom:"🍺 Bières", produits:[
+    {id:"b7",nom:"Bière pression",desc:"25cl",emoji:"🍺",prix:3.50,actif:true},
+    {id:"b8",nom:"Bière pression",desc:"50cl",emoji:"🍺",prix:5.50,actif:true},
+    {id:"b9",nom:"Bière bouteille",desc:"33cl",emoji:"🍺",prix:4.50,actif:true},
+    {id:"b10",nom:"Bière sans alcool",desc:"33cl",emoji:"🍺",prix:4.00,actif:true},
+  ]},
+  { id:"vins_blancs", nom:"🥂 Vins Blancs", produits:[
+    {id:"b11",nom:"Picpoul de Pinet AOP",desc:"Codet 25cl",emoji:"🥂",prix:4.50,actif:true},
+    {id:"b12",nom:"Picpoul de Pinet AOP",desc:"Pichet 50cl",emoji:"🥂",prix:9.50,actif:true},
+    {id:"b13",nom:"Picpoul de Pinet AOP",desc:"Bouteille 75cl",emoji:"🥂",prix:17.00,actif:true},
+    {id:"b14",nom:"La Clape Blanc AOP",desc:"Bouteille 75cl",emoji:"🥂",prix:19.00,actif:true},
+    {id:"b15",nom:"Gérard Bertrand Blanc",desc:"Bouteille 75cl",emoji:"🥂",prix:18.00,actif:true},
+    {id:"b16",nom:"Gérard Bertrand Blanc",desc:"Magnum 1,5L",emoji:"🥂",prix:32.00,actif:true},
+  ]},
+  { id:"vins_roses", nom:"🍷 Vins Rosés", produits:[
+    {id:"b17",nom:"Corbières Rosé AOP",desc:"Codet 25cl",emoji:"🍷",prix:4.50,actif:true},
+    {id:"b18",nom:"Corbières Rosé AOP",desc:"Pichet 50cl",emoji:"🍷",prix:9.50,actif:true},
+    {id:"b19",nom:"Corbières Rosé AOP",desc:"Bouteille 75cl",emoji:"🍷",prix:16.00,actif:true},
+    {id:"b20",nom:"La Clape Rosé AOP",desc:"Bouteille 75cl",emoji:"🍷",prix:19.00,actif:true},
+    {id:"b21",nom:"Gérard Bertrand Rosé",desc:"Bouteille 75cl",emoji:"🍷",prix:20.00,actif:true},
+    {id:"b22",nom:"Gérard Bertrand Rosé",desc:"Magnum 1,5L",emoji:"🍷",prix:36.00,actif:true},
+  ]},
+  { id:"vins_rouges", nom:"🍷 Vins Rouges", produits:[
+    {id:"b23",nom:"Minervois Rouge AOP",desc:"Bouteille 75cl",emoji:"🍷",prix:17.00,actif:true},
+    {id:"b24",nom:"Corbières Rouge AOP",desc:"Bouteille 75cl",emoji:"🍷",prix:16.00,actif:true},
+  ]},
+  { id:"cocktails", nom:"🍹 Cocktails", produits:[
+    {id:"b25",nom:"Spritz",desc:"Aperol, Prosecco, eau gazeuse — 25cl",emoji:"🥂",prix:8.00,actif:true},
+    {id:"b26",nom:"Mojito",desc:"Rhum, menthe fraîche, citron vert — 25cl",emoji:"🍹",prix:8.50,actif:true},
+    {id:"b27",nom:"Moscow Mule",desc:"Vodka, ginger beer, citron — 25cl",emoji:"🍹",prix:8.50,actif:true},
+    {id:"b28",nom:"Pastis / Ricard",desc:"4cl",emoji:"🥃",prix:4.00,actif:true},
+  ]},
+  { id:"sangria", nom:"🍷 Sangria", produits:[
+    {id:"b29",nom:"Sangria Maison",desc:"Verre 25cl — Vin rouge, fruits frais, épices",emoji:"🍷",prix:5.50,actif:true},
+    {id:"b30",nom:"Sangria Maison",desc:"Pichet 50cl",emoji:"🍷",prix:9.50,actif:true},
+    {id:"b31",nom:"Sangria Maison",desc:"Pichet 1L",emoji:"🍷",prix:16.00,actif:true},
+  ]},
+  { id:"desserts", nom:"🍮 Desserts", produits:[
+    {id:"d1",nom:"Dessert du jour",desc:"Demandez à votre serveur",emoji:"🍮",prix:3.50,actif:true},
+    {id:"d2",nom:"Glace italienne",desc:"Vanille ou chocolat",emoji:"🍦",prix:3.50,actif:true},
+    {id:"d3",nom:"Mousse au chocolat",desc:"Maison",emoji:"🍫",prix:3.50,actif:true},
+  ]},
+  { id:"digestifs", nom:"✨ Digestifs", produits:[
+    {id:"dg1",nom:"Cabanel Citron",desc:"Liqueur artisanale — Carcassonne 1868 — 4cl",emoji:"🍋",prix:4.50,actif:true},
+    {id:"dg2",nom:"Cabanel Menthe",desc:"Liqueur artisanale — Carcassonne 1868 — 4cl",emoji:"🌿",prix:4.50,actif:true},
+    {id:"dg3",nom:"Cabanel Clémentine",desc:"Liqueur artisanale — Carcassonne 1868 — 4cl",emoji:"🍊",prix:4.50,actif:true},
+  ]},
+  { id:"chauds", nom:"☕ Chauds", produits:[
+    {id:"b32",nom:"Café / Expresso",desc:"",emoji:"☕",prix:2.50,actif:true},
+    {id:"b33",nom:"Thé / Infusion",desc:"",emoji:"🍵",prix:2.50,actif:true},
+  ]},
+]};
 
-// Écouter les mises à jour de la carte depuis Firebase
-db.collection('config').doc('carte').onSnapshot(doc => {
-  if (doc.exists) {
-    const data = doc.data();
-    if (data.paliers) carte.paliers = data.paliers;
-    if (data.sauces) carte.sauces = data.sauces;
-    if (data.boissons) carte.boissons = data.boissons;
+// Écouter carte Firebase
+db.collection('config').doc('carte_v2').onSnapshot(doc => {
+  if (doc.exists && doc.data().categories && doc.data().categories.length) {
+    carte = doc.data();
+  } else {
+    carte = carteDefaut;
+    db.collection('config').doc('carte_v2').set(carteDefaut).catch(()=>{});
   }
+  if (catActive) renderProduits(catActive);
+  renderTabs();
 });
 
-// ============================================================
-// NAVIGATION
-// ============================================================
 function showScreen(id) {
+  if (id === 'screenPanier') renderPanierItems();
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('loader').style.display = 'none';
   document.getElementById(id).classList.add('active');
-  window.scrollTo(0, 0);
+  window.scrollTo(0,0);
 }
 
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
+  setTimeout(()=>t.classList.remove('show'), 2000);
 }
 
-// ============================================================
-// SCREEN 1 — TABLE
-// ============================================================
 function validerTable() {
   const val = parseInt(document.getElementById('tableInput').value);
-  if (!val || val < 1 || val > 150) {
-    showToast('⚠️ Numéro de table invalide');
-    return;
-  }
+  if (!val || val < 1 || val > 150) { showToast('⚠️ Numéro invalide'); return; }
   tableNum = val;
   document.getElementById('tableNumHeader').textContent = tableNum;
   document.getElementById('tableBadge').style.display = 'inline-block';
-  renderPaliers();
-  showScreen('screenPalier');
+  catActive = (carte || carteDefaut).categories[0]?.id;
+  renderTabs();
+  renderProduits(catActive);
+  showScreen('screenCarte');
 }
 
-// ============================================================
-// SCREEN 2 — PALIERS
-// ============================================================
-function renderPaliers() {
-  const container = document.getElementById('paliersList');
-  container.innerHTML = '';
-  carte.paliers.filter(p => p.actif).forEach(p => {
-    const div = document.createElement('div');
-    div.className = 'palier-card' + (selectedPalier && selectedPalier.id === p.id ? ' selected' : '');
-    div.onclick = () => choisirPalier(p);
-    div.innerHTML = `
-      ${p.badge ? `<div class="badge-promo">${p.badge}</div>` : ''}
-      <div class="emoji">${p.emoji}</div>
-      <h3>${p.nom}</h3>
-      <p>${p.desc}</p>
-      <div class="prix">${p.prix.toFixed(2).replace('.', ',')} €</div>
-    `;
-    container.appendChild(div);
-  });
+function renderTabs() {
+  const c = carte || carteDefaut;
+  document.getElementById('catTabs').innerHTML = c.categories.map(cat =>
+    `<div class="cat-tab ${cat.id===catActive?'active':''}" onclick="selectCat('${cat.id}')">${cat.nom}</div>`
+  ).join('');
 }
 
-function choisirPalier(p) {
-  selectedPalier = p;
-  selectedSauce = null;
-  selectedBoisson = null;
-  renderSauces();
-  showScreen('screenSauce');
+function selectCat(id) {
+  catActive = id;
+  renderTabs();
+  renderProduits(id);
 }
 
-// ============================================================
-// SCREEN 3 — SAUCES
-// ============================================================
-function renderSauces() {
-  const container = document.getElementById('saucesList');
-  container.innerHTML = '';
-  carte.sauces.forEach(s => {
-    const div = document.createElement('div');
-    div.className = 'sauce-card' + (s.actif ? '' : ' disabled') + (selectedSauce && selectedSauce.id === s.id ? ' selected' : '');
-    div.onclick = () => s.actif && choisirSauce(s);
-    div.innerHTML = `
-      <div class="emoji">${s.emoji}</div>
-      <h4>${s.nom}</h4>
-      <p>${s.desc}</p>
-      <div class="checkmark">✓</div>
-    `;
-    container.appendChild(div);
-  });
-}
-
-function choisirSauce(s) {
-  selectedSauce = s;
-  if (selectedPalier.id === 'p1') {
-    renderRecap();
-    showScreen('screenRecap');
-  } else {
-    renderBoissons();
-    showScreen('screenBoisson');
+function renderProduits(catId) {
+  const c = carte || carteDefaut;
+  const cat = c.categories.find(x => x.id === catId);
+  if (!cat) return;
+  const container = document.getElementById('productList');
+  const produits = (cat.produits || []);
+  if (!produits.length) {
+    container.innerHTML = '<div style="text-align:center;color:#888;padding:30px">Aucun produit disponible</div>';
+    return;
   }
-}
-
-// ============================================================
-// SCREEN 4 — BOISSONS
-// ============================================================
-function renderBoissons() {
-  const container = document.getElementById('boissonsList');
-  container.innerHTML = '';
-  carte.boissons.filter(b => b.actif).forEach(b => {
-    const div = document.createElement('div');
-    div.className = 'boisson-item' + (selectedBoisson && selectedBoisson.id === b.id ? ' selected' : '');
-    div.onclick = () => choisirBoisson(b);
-    div.innerHTML = `
-      <div>
-        <div class="nom">${b.emoji} ${b.nom}</div>
-        <div class="detail">${b.detail}</div>
+  container.innerHTML = produits.map(p => `
+    <div class="product-card ${p.actif?'':'disabled'}">
+      <div class="info">
+        <div class="nom">${p.emoji?p.emoji+' ':''}${p.nom}</div>
+        ${p.desc?`<div class="desc">${p.desc}</div>`:''}
       </div>
-      <div class="prix-boisson">incluse</div>
-    `;
-    container.appendChild(div);
-  });
+      <div style="display:flex;align-items:center;flex-shrink:0">
+        <div class="${p.prix===0?'gratuit':'prix'}">${p.prix===0?'Inclus':p.prix.toFixed(2).replace('.',',')+' €'}</div>
+        ${p.actif?`<button class="add-btn" onclick="ajouterPanier('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${p.prix})">+</button>`:''}
+      </div>
+    </div>
+  `).join('');
 }
 
-function choisirBoisson(b) {
-  selectedBoisson = b;
-  renderRecap();
-  showScreen('screenRecap');
+function esc(s){ return s.replace(/'/g,"\\'").replace(/"/g,'\\"'); }
+
+function ajouterPanier(id, nom, desc, prix) {
+  panier.push({id, nom, desc, prix, uid: Date.now()+Math.random()});
+  updatePanierBar();
+  showToast('✅ Ajouté !');
 }
 
-// ============================================================
-// SCREEN 5 — RÉCAP
-// ============================================================
-function renderRecap() {
-  const container = document.getElementById('recapContent');
-  let html = `
-    <div class="recap-row"><span class="label">Table</span><span class="value">N° ${tableNum}</span></div>
-    <div class="recap-row"><span class="label">Formule</span><span class="value">${selectedPalier.nom}</span></div>
-    <div class="recap-row"><span class="label">Sauce</span><span class="value">${selectedSauce.emoji} ${selectedSauce.nom}</span></div>
-  `;
-  if (selectedBoisson) html += `<div class="recap-row"><span class="label">Boisson</span><span class="value">${selectedBoisson.emoji} ${selectedBoisson.nom}</span></div>`;
-  if (selectedPalier.id === 'p3') html += `<div class="recap-row"><span class="label">Dessert</span><span class="value">🍮 Inclus — ticket remis par le serveur</span></div>`;
-  html += `<div class="recap-row"><span class="label">TOTAL</span><span class="value">${selectedPalier.prix.toFixed(2).replace('.', ',')} €</span></div>`;
-  container.innerHTML = html;
+function supprimerPanier(uid) {
+  panier = panier.filter(p => p.uid != uid);
+  updatePanierBar();
+  renderPanierItems();
 }
 
-function retourDepuisRecap() {
-  if (selectedPalier.id === 'p1') showScreen('screenSauce');
-  else showScreen('screenBoisson');
+function updatePanierBar() {
+  const total = panier.reduce((s,p)=>s+p.prix,0);
+  const nb = panier.length;
+  document.getElementById('panierNb').textContent = nb+' article'+(nb>1?'s':'');
+  document.getElementById('panierTotalBar').textContent = total.toFixed(2).replace('.',',')+' €';
+  document.getElementById('panierBar').classList.toggle('visible', nb>0);
 }
 
-// ============================================================
-// VALIDER COMMANDE → FIREBASE
-// ============================================================
+function renderPanierItems() {
+  const container = document.getElementById('panierItems');
+  document.getElementById('panierTable').textContent = tableNum;
+  document.getElementById('btnCommander').style.display = panier.length?'block':'none';
+  if (!panier.length) {
+    container.innerHTML = '<div style="text-align:center;color:#888;padding:30px">Panier vide<br><br><button class="btn btn-outline" onclick="showScreen(\'screenCarte\')" style="width:auto;padding:10px 20px">← Voir la carte</button></div>';
+    return;
+  }
+  const total = panier.reduce((s,p)=>s+p.prix,0);
+  container.innerHTML = panier.map(p=>`
+    <div class="panier-item">
+      <div><div class="pnom">${p.nom}</div>${p.desc?`<div class="pdesc">${p.desc}</div>`:''}</div>
+      <div style="display:flex;align-items:center">
+        <div class="pprix">${p.prix===0?'Inclus':p.prix.toFixed(2).replace('.',',')+' €'}</div>
+        <button class="del-btn" onclick="supprimerPanier(${p.uid})">✕</button>
+      </div>
+    </div>
+  `).join('')+`
+    <div class="panier-total-row">
+      <span style="font-size:15px;font-weight:bold">TOTAL</span>
+      <span style="font-size:22px;font-weight:bold;color:#D4AF37">${total.toFixed(2).replace('.',',')} €</span>
+    </div>`;
+}
+
 async function validerCommande() {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  if (!panier.length) { showToast('⚠️ Panier vide'); return; }
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('loader').style.display = 'block';
-
-  const commande = {
-    table: tableNum,
-    palier: selectedPalier.nom,
-    palierPrix: selectedPalier.prix,
-    sauce: selectedSauce.nom,
-    boisson: selectedBoisson ? selectedBoisson.nom : null,
-    dessert: selectedPalier.id === 'p3',
-    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-    statut: 'nouvelle',
-    heure: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-  };
-
+  const total = panier.reduce((s,p)=>s+p.prix,0);
   try {
-    await db.collection('commandes').add(commande);
-    commandesTable.push(commande);
+    await db.collection('commandes').add({
+      table: tableNum,
+      items: panier.map(p=>({id:p.id, nom:p.nom, desc:p.desc, prix:p.prix})),
+      total,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      statut: 'nouvelle',
+      heure: new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})
+    });
+    panier = [];
+    updatePanierBar();
     document.getElementById('confirmTable').textContent = tableNum;
     showScreen('screenConfirm');
-  } catch (e) {
-    document.getElementById('loader').style.display = 'none';
-    showScreen('screenRecap');
-    showToast('❌ Erreur réseau — réessayez');
+  } catch(e) {
+    showScreen('screenPanier');
+    showToast('❌ Erreur — réessayez');
   }
 }
 
-// ============================================================
-// NOUVELLE RONDE
-// ============================================================
-function nouvelleRonde() {
-  selectedPalier = null;
-  selectedSauce = null;
-  selectedBoisson = null;
-  renderPaliers();
-  showScreen('screenPalier');
+function commanderEncore() {
+  catActive = (carte||carteDefaut).categories[0]?.id;
+  renderTabs();
+  renderProduits(catActive);
+  showScreen('screenCarte');
 }
 
-// ============================================================
-// DEMANDER L'ADDITION
-// ============================================================
 async function demanderAddition() {
   document.getElementById('additionTable').textContent = tableNum;
-
-  // Charger toutes les commandes de cette table
-  const snapshot = await db.collection('commandes')
-    .where('table', '==', tableNum)
-    .where('statut', '!=', 'regle')
-    .get();
-
-  let total = 0;
-  let html = '';
-  snapshot.forEach(doc => {
+  const snap = await db.collection('commandes').where('table','==',tableNum).where('statut','!=','regle').get();
+  let total = 0; let html = '';
+  snap.forEach(doc=>{
     const cmd = doc.data();
-    total += cmd.palierPrix || 0;
-    html += `
-      <div class="cmd-item">
-        <span>${cmd.palier} — ${cmd.sauce}${cmd.boisson ? ' · ' + cmd.boisson : ''}</span>
-        <span style="color:#D4AF37">${(cmd.palierPrix || 0).toFixed(2).replace('.', ',')} €</span>
-      </div>
-    `;
+    total += cmd.total||0;
+    (cmd.items||[]).forEach(item=>{
+      html+=`<div class="cmd-item"><span>${item.nom}</span><span style="color:#D4AF37">${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span></div>`;
+    });
+    html+=`<div style="border-top:1px solid #444;margin:4px 0"></div>`;
   });
-
-  if (!html) html = '<div class="cmd-item" style="color:#888">Aucune commande trouvée</div>';
-
+  if(!html) html='<div class="cmd-item" style="color:#888">Aucune commande enregistrée</div>';
   document.getElementById('commandesList').innerHTML = html;
-  document.getElementById('totalAmount').textContent = total.toFixed(2).replace('.', ',') + ' €';
-
-  // Notifier la caisse
+  document.getElementById('totalAmount').textContent = total.toFixed(2).replace('.',',')+' €';
   await db.collection('additions').doc(`table_${tableNum}`).set({
-    table: tableNum,
-    total: total,
-    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-    statut: 'demandee'
+    table:tableNum, total, timestamp:firebase.firestore.FieldValue.serverTimestamp(), statut:'demandee'
   });
-
   showScreen('screenAddition');
 }
 </script>
