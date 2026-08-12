@@ -239,6 +239,23 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
+<!-- POPUP CONFIRMATION ÂGE ENFANT -->
+<div class="modal-overlay" id="modalEnfant">
+  <div class="modal-box" style="text-align:center">
+    <div style="font-size:48px;margin-bottom:12px">👧</div>
+    <h3 style="margin-bottom:8px">Confirmation enfant gratuit</h3>
+    <div class="modal-sub" style="margin-bottom:20px">
+      L'offre enfant gratuit est réservée aux enfants de <strong style="color:#D4AF37">0 à 7 ans révolus</strong>.<br>
+      Au-delà de 7 ans, le tarif enfant/ado s'applique (15,90 €).
+    </div>
+    <div style="background:#1A3A2A;border:1px solid #1A7A50;border-radius:10px;padding:14px;margin-bottom:20px;font-size:13px;color:#4ABA80">
+      ✋ En validant, vous confirmez que l'enfant<br>a <strong>7 ans ou moins</strong>.
+    </div>
+    <button class="btn btn-or" onclick="confirmerEnfantGratuit()" style="margin-bottom:8px">✅ Oui, l'enfant a 7 ans ou moins</button>
+    <button class="modal-close" onclick="fermerModalEnfant()">Non — je prends le tarif enfant/ado (15,90 €)</button>
+  </div>
+</div>
+
 <div class="version">v.12/08/2026 14:00 — Moule & Smile</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -480,17 +497,47 @@ function renderProduits(catId){
 function esc(s){return s.replace(/'/g,"\\'").replace(/"/g,'\\"');}
 
 // PANIER
+// IDs des adultes payants (paliers + calamars + fish)
+const IDS_ADULTES=['p1','p2','p3','ca1','fc1','en2'];
+
+function nbAdultesPayants(){
+  return panier.filter(p=>IDS_ADULTES.includes(p.id)).length;
+}
+function nbEnfantsGratuits(){
+  return panier.filter(p=>p.id==='en1').length;
+}
+
 function ajouterPanier(id,nom,desc,prix){
+  // Vérification enfant gratuit
+  if(id==='en1'){
+    // Doit y avoir au moins 1 adulte payant
+    if(nbAdultesPayants()===0){
+      showToast('⚠️ Ajoutez d'abord un menu adulte !');
+      return;
+    }
+    // Ne peut pas avoir plus d'enfants gratuits que d'adultes
+    if(nbEnfantsGratuits()>=nbAdultesPayants()){
+      showToast(`⚠️ Maximum ${nbAdultesPayants()} enfant(s) gratuit(s) pour ${nbAdultesPayants()} adulte(s)`);
+      return;
+    }
+    // Popup confirmation âge
+    ouvrirPopupEnfant(nom, desc, prix);
+    return;
+  }
+
+  // Paliers avec boisson incluse
   if(['p2','p3'].includes(id)){
     palierEnCours=id;
     panier.push({id,nom,desc,prix,uid:Date.now()+Math.random()});
     updatePanierBar();
     ouvrirModalBoisson(id);
-  } else {
-    panier.push({id,nom,desc,prix,uid:Date.now()+Math.random()});
-    updatePanierBar();
-    showToast('✅ Ajouté !');
+    return;
   }
+
+  // Tous les autres — ajout silencieux (pas de toast)
+  panier.push({id,nom,desc,prix,uid:Date.now()+Math.random()});
+  updatePanierBar();
+  // Petit feedback visuel discret sur le bouton (pas de toast)
 }
 
 function updatePanierBar(){
@@ -821,6 +868,31 @@ async function demanderAddition(){
 
 
 
+
+// ============================================================
+// POPUP CONFIRMATION ÂGE ENFANT
+// ============================================================
+let enfantEnAttente = null;
+
+function ouvrirPopupEnfant(nom, desc, prix){
+  enfantEnAttente={nom, desc, prix};
+  document.getElementById('modalEnfant').classList.add('visible');
+}
+
+function confirmerEnfantGratuit(){
+  if(!enfantEnAttente) return;
+  panier.push({id:'en1', nom:enfantEnAttente.nom, desc:enfantEnAttente.desc, prix:0, uid:Date.now()+Math.random()});
+  updatePanierBar();
+  document.getElementById('modalEnfant').classList.remove('visible');
+  enfantEnAttente=null;
+}
+
+function fermerModalEnfant(){
+  document.getElementById('modalEnfant').classList.remove('visible');
+  enfantEnAttente=null;
+  // Proposer le tarif ado à la place
+  showToast('💡 Ajoutez le tarif Enfant/Ado 8-17 ans à 15,90 €');
+}
 </script>
 </body>
 </html>
