@@ -71,9 +71,24 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
 
 /* TICKET IMPRESSION */
 @media print{
-  body{background:white;color:black;font-size:12px}
-  .no-print{display:none!important}
-  .ticket-print{display:block!important}
+  body *{display:none!important}
+  body,html{background:white!important;margin:0!important;padding:0!important}
+  .ticket-print,
+  .ticket-print *{display:block!important}
+  .ticket-print{
+    display:block!important;
+    position:fixed!important;
+    top:0!important;left:0!important;
+    width:80mm!important;
+    margin:0!important;
+    padding:8mm!important;
+    font-family:'Courier New',monospace!important;
+    font-size:12px!important;
+    color:black!important;
+    background:white!important;
+  }
+  .ticket-print .t-ligne,
+  .ticket-print .t-total{display:flex!important}
 }
 .ticket-print{display:none;width:80mm;margin:0 auto;font-family:'Courier New',monospace;font-size:12px;color:black;background:white;padding:8mm}
 .ticket-print .t-title{text-align:center;font-size:16px;font-weight:bold;margin-bottom:4px}
@@ -529,23 +544,59 @@ function imprimerTicket(tableNum, commandes, total){
   const now=new Date().toLocaleString('fr-FR');
   let lignes='';
   (commandes||[]).forEach(cmd=>{
-    lignes+=`<div class="t-sep"></div><div style="font-size:10px;color:#888">🕐 ${cmd.heure}</div>`;
+    lignes+=`<tr><td colspan="2" style="padding:4px 0;border-top:1px dashed #000;font-size:10px;color:#555">🕐 ${cmd.heure||'--:--'}</td></tr>`;
     (cmd.items||[]).forEach(item=>{
-      lignes+=`<div class="t-ligne"><span>${item.nom}</span><span>${item.prix===0?'Incl.':item.prix.toFixed(2).replace('.',',')+' €'}</span></div>`;
+      lignes+=`<tr>
+        <td style="padding:2px 0;font-size:12px">${item.nom}</td>
+        <td style="padding:2px 0;font-size:12px;text-align:right;white-space:nowrap">${item.prix===0?'Incl.':item.prix.toFixed(2).replace('.',',')+' €'}</td>
+      </tr>`;
     });
-    lignes+=`<div style="text-align:right;font-size:10px">ss-total : ${(cmd.total||0).toFixed(2).replace('.',',')} €</div>`;
+    lignes+=`<tr><td colspan="2" style="text-align:right;font-size:10px;color:#555;padding-bottom:4px">ss-total : ${(cmd.total||0).toFixed(2).replace('.',',')} €</td></tr>`;
   });
 
-  const ticket=document.getElementById('ticketPrint');
-  ticket.innerHTML=`
-    <div class="t-title">🐚 MOULE & SMILE</div>
-    <div class="t-sub">1 Bd de la Douane — Saint-Pierre-la-Mer<br>Table ${tableNum} — ${now}</div>
+  // Ouvrir une fenêtre dédiée — UNIQUEMENT le ticket
+  const win=window.open('','_blank','width=400,height=600');
+  win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Ticket Table ${tableNum}</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Courier New',monospace;font-size:12px;color:black;background:white;width:80mm;margin:0 auto;padding:8mm}
+  .title{text-align:center;font-size:16px;font-weight:bold;margin-bottom:4px}
+  .sub{text-align:center;font-size:10px;margin-bottom:8px;border-bottom:1px dashed black;padding-bottom:6px}
+  table{width:100%;border-collapse:collapse}
+  .sep{border-top:1px dashed black;margin:6px 0}
+  .total-row td{font-weight:bold;font-size:14px;padding-top:6px;border-top:2px solid black}
+  .footer{text-align:center;font-size:10px;margin-top:8px;border-top:1px dashed black;padding-top:6px}
+  @media print{
+    body{width:80mm;margin:0;padding:6mm}
+    @page{margin:0;size:80mm auto}
+  }
+</style>
+</head>
+<body>
+  <div class="title">MOULE & SMILE</div>
+  <div class="sub">1 Bd de la Douane — Saint-Pierre-la-Mer<br>Table ${tableNum} — ${now}</div>
+  <table>
     ${lignes}
-    <div class="t-sep"></div>
-    <div class="t-total"><span>TOTAL</span><span>${(total||0).toFixed(2).replace('.',',')} €</span></div>
-    <div class="t-footer">Merci de votre visite !<br>À bientôt chez Moule & Smile 🐚</div>`;
-
-  window.print();
+    <tr><td colspan="2"><div class="sep"></div></td></tr>
+    <tr class="total-row">
+      <td>TOTAL</td>
+      <td style="text-align:right">${(total||0).toFixed(2).replace('.',',')} €</td>
+    </tr>
+  </table>
+  <div class="footer">Merci de votre visite !<br>À bientôt chez Moule & Smile</div>
+  <script>
+    window.onload=function(){
+      window.print();
+      setTimeout(()=>window.close(),1000);
+    }
+  <\/script>
+</body>
+</html>`);
+  win.document.close();
 }
 
 // ============================================================
