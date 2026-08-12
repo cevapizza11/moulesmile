@@ -512,7 +512,7 @@ function ajouterPanier(id,nom,desc,prix){
   if(id==='en1'){
     // Doit y avoir au moins 1 adulte payant
     if(nbAdultesPayants()===0){
-      showToast('⚠️ Ajoutez d'abord un menu adulte !');
+      showToast('⚠️ Ajoutez un menu adulte en premier !');
       return;
     }
     // Ne peut pas avoir plus d'enfants gratuits que d'adultes
