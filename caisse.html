@@ -187,6 +187,7 @@ const db=firebase.firestore();
 let allCommandes={};
 let allAdditions={};
 let historique=[];
+let ticketsData={}; // Stockage données tickets pour impression
 
 function playBeep(){try{const ctx=new AudioContext();const o=ctx.createOscillator();o.connect(ctx.destination);o.frequency.value=880;o.start();setTimeout(()=>o.stop(),200);}catch(e){}}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
@@ -194,7 +195,7 @@ function showToast(msg){const t=document.getElementById('toast');t.textContent=m
 // ============================================================
 // ÉCOUTE COMMANDES
 // ============================================================
-db.collection('commandes').orderBy('timestamp','desc').limit(100).onSnapshot(snap=>{
+db.collection('commandes').onSnapshot(snap=>{
   let hasNew=false;
   snap.docChanges().forEach(change=>{
     if(change.type==='added'&&allCommandes[change.doc.id]===undefined){hasNew=true;}
@@ -427,10 +428,11 @@ function renderAdditions(){
           </div>`).join('')}
       </div>
       <div class="addition-actions">
-        <button class="btn-imprimer" onclick="imprimerTicket(${add.table}, ${JSON.stringify(add.commandes||[]).replace(/"/g,'&quot;')}, ${add.total||0})">🖨️ Imprimer</button>
+        <button class="btn-imprimer" onclick="imprimerTicketById('add_${add.table}')">🖨️ Imprimer</button>
         <button class="btn-encaisser" onclick="encaisser(${add.table},'${add.id}')">💰 Encaissé ✓</button>
       </div>
     </div>`;
+    ticketsData['add_'+add.table]={table:add.table, commandes:add.commandes||[], total:add.total||0};
   }).join('');
 }
 
@@ -498,6 +500,10 @@ function renderHistorique(){
     container.innerHTML='<div class="empty"><div class="em">📚</div><p>Aucun historique</p></div>';
     return;
   }
+  // Stocker dans ticketsData pour impression
+  historique.forEach((h,idx)=>{
+    ticketsData[`hist_${idx}`]={table:h.table, commandes:h.commandes||[], total:h.total||0};
+  });
   container.innerHTML=historique.map((h,idx)=>`
     <div class="historique-item" onclick="toggleHistorique(${idx})">
       <div class="historique-header">
@@ -517,7 +523,7 @@ function renderHistorique(){
                 <span>${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span>
               </div>`).join('')}
           </div>`).join('')}
-        <button onclick="event.stopPropagation();imprimerTicket(${h.table},${JSON.stringify(h.commandes||[]).replace(/"/g,'&quot;')},${h.total||0})" style="background:#333;border:1px solid #D4AF37;color:#D4AF37;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;margin-top:6px">🖨️ Réimprimer</button>
+        <button onclick="event.stopPropagation();imprimerTicketById('hist_'+${idx})" style="background:#333;border:1px solid #D4AF37;color:#D4AF37;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;margin-top:6px">🖨️ Réimprimer</button>
       </div>
     </div>`).join('');
 }
@@ -540,6 +546,12 @@ async function viderHistorique(){
 // ============================================================
 // IMPRESSION TICKET
 // ============================================================
+function imprimerTicketById(key){
+  const data=ticketsData[key];
+  if(!data){showToast('❌ Données ticket introuvables');return;}
+  imprimerTicket(data.table, data.commandes, data.total);
+}
+
 function imprimerTicket(tableNum, commandes, total){
   const now=new Date().toLocaleString('fr-FR');
   let lignes='';
