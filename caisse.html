@@ -3,174 +3,200 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Moule & Smile — Caisse / Passage</title>
+<title>Moule & Smile — Caisse</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, sans-serif; background: #111; color: #fff; min-height: 100vh; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;padding-bottom:20px}
+.header{background:#1A1A1A;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #D4AF37;position:sticky;top:0;z-index:100}
+.header h1{color:#D4AF37;font-size:16px}
+.stats-row{display:flex;gap:12px}
+.stat{text-align:center}
+.stat .num{color:#D4AF37;font-size:20px;font-weight:bold}
+.stat .lbl{color:#888;font-size:9px}
+.nav-tabs{display:flex;background:#1A1A1A;border-bottom:2px solid #333}
+.nav-tab{flex:1;padding:11px 8px;text-align:center;cursor:pointer;font-size:11px;color:#888;border-bottom:3px solid transparent;font-weight:bold}
+.nav-tab.active{color:#D4AF37;border-bottom-color:#D4AF37}
+.content{padding:14px;max-width:1200px;margin:0 auto}
 
-  .header { background: #1A1A1A; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #D4AF37; position: sticky; top: 0; z-index: 100; }
-  .header h1 { color: #D4AF37; font-size: 18px; }
-  .header .stats { display: flex; gap: 16px; }
-  .stat { text-align: center; }
-  .stat .num { color: #D4AF37; font-size: 22px; font-weight: bold; }
-  .stat .lbl { color: #888; font-size: 10px; }
+/* COMMANDES */
+.commandes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.cmd-card{background:#1E1E1E;border:2px solid #333;border-radius:14px;padding:14px;transition:all .3s}
+.cmd-card.nouvelle{border-color:#D4AF37;animation:pulse 2s infinite}
+.cmd-card.vue{border-color:#1A7A50}
+.cmd-card.regle{opacity:.35;border-color:#333}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(212,175,55,.4)}50%{box-shadow:0 0 0 8px rgba(212,175,55,0)}}
+.cmd-table{font-size:26px;font-weight:bold;color:#D4AF37}
+.cmd-heure{font-size:11px;color:#888;background:#2A2A2A;padding:2px 8px;border-radius:20px;display:inline-block;margin-bottom:8px}
+.cmd-item-row{padding:4px 0;font-size:13px;color:#ddd;display:flex;justify-content:space-between;border-bottom:1px solid #2A2A2A}
+.cmd-item-row:last-child{border-bottom:none}
+.cmd-total{color:#D4AF37;font-weight:bold;font-size:16px;margin:8px 0;padding-top:8px;border-top:1px solid #444}
+.cmd-actions{display:flex;gap:6px;margin-top:10px}
+.btn-vu{flex:1;padding:8px;background:#1A7A50;border:none;border-radius:8px;color:white;font-size:12px;font-weight:bold;cursor:pointer}
+.btn-addition{flex:1;padding:8px;background:#D4AF37;border:none;border-radius:8px;color:#1A1A1A;font-size:12px;font-weight:bold;cursor:pointer}
+.btn-regle{flex:1;padding:8px;background:#C0392B;border:none;border-radius:8px;color:white;font-size:12px;cursor:pointer}
 
-  .tabs { display: flex; background: #1A1A1A; border-bottom: 1px solid #333; }
-  .tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; font-size: 13px; color: #888; border-bottom: 3px solid transparent; transition: all 0.2s; }
-  .tab.active { color: #D4AF37; border-bottom-color: #D4AF37; font-weight: bold; }
+/* ADDITIONS */
+.addition-card{background:#1E1E1E;border:2px solid #C0392B;border-radius:14px;padding:16px;margin-bottom:12px}
+.addition-card.reglee{opacity:.4;border-color:#333}
+.addition-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+.addition-table{color:#C0392B;font-size:20px;font-weight:bold}
+.addition-total{color:#D4AF37;font-size:28px;font-weight:bold}
+.addition-commandes{margin-bottom:12px}
+.addition-groupe{margin-bottom:8px;background:#2A2A2A;border-radius:8px;padding:10px}
+.addition-groupe-heure{color:#D4AF37;font-size:11px;font-weight:bold;margin-bottom:6px}
+.addition-item{padding:3px 0;font-size:12px;color:#ddd;display:flex;justify-content:space-between}
+.addition-subtotal{text-align:right;color:#888;font-size:11px;margin-top:4px;padding-top:4px;border-top:1px solid #333}
+.addition-actions{display:flex;gap:8px}
+.btn-imprimer{flex:1;padding:10px;background:#2A2A2A;border:2px solid #D4AF37;border-radius:8px;color:#D4AF37;font-weight:bold;font-size:13px;cursor:pointer}
+.btn-encaisser{flex:1;padding:10px;background:#C0392B;border:none;border-radius:8px;color:white;font-weight:bold;font-size:13px;cursor:pointer}
 
-  .content { padding: 16px; max-width: 900px; margin: 0 auto; }
+/* HISTORIQUE */
+.historique-item{background:#1E1E1E;border:1px solid #333;border-radius:10px;padding:12px;margin-bottom:8px;cursor:pointer;transition:all .2s}
+.historique-item:hover{border-color:#D4AF37}
+.historique-header{display:flex;justify-content:space-between;margin-bottom:4px}
+.historique-table{color:#D4AF37;font-weight:bold;font-size:14px}
+.historique-total{color:#D4AF37;font-weight:bold;font-size:16px}
+.historique-heure{color:#888;font-size:11px}
+.historique-detail{display:none;margin-top:8px;padding-top:8px;border-top:1px solid #333}
+.historique-detail.show{display:block}
 
-  /* COMMANDES GRID */
-  .commandes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+/* CA */
+.ca-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.ca-box{background:#1E1E1E;border:2px solid #333;border-radius:12px;padding:16px;text-align:center}
+.ca-box .num{font-size:28px;font-weight:bold;color:#D4AF37}
+.ca-box .lbl{font-size:11px;color:#888;margin-top:4px}
+.table-ca{width:100%;border-collapse:collapse}
+.table-ca th{background:#1A1A1A;color:#D4AF37;padding:8px;text-align:left;font-size:12px}
+.table-ca td{padding:7px 8px;border-bottom:1px solid #2A2A2A;font-size:12px;color:#ddd}
 
-  .cmd-card { background: #1E1E1E; border: 2px solid #333; border-radius: 14px; padding: 16px; position: relative; transition: all 0.3s; }
-  .cmd-card.nouvelle { border-color: #D4AF37; animation: pulse 2s infinite; }
-  .cmd-card.vue { border-color: #1A7A50; }
-  .cmd-card.regle { border-color: #333; opacity: 0.4; }
+/* TICKET IMPRESSION */
+@media print{
+  body{background:white;color:black;font-size:12px}
+  .no-print{display:none!important}
+  .ticket-print{display:block!important}
+}
+.ticket-print{display:none;width:80mm;margin:0 auto;font-family:'Courier New',monospace;font-size:12px;color:black;background:white;padding:8mm}
+.ticket-print .t-title{text-align:center;font-size:16px;font-weight:bold;margin-bottom:4px}
+.ticket-print .t-sub{text-align:center;font-size:10px;margin-bottom:8px;border-bottom:1px dashed black;padding-bottom:6px}
+.ticket-print .t-ligne{display:flex;justify-content:space-between;padding:2px 0}
+.ticket-print .t-sep{border-top:1px dashed black;margin:6px 0}
+.ticket-print .t-total{display:flex;justify-content:space-between;font-weight:bold;font-size:14px;padding:4px 0}
+.ticket-print .t-footer{text-align:center;font-size:10px;margin-top:8px;border-top:1px dashed black;padding-top:6px}
 
-  @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(212,175,55,0.4)} 50%{box-shadow:0 0 0 8px rgba(212,175,55,0)} }
-
-  .cmd-table { font-size: 28px; font-weight: bold; color: #D4AF37; margin-bottom: 8px; }
-  .cmd-heure { position: absolute; top: 14px; right: 14px; font-size: 11px; color: #888; background: #2A2A2A; padding: 2px 8px; border-radius: 20px; }
-  .cmd-detail { margin-bottom: 12px; }
-  .cmd-detail .row { display: flex; gap: 8px; align-items: center; padding: 4px 0; font-size: 13px; color: #ddd; }
-  .cmd-detail .emoji { font-size: 16px; }
-  .cmd-detail .bold { font-weight: bold; color: #fff; }
-  .badge-dessert { display: inline-block; background: #8B4513; color: #FFD700; font-size: 10px; font-weight: bold; padding: 2px 8px; border-radius: 20px; margin-top: 6px; }
-  .badge-special { display: inline-block; background: #C0392B; color: white; font-size: 10px; font-weight: bold; padding: 2px 8px; border-radius: 20px; margin-top: 4px; }
-
-  .cmd-prix { font-size: 20px; font-weight: bold; color: #D4AF37; margin-bottom: 12px; }
-
-  .cmd-actions { display: flex; gap: 8px; }
-  .btn-vue { flex: 1; padding: 8px; background: #1A7A50; border: none; border-radius: 8px; color: white; font-size: 12px; font-weight: bold; cursor: pointer; }
-  .btn-regle { flex: 1; padding: 8px; background: #333; border: none; border-radius: 8px; color: #aaa; font-size: 12px; cursor: pointer; }
-  .btn-regle.actif { background: #C0392B; color: white; }
-
-  /* ADDITION ALERT */
-  .addition-alert { background: #2A1A1A; border: 2px solid #C0392B; border-radius: 12px; padding: 16px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
-  .addition-alert .info { }
-  .addition-alert .table-lbl { color: #C0392B; font-weight: bold; font-size: 16px; }
-  .addition-alert .montant { color: #D4AF37; font-size: 22px; font-weight: bold; }
-  .btn-encaisse { padding: 10px 20px; background: #C0392B; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; }
-
-  /* EMPTY STATE */
-  .empty { text-align: center; padding: 60px 20px; color: #444; }
-  .empty .emoji { font-size: 48px; margin-bottom: 16px; }
-
-  /* CA TEMPS REEL */
-  .ca-box { background: #1E1E1E; border: 2px solid #D4AF37; border-radius: 14px; padding: 20px; margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; text-align: center; }
-  .ca-item .num { font-size: 28px; font-weight: bold; color: #D4AF37; }
-  .ca-item .lbl { font-size: 11px; color: #888; margin-top: 4px; }
-
-  .version { text-align: center; padding: 10px; color: #333; font-size: 10px; }
+/* UTILS */
+.empty{text-align:center;padding:50px;color:#444}
+.empty .em{font-size:40px;margin-bottom:12px}
+.badge-rouge{background:#C0392B;color:white;font-size:10px;font-weight:bold;padding:2px 6px;border-radius:10px;margin-left:4px}
+.status-bar{background:#1A3A2A;border:1px solid #1A7A50;border-radius:10px;padding:8px 14px;margin-bottom:12px;font-size:12px;color:#4ABA80;display:flex;align-items:center;gap:8px}
+.dot{width:8px;height:8px;background:#4ABA80;border-radius:50%;animation:blink 1.5s infinite;flex-shrink:0}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#D4AF37;color:#1A1A1A;padding:10px 22px;border-radius:30px;font-weight:bold;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+.version{text-align:center;padding:10px;color:#333;font-size:10px}
 </style>
 </head>
 <body>
 
-<div class="header">
+<div class="header no-print">
   <h1>🐚 CAISSE — Moule & Smile</h1>
-  <div class="stats">
-    <div class="stat"><div class="num" id="statNouvelles">0</div><div class="lbl">Nouvelles</div></div>
-    <div class="stat"><div class="num" id="statEnCours">0</div><div class="lbl">En cours</div></div>
+  <div class="stats-row">
+    <div class="stat"><div class="num" id="statNouv">0</div><div class="lbl">Nouvelles</div></div>
     <div class="stat"><div class="num" id="statAdditions">0</div><div class="lbl">Additions</div></div>
+    <div class="stat"><div class="num" id="statCA">0€</div><div class="lbl">CA jour</div></div>
   </div>
 </div>
 
-<div class="tabs">
-  <div class="tab active" onclick="switchTab('commandes', this)">📋 Commandes</div>
-  <div class="tab" onclick="switchTab('additions', this)">🧾 Additions</div>
-  <div class="tab" onclick="switchTab('ca', this)">💰 CA du jour</div>
+<div class="nav-tabs no-print">
+  <div class="nav-tab active" onclick="switchTab('commandes',this)">📋 Commandes</div>
+  <div class="nav-tab" onclick="switchTab('additions',this)">🧾 Additions <span class="badge-rouge" id="badgeAdd">0</span></div>
+  <div class="nav-tab" onclick="switchTab('historique',this)">📚 Historique</div>
+  <div class="nav-tab" onclick="switchTab('ca',this)">💰 CA</div>
 </div>
 
-<div class="content">
+<div class="toast" id="toast"></div>
 
-  <!-- TAB COMMANDES -->
-  <div id="tabCommandes">
-    <div id="commandesGrid" class="commandes-grid">
-      <div class="empty"><div class="emoji">🐚</div><p>En attente de commandes...</p></div>
-    </div>
+<!-- TICKET IMPRESSION -->
+<div class="ticket-print" id="ticketPrint"></div>
+
+<!-- COMMANDES -->
+<div id="tabCommandes" class="content">
+  <div class="status-bar"><div class="dot"></div>Commandes en temps réel — cliquez "Vu" puis glissez dans Addition</div>
+  <div id="commandesGrid" class="commandes-grid">
+    <div class="empty"><div class="em">🐚</div><p>En attente de commandes...</p></div>
   </div>
-
-  <!-- TAB ADDITIONS -->
-  <div id="tabAdditions" style="display:none">
-    <div id="additionsList">
-      <div class="empty"><div class="emoji">🧾</div><p>Aucune addition demandée</p></div>
-    </div>
-  </div>
-
-  <!-- TAB CA -->
-  <div id="tabCA" style="display:none">
-    <div class="ca-box">
-      <div class="ca-item"><div class="num" id="caTotal">0 €</div><div class="lbl">CA Total</div></div>
-      <div class="ca-item"><div class="num" id="nbCouverts">0</div><div class="lbl">Couverts</div></div>
-      <div class="ca-item"><div class="num" id="ticketMoyen">0 €</div><div class="lbl">Ticket moyen</div></div>
-    </div>
-    <div id="caParSauce"></div>
-    <div id="caParPalier"></div>
-  </div>
-
 </div>
 
-<div class="version">v.12/08/2026 14:00 — Moule & Smile Caisse</div>
+<!-- ADDITIONS -->
+<div id="tabAdditions" class="content" style="display:none">
+  <div class="status-bar"><div class="dot"></div>Tables avec addition demandée ou en cours — cliquez "Encaissé" une fois réglé</div>
+  <div id="additionsList"></div>
+</div>
+
+<!-- HISTORIQUE -->
+<div id="tabHistorique" class="content" style="display:none">
+  <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
+    <span style="color:#D4AF37;font-weight:bold">Tables réglées aujourd'hui</span>
+    <button onclick="viderHistorique()" style="background:#333;border:none;color:#aaa;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px">Vider l'historique</button>
+  </div>
+  <div id="historiqueList"><div class="empty"><div class="em">📚</div><p>Aucun historique</p></div></div>
+</div>
+
+<!-- CA -->
+<div id="tabCA" class="content" style="display:none">
+  <div class="ca-grid">
+    <div class="ca-box"><div class="num" id="caTotal">0 €</div><div class="lbl">CA Total</div></div>
+    <div class="ca-box"><div class="num" id="caCouverts">0</div><div class="lbl">Commandes</div></div>
+    <div class="ca-box"><div class="num" id="caTicket">0 €</div><div class="lbl">Ticket moyen</div></div>
+  </div>
+  <table class="table-ca">
+    <thead><tr><th>Heure</th><th>Table</th><th>Items</th><th>Total</th></tr></thead>
+    <tbody id="caTable"></tbody>
+  </table>
+</div>
+
+<div class="version no-print">v.12/08/2026 14:00 — Moule & Smile Caisse</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyDUb3LtVsMAq986DgtHwkMBeQFr8A8A2nU",
-  authDomain: "commandemoulesmile.firebaseapp.com",
-  projectId: "commandemoulesmile",
-  storageBucket: "commandemoulesmile.firebasestorage.app",
-  messagingSenderId: "303564394584",
-  appId: "1:303564394584:web:cbde6960f99cac83517a2d"
-};
+const firebaseConfig={apiKey:"AIzaSyDUb3LtVsMAq986DgtHwkMBeQFr8A8A2nU",authDomain:"commandemoulesmile.firebaseapp.com",projectId:"commandemoulesmile",storageBucket:"commandemoulesmile.firebasestorage.app",messagingSenderId:"303564394584",appId:"1:303564394584:web:cbde6960f99cac83517a2d"};
 firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+const db=firebase.firestore();
 
-let allCommandes = {};
-let allAdditions = {};
-let activeTab = 'commandes';
+let allCommandes={};
+let allAdditions={};
+let historique=[];
 
-// Son de notification
-function playBeep() {
-  try {
-    const ctx = new AudioContext();
-    const osc = ctx.createOscillator();
-    osc.connect(ctx.destination);
-    osc.frequency.value = 880;
-    osc.start();
-    setTimeout(() => osc.stop(), 200);
-  } catch(e) {}
-}
+function playBeep(){try{const ctx=new AudioContext();const o=ctx.createOscillator();o.connect(ctx.destination);o.frequency.value=880;o.start();setTimeout(()=>o.stop(),200);}catch(e){}}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
 // ============================================================
-// ÉCOUTE COMMANDES EN TEMPS RÉEL
+// ÉCOUTE COMMANDES
 // ============================================================
-db.collection('commandes').orderBy('timestamp', 'desc').onSnapshot(snapshot => {
-  snapshot.docChanges().forEach(change => {
-    if (change.type === 'added' && allCommandes[change.doc.id] === undefined) {
-      playBeep();
-    }
-    allCommandes[change.doc.id] = { id: change.doc.id, ...change.doc.data() };
-    if (change.type === 'removed') delete allCommandes[change.doc.id];
+db.collection('commandes').orderBy('timestamp','desc').limit(100).onSnapshot(snap=>{
+  let hasNew=false;
+  snap.docChanges().forEach(change=>{
+    if(change.type==='added'&&allCommandes[change.doc.id]===undefined){hasNew=true;}
+    allCommandes[change.doc.id]={id:change.doc.id,...change.doc.data()};
+    if(change.type==='removed') delete allCommandes[change.doc.id];
   });
+  if(hasNew) playBeep();
   renderCommandes();
   updateStats();
-  updateCA();
+  renderCA();
 });
 
 // ============================================================
-// ÉCOUTE ADDITIONS EN TEMPS RÉEL
+// ÉCOUTE ADDITIONS
 // ============================================================
-db.collection('additions').onSnapshot(snapshot => {
-  snapshot.docChanges().forEach(change => {
-    if (change.type === 'added' && allAdditions[change.doc.id] === undefined) {
-      playBeep(); playBeep();
-    }
-    allAdditions[change.doc.id] = { id: change.doc.id, ...change.doc.data() };
-    if (change.type === 'removed') delete allAdditions[change.doc.id];
+db.collection('additions').onSnapshot(snap=>{
+  let hasNew=false;
+  snap.docChanges().forEach(change=>{
+    if(change.type==='added'&&allAdditions[change.doc.id]===undefined&&change.doc.data().statut==='demandee'){hasNew=true;}
+    allAdditions[change.doc.id]={id:change.doc.id,...change.doc.data()};
+    if(change.type==='removed') delete allAdditions[change.doc.id];
   });
+  if(hasNew){playBeep();playBeep();}
   renderAdditions();
   updateStats();
 });
@@ -178,135 +204,280 @@ db.collection('additions').onSnapshot(snapshot => {
 // ============================================================
 // RENDER COMMANDES
 // ============================================================
-function renderCommandes() {
-  const grid = document.getElementById('commandesGrid');
-  const cmds = Object.values(allCommandes).filter(c => c.statut !== 'regle');
-
-  if (!cmds.length) {
-    grid.innerHTML = '<div class="empty"><div class="emoji">🐚</div><p>En attente de commandes...</p></div>';
+function renderCommandes(){
+  const grid=document.getElementById('commandesGrid');
+  const cmds=Object.values(allCommandes).filter(c=>c.statut!=='regle').sort((a,b)=>(a.table||0)-(b.table||0));
+  if(!cmds.length){
+    grid.innerHTML='<div class="empty"><div class="em">🐚</div><p>En attente de commandes...</p></div>';
     return;
   }
-
-  // Trier par table puis par timestamp
-  cmds.sort((a, b) => (a.table || 0) - (b.table || 0));
-
-  grid.innerHTML = cmds.map(cmd => `
-    <div class="cmd-card ${cmd.statut || 'nouvelle'}" id="card_${cmd.id}">
-      <div class="cmd-table">Table ${cmd.table}</div>
-      <div class="cmd-heure">${cmd.heure || ''}</div>
-      <div class="cmd-detail">
-        <div class="row"><span class="emoji">🐚</span><span class="bold">${cmd.palier}</span></div>
-        <div class="row"><span class="emoji">🥘</span><span>Sauce : <strong>${cmd.sauce}</strong></span></div>
-        ${cmd.boisson ? `<div class="row"><span class="emoji">🍺</span><span>Boisson : <strong>${cmd.boisson}</strong></span></div>` : ''}
-        ${cmd.dessert ? '<span class="badge-dessert">🍮 TICKET DESSERT À DONNER</span>' : ''}
+  grid.innerHTML=cmds.map(cmd=>{
+    const items=cmd.items||[];
+    return `<div class="cmd-card ${cmd.statut||'nouvelle'}" id="card_${cmd.id}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+        <div class="cmd-table">Table ${cmd.table}</div>
+        <div class="cmd-heure">🕐 ${cmd.heure||'--:--'}</div>
       </div>
-      <div class="cmd-prix">${(cmd.palierPrix || 0).toFixed(2).replace('.', ',')} €</div>
+      ${items.map(item=>`
+        <div class="cmd-item-row">
+          <span>${item.nom}</span>
+          <span style="color:#D4AF37;font-weight:bold">${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span>
+        </div>`).join('')}
+      <div class="cmd-total">Total : ${(cmd.total||0).toFixed(2).replace('.',',')} €</div>
       <div class="cmd-actions">
-        <button class="btn-vue" onclick="marquerVue('${cmd.id}')">✓ Vu</button>
-        <button class="btn-regle ${cmd.statut === 'vue' ? 'actif' : ''}" onclick="marquerRegle('${cmd.id}')">💰 Réglé</button>
+        <button class="btn-vu" onclick="marquerVue('${cmd.id}',${cmd.table})">✓ Vu</button>
+        <button class="btn-addition" onclick="basculerAddition('${cmd.id}',${cmd.table})">→ Addition</button>
+        <button class="btn-regle" onclick="marquerRegle('${cmd.id}')">✕ Suppr.</button>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// ACTIONS COMMANDES
+// ============================================================
+async function marquerVue(id, tableNum){
+  await db.collection('commandes').doc(id).update({statut:'vue'});
+  // Notifier le téléphone client
+  await db.collection('notifications').doc(`table_${tableNum}`).set({
+    message:'✅ Votre commande est prise en charge — un serveur arrive !',
+    ts:firebase.firestore.FieldValue.serverTimestamp()
+  });
+  showToast(`✅ Table ${tableNum} notifiée`);
+}
+
+async function basculerAddition(cmdId, tableNum){
+  // Marquer la commande comme "en addition"
+  await db.collection('commandes').doc(cmdId).update({statut:'en_addition'});
+  // Récupérer toutes les commandes de cette table non réglées
+  await recalcAddition(tableNum);
+  showToast(`📋 Table ${tableNum} → Addition mise à jour`);
+}
+
+async function recalcAddition(tableNum){
+  const snap=await db.collection('commandes')
+    .where('table','==',tableNum)
+    .where('statut','in',['vue','en_addition','nouvelle'])
+    .get();
+  let total=0;
+  const commandes=[];
+  snap.forEach(doc=>{
+    const d=doc.data();
+    total+=d.total||0;
+    if((d.items||[]).length) commandes.push({heure:d.heure||'--:--',items:d.items||[],total:d.total||0,id:doc.id});
+  });
+  commandes.sort((a,b)=>a.heure.localeCompare(b.heure));
+  if(!commandes.length) return;
+  await db.collection('additions').doc(`table_${tableNum}`).set({
+    table:tableNum,total,commandes,
+    timestamp:firebase.firestore.FieldValue.serverTimestamp(),
+    statut:'en_cours'
+  });
+}
+
+async function marquerRegle(id){
+  await db.collection('commandes').doc(id).update({statut:'regle'});
 }
 
 // ============================================================
 // RENDER ADDITIONS
 // ============================================================
-function renderAdditions() {
-  const container = document.getElementById('additionsList');
-  const adds = Object.values(allAdditions).filter(a => a.statut === 'demandee');
-
-  if (!adds.length) {
-    container.innerHTML = '<div class="empty"><div class="emoji">🧾</div><p>Aucune addition demandée</p></div>';
+function renderAdditions(){
+  const container=document.getElementById('additionsList');
+  const adds=Object.values(allAdditions).filter(a=>a.statut!=='regle').sort((a,b)=>(a.table||0)-(b.table||0));
+  if(!adds.length){
+    container.innerHTML='<div class="empty"><div class="em">🧾</div><p>Aucune addition en cours</p></div>';
     return;
   }
-
-  container.innerHTML = adds.map(add => `
-    <div class="addition-alert">
-      <div class="info">
-        <div class="table-lbl">🔔 Table ${add.table} demande l'addition</div>
-        <div class="montant">${(add.total || 0).toFixed(2).replace('.', ',')} €</div>
+  container.innerHTML=adds.map(add=>{
+    const commandes=add.commandes||[];
+    return `<div class="addition-card ${add.statut==='regle'?'reglee':''}">
+      <div class="addition-header">
+        <div>
+          <div class="addition-table">🪑 Table ${add.table}</div>
+          <div style="color:#888;font-size:11px;margin-top:2px">${commandes.length} commande(s)</div>
+        </div>
+        <div class="addition-total">${(add.total||0).toFixed(2).replace('.',',')} €</div>
       </div>
-      <button class="btn-encaisse" onclick="encaisserTable('${add.id}', ${add.table})">💰 Encaissé</button>
-    </div>
-  `).join('');
+      <div class="addition-commandes">
+        ${commandes.map(cmd=>`
+          <div class="addition-groupe">
+            <div class="addition-groupe-heure">🕐 ${cmd.heure} — ${(cmd.items||[]).length} article(s)</div>
+            ${(cmd.items||[]).map(item=>`
+              <div class="addition-item">
+                <span>${item.nom}</span>
+                <span style="color:#D4AF37">${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span>
+              </div>`).join('')}
+            <div class="addition-subtotal">Sous-total : ${cmd.total.toFixed(2).replace('.',',')} €</div>
+          </div>`).join('')}
+      </div>
+      <div class="addition-actions">
+        <button class="btn-imprimer" onclick="imprimerTicket(${add.table}, ${JSON.stringify(add.commandes||[]).replace(/"/g,'&quot;')}, ${add.total||0})">🖨️ Imprimer</button>
+        <button class="btn-encaisser" onclick="encaisser(${add.table},'${add.id}')">💰 Encaissé ✓</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ============================================================
-// ACTIONS
+// ENCAISSER
 // ============================================================
-async function marquerVue(id) {
-  await db.collection('commandes').doc(id).update({ statut: 'vue' });
-}
-
-async function marquerRegle(id) {
-  await db.collection('commandes').doc(id).update({ statut: 'regle' });
-}
-
-async function encaisserTable(addId, tableNum) {
-  await db.collection('additions').doc(addId).update({ statut: 'regle' });
-  // Marquer toutes les commandes de cette table comme réglées
-  const snapshot = await db.collection('commandes').where('table', '==', tableNum).get();
-  const batch = db.batch();
-  snapshot.forEach(doc => batch.update(doc.ref, { statut: 'regle' }));
+async function encaisser(tableNum, addId){
+  if(!confirm(`Encaisser la table ${tableNum} ?`)) return;
+  // Récupérer les données avant suppression pour historique
+  const addSnap=await db.collection('additions').doc(addId.replace('table_',`table_`)).get();
+  const addData=addSnap.exists?addSnap.data():allAdditions[addId]||{};
+  // Archiver dans historique
+  await db.collection('historique').add({
+    table:tableNum,
+    total:addData.total||0,
+    commandes:addData.commandes||[],
+    heureReglement:new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}),
+    timestamp:firebase.firestore.FieldValue.serverTimestamp()
+  });
+  // Marquer toutes commandes réglées
+  const snap=await db.collection('commandes').where('table','==',tableNum).get();
+  const batch=db.batch();
+  snap.forEach(d=>batch.update(d.ref,{statut:'regle'}));
+  // Supprimer addition
+  const addRef=db.collection('additions').doc(`table_${tableNum}`);
+  batch.delete(addRef);
   await batch.commit();
+  // Notifier le client
+  await db.collection('notifications').doc(`table_${tableNum}`).set({
+    message:'💳 Paiement enregistré — merci et à bientôt !',
+    ts:firebase.firestore.FieldValue.serverTimestamp()
+  });
+  showToast(`✅ Table ${tableNum} encaissée`);
+  chargerHistorique();
 }
 
 // ============================================================
-// STATS + CA
+// HISTORIQUE
 // ============================================================
-function updateStats() {
-  const cmds = Object.values(allCommandes);
-  document.getElementById('statNouvelles').textContent = cmds.filter(c => c.statut === 'nouvelle').length;
-  document.getElementById('statEnCours').textContent = cmds.filter(c => c.statut === 'vue').length;
-  document.getElementById('statAdditions').textContent = Object.values(allAdditions).filter(a => a.statut === 'demandee').length;
+async function chargerHistorique(){
+  const snap=await db.collection('historique').orderBy('timestamp','desc').limit(50).get();
+  historique=[];
+  snap.forEach(doc=>historique.push({id:doc.id,...doc.data()}));
+  renderHistorique();
 }
 
-function updateCA() {
-  const cmds = Object.values(allCommandes);
-  const total = cmds.reduce((s, c) => s + (c.palierPrix || 0), 0);
-  const nb = cmds.length;
-  document.getElementById('caTotal').textContent = total.toFixed(2).replace('.', ',') + ' €';
-  document.getElementById('nbCouverts').textContent = nb;
-  document.getElementById('ticketMoyen').textContent = nb ? (total/nb).toFixed(2).replace('.', ',') + ' €' : '0 €';
+function renderHistorique(){
+  const container=document.getElementById('historiqueList');
+  if(!historique.length){
+    container.innerHTML='<div class="empty"><div class="em">📚</div><p>Aucun historique</p></div>';
+    return;
+  }
+  container.innerHTML=historique.map((h,idx)=>`
+    <div class="historique-item" onclick="toggleHistorique(${idx})">
+      <div class="historique-header">
+        <div>
+          <span class="historique-table">Table ${h.table}</span>
+          <span class="historique-heure" style="margin-left:8px">Réglé à ${h.heureReglement||'--:--'}</span>
+        </div>
+        <div class="historique-total">${(h.total||0).toFixed(2).replace('.',',')} €</div>
+      </div>
+      <div class="historique-detail" id="hdet_${idx}">
+        ${(h.commandes||[]).map(cmd=>`
+          <div style="margin-bottom:8px;padding:8px;background:#2A2A2A;border-radius:6px">
+            <div style="color:#D4AF37;font-size:11px;margin-bottom:4px">🕐 ${cmd.heure}</div>
+            ${(cmd.items||[]).map(item=>`
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:#ddd;padding:2px 0">
+                <span>${item.nom}</span>
+                <span>${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span>
+              </div>`).join('')}
+          </div>`).join('')}
+        <button onclick="event.stopPropagation();imprimerTicket(${h.table},${JSON.stringify(h.commandes||[]).replace(/"/g,'&quot;')},${h.total||0})" style="background:#333;border:1px solid #D4AF37;color:#D4AF37;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;margin-top:6px">🖨️ Réimprimer</button>
+      </div>
+    </div>`).join('');
+}
 
-  // Stats par sauce
-  const sauces = {};
-  cmds.forEach(c => { if (c.sauce) sauces[c.sauce] = (sauces[c.sauce] || 0) + 1; });
-  const topSauces = Object.entries(sauces).sort((a,b) => b[1]-a[1]);
-  document.getElementById('caParSauce').innerHTML = `
-    <div style="background:#1E1E1E;border-radius:12px;padding:16px;margin-bottom:16px">
-      <div style="color:#D4AF37;font-weight:bold;margin-bottom:12px">🥘 Sauces populaires</div>
-      ${topSauces.map(([s,n]) => `
-        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #333;font-size:13px">
-          <span>${s}</span><span style="color:#D4AF37;font-weight:bold">${n} commandes</span>
-        </div>`).join('')}
-    </div>`;
+function toggleHistorique(idx){
+  const el=document.getElementById(`hdet_${idx}`);
+  if(el) el.classList.toggle('show');
+}
 
-  // Stats par palier
-  const paliers = {};
-  cmds.forEach(c => { if (c.palier) paliers[c.palier] = (paliers[c.palier] || 0) + 1; });
-  document.getElementById('caParPalier').innerHTML = `
-    <div style="background:#1E1E1E;border-radius:12px;padding:16px">
-      <div style="color:#D4AF37;font-weight:bold;margin-bottom:12px">🐚 Répartition paliers</div>
-      ${Object.entries(paliers).map(([p,n]) => `
-        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #333;font-size:13px">
-          <span>${p}</span><span style="color:#D4AF37;font-weight:bold">${n} commandes</span>
-        </div>`).join('')}
-    </div>`;
+async function viderHistorique(){
+  if(!confirm('Vider tout l\'historique ? Irréversible.')) return;
+  const snap=await db.collection('historique').get();
+  const batch=db.batch();
+  snap.forEach(d=>batch.delete(d.ref));
+  await batch.commit();
+  historique=[];renderHistorique();
+  showToast('🗑️ Historique vidé');
+}
+
+// ============================================================
+// IMPRESSION TICKET
+// ============================================================
+function imprimerTicket(tableNum, commandes, total){
+  const now=new Date().toLocaleString('fr-FR');
+  let lignes='';
+  (commandes||[]).forEach(cmd=>{
+    lignes+=`<div class="t-sep"></div><div style="font-size:10px;color:#888">🕐 ${cmd.heure}</div>`;
+    (cmd.items||[]).forEach(item=>{
+      lignes+=`<div class="t-ligne"><span>${item.nom}</span><span>${item.prix===0?'Incl.':item.prix.toFixed(2).replace('.',',')+' €'}</span></div>`;
+    });
+    lignes+=`<div style="text-align:right;font-size:10px">ss-total : ${(cmd.total||0).toFixed(2).replace('.',',')} €</div>`;
+  });
+
+  const ticket=document.getElementById('ticketPrint');
+  ticket.innerHTML=`
+    <div class="t-title">🐚 MOULE & SMILE</div>
+    <div class="t-sub">1 Bd de la Douane — Saint-Pierre-la-Mer<br>Table ${tableNum} — ${now}</div>
+    ${lignes}
+    <div class="t-sep"></div>
+    <div class="t-total"><span>TOTAL</span><span>${(total||0).toFixed(2).replace('.',',')} €</span></div>
+    <div class="t-footer">Merci de votre visite !<br>À bientôt chez Moule & Smile 🐚</div>`;
+
+  window.print();
+}
+
+// ============================================================
+// CA
+// ============================================================
+function renderCA(){
+  const cmds=Object.values(allCommandes);
+  const total=cmds.reduce((s,c)=>s+(c.total||0),0);
+  const nb=cmds.length;
+  document.getElementById('caTotal').textContent=total.toFixed(0)+' €';
+  document.getElementById('caCouverts').textContent=nb;
+  document.getElementById('caTicket').textContent=nb?(total/nb).toFixed(0)+' €':'0 €';
+  document.getElementById('caTable').innerHTML=cmds.slice(0,30).map(c=>`
+    <tr>
+      <td>${c.heure||'--'}</td>
+      <td>Table ${c.table}</td>
+      <td>${(c.items||[]).length} articles</td>
+      <td style="color:#D4AF37;font-weight:bold">${(c.total||0).toFixed(2).replace('.',',')} €</td>
+    </tr>`).join('');
+}
+
+// ============================================================
+// STATS
+// ============================================================
+function updateStats(){
+  const cmds=Object.values(allCommandes);
+  const adds=Object.values(allAdditions);
+  document.getElementById('statNouv').textContent=cmds.filter(c=>c.statut==='nouvelle').length;
+  document.getElementById('statAdditions').textContent=adds.filter(a=>a.statut!=='regle').length;
+  document.getElementById('badgeAdd').textContent=adds.filter(a=>a.statut!=='regle').length;
+  const total=cmds.reduce((s,c)=>s+(c.total||0),0);
+  document.getElementById('statCA').textContent=total.toFixed(0)+'€';
 }
 
 // ============================================================
 // TABS
 // ============================================================
-function switchTab(tab, el) {
-  activeTab = tab;
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+function switchTab(tab,el){
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
-  document.getElementById('tabCommandes').style.display = tab === 'commandes' ? 'block' : 'none';
-  document.getElementById('tabAdditions').style.display = tab === 'additions' ? 'block' : 'none';
-  document.getElementById('tabCA').style.display = tab === 'ca' ? 'block' : 'none';
+  ['tabCommandes','tabAdditions','tabHistorique','tabCA'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1)).style.display='block';
+  if(tab==='historique') chargerHistorique();
 }
+
+// Init
+chargerHistorique();
 </script>
 </body>
 </html>

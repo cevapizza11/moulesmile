@@ -13,36 +13,55 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 .table-badge{background:#D4AF37;color:#1A1A1A;font-size:11px;font-weight:bold;padding:2px 10px;border-radius:20px;display:inline-block;margin-top:3px}
 .screen{display:none;padding:16px;max-width:480px;margin:0 auto}
 .screen.active{display:block}
+
+/* TABLE */
 .table-screen{text-align:center;padding-top:50px}
 .table-screen .logo{font-size:56px;margin-bottom:16px}
 .table-screen h2{color:#D4AF37;font-size:22px;margin-bottom:6px}
 .table-screen p{color:#aaa;font-size:13px;margin-bottom:30px}
 .table-input{width:100%;padding:18px;font-size:36px;text-align:center;background:#2A2A2A;border:2px solid #D4AF37;border-radius:12px;color:#D4AF37;font-weight:bold;margin-bottom:16px}
-.cat-tabs{display:flex;overflow-x:auto;gap:8px;padding:0 0 12px;margin-bottom:4px;scrollbar-width:none}
+
+/* NOTIFICATION BANDEAU */
+.notif-banner{position:fixed;top:0;left:0;right:0;z-index:999;background:#1A7A50;color:white;padding:16px;text-align:center;font-size:15px;font-weight:bold;transform:translateY(-100%);transition:transform .4s ease;border-bottom:3px solid #D4AF37}
+.notif-banner.show{transform:translateY(0)}
+.notif-banner .notif-icon{font-size:24px;margin-bottom:4px}
+
+/* CATÉGORIES */
+.cat-tabs{display:flex;overflow-x:auto;gap:8px;padding:0 0 12px;scrollbar-width:none;margin-bottom:4px}
 .cat-tabs::-webkit-scrollbar{display:none}
 .cat-tab{flex-shrink:0;padding:8px 14px;background:#2A2A2A;border:2px solid #333;border-radius:20px;font-size:12px;font-weight:bold;cursor:pointer;color:#aaa;white-space:nowrap;transition:all .2s}
 .cat-tab.active{background:#D4AF37;color:#1A1A1A;border-color:#D4AF37}
+
+/* SOUS-CATÉGORIES */
+.subcat-header{color:#D4AF37;font-size:12px;font-weight:bold;padding:10px 0 6px;letter-spacing:1px;border-bottom:1px solid #333;margin-bottom:8px;margin-top:4px}
+
+/* PRODUITS */
 .product-list{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
-.product-card{background:#2A2A2A;border:2px solid #333;border-radius:12px;padding:14px;display:flex;justify-content:space-between;align-items:center;transition:all .2s}
+.product-card{background:#2A2A2A;border:2px solid #333;border-radius:12px;padding:14px;display:flex;justify-content:space-between;align-items:center;transition:all .2s;position:relative}
 .product-card.disabled{opacity:.3;pointer-events:none}
 .product-card .info{flex:1}
 .product-card .nom{font-size:14px;font-weight:bold;color:#fff;margin-bottom:3px}
 .product-card .desc{font-size:11px;color:#888;line-height:1.3}
-.product-card .prix{color:#D4AF37;font-size:16px;font-weight:bold;text-align:right;margin-left:12px;white-space:nowrap}
-.gratuit{color:#1A7A50;font-size:13px;font-weight:bold}
-.add-btn{background:#D4AF37;border:none;border-radius:8px;color:#1A1A1A;font-size:22px;font-weight:bold;width:38px;height:38px;cursor:pointer;flex-shrink:0;margin-left:10px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.badge-menu{display:inline-block;background:#1A3A2A;border:1px solid #1A7A50;color:#4ABA80;font-size:9px;font-weight:bold;padding:1px 6px;border-radius:10px;margin-left:6px;vertical-align:middle}
+.add-btn{background:#D4AF37;border:none;border-radius:8px;color:#1A1A1A;font-size:22px;font-weight:bold;width:38px;height:38px;cursor:pointer;flex-shrink:0;margin-left:10px;display:flex;align-items:center;justify-content:center}
 .add-btn:active{background:#C49A2F;transform:scale(.95)}
+.prix{color:#D4AF37;font-size:16px;font-weight:bold;text-align:right;margin-left:12px;white-space:nowrap}
+.gratuit{color:#1A7A50;font-size:13px;font-weight:bold}
+
+/* PANIER */
 .panier-bar{position:fixed;bottom:0;left:0;right:0;background:#D4AF37;padding:12px 20px;display:none;justify-content:space-between;align-items:center;z-index:200;cursor:pointer}
 .panier-bar.visible{display:flex}
-.panier-info .panier-nb{font-size:12px;font-weight:bold;color:#1A1A1A}
-.panier-info .panier-total{font-size:20px;font-weight:bold;color:#1A1A1A}
-.panier-btn{background:#1A1A1A;color:#D4AF37;border:none;padding:10px 18px;border-radius:8px;font-weight:bold;font-size:13px;cursor:pointer}
+.panier-bar .panier-nb{font-size:12px;font-weight:bold;color:#1A1A1A}
+.panier-bar .panier-total{font-size:20px;font-weight:bold;color:#1A1A1A}
+.panier-bar .panier-btn{background:#1A1A1A;color:#D4AF37;border:none;padding:10px 18px;border-radius:8px;font-weight:bold;font-size:13px;cursor:pointer}
 .panier-item{background:#2A2A2A;border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
 .panier-item .pnom{font-size:13px;font-weight:bold}
 .panier-item .pdesc{font-size:11px;color:#888}
 .panier-item .pprix{color:#D4AF37;font-weight:bold;font-size:14px}
 .del-btn{background:#C0392B;border:none;border-radius:6px;color:white;padding:4px 10px;cursor:pointer;font-size:12px;margin-left:8px}
 .panier-total-row{display:flex;justify-content:space-between;padding:14px;background:#2A2A2A;border-radius:10px;margin-top:8px;border:2px solid #D4AF37}
+
+/* CONFIRM */
 .confirm-screen{text-align:center;padding-top:30px}
 .big-emoji{font-size:64px;margin-bottom:16px}
 .steps-list{background:#2A2A2A;border-radius:12px;padding:14px;text-align:left;margin:16px 0}
@@ -50,12 +69,46 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 .step-item:last-child{border-bottom:none}
 .step-num{background:#D4AF37;color:#1A1A1A;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:12px;flex-shrink:0}
 .step-text{color:#ddd;font-size:13px}
+
+/* ADDITION */
 .total-box{background:#D4AF37;border-radius:14px;padding:24px;margin:16px 0;text-align:center}
 .total-box .tlbl{color:#1A1A1A;font-size:13px;font-weight:bold;margin-bottom:6px}
 .total-box .tamt{color:#1A1A1A;font-size:44px;font-weight:bold}
-.cmd-item{padding:7px 0;border-bottom:1px solid #333;font-size:13px;color:#ddd;display:flex;justify-content:space-between}
-.cmd-item:last-child{border-bottom:none}
-.btn{width:100%;padding:15px;border:none;border-radius:12px;font-size:15px;font-weight:bold;cursor:pointer;margin-bottom:10px}
+.commande-groupe{background:#2A2A2A;border-radius:10px;padding:12px;margin-bottom:10px}
+.commande-groupe .cmd-heure{color:#D4AF37;font-size:11px;font-weight:bold;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #333}
+.cmd-item{padding:5px 0;font-size:13px;color:#ddd;display:flex;justify-content:space-between}
+
+/* MODALS */
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:500;display:none;align-items:flex-end;justify-content:center}
+.modal-overlay.visible{display:flex}
+.modal-box{background:#1E1E1E;border-radius:20px 20px 0 0;padding:24px 16px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto;border-top:3px solid #D4AF37}
+.modal-box h3{color:#D4AF37;font-size:18px;font-weight:bold;margin-bottom:4px;text-align:center}
+.modal-sub{color:#888;font-size:12px;text-align:center;margin-bottom:20px}
+.modal-list{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.modal-item{background:#2A2A2A;border:2px solid #333;border-radius:12px;padding:14px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:all .2s}
+.modal-item:active{border-color:#D4AF37;background:#2E2A1A}
+.modal-item .mnom{font-size:14px;font-weight:bold;color:#fff}
+.modal-item .mdesc{font-size:11px;color:#888;margin-top:2px}
+.modal-item .mprix{color:#1A7A50;font-size:14px;font-weight:bold;flex-shrink:0;margin-left:10px}
+.modal-close{background:#333;border:none;color:#aaa;padding:12px;border-radius:10px;width:100%;font-size:13px;cursor:pointer}
+
+/* UPSELL */
+.upsell-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.9);z-index:600;display:none;align-items:flex-end;justify-content:center}
+.upsell-overlay.visible{display:flex}
+.upsell-box{background:#1E1E1E;border-radius:20px 20px 0 0;padding:24px 16px;width:100%;max-width:480px;border-top:3px solid #D4AF37;text-align:center}
+.upsell-box .upsell-emoji{font-size:48px;margin-bottom:12px}
+.upsell-box h3{color:#D4AF37;font-size:20px;font-weight:bold;margin-bottom:6px}
+.upsell-box p{color:#aaa;font-size:13px;margin-bottom:20px;line-height:1.5}
+.upsell-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;text-align:left}
+.upsell-item{background:#2A2A2A;border:2px solid #333;border-radius:10px;padding:12px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.upsell-item:active{border-color:#D4AF37}
+.upsell-item .unom{font-size:13px;font-weight:bold;color:#fff}
+.upsell-item .udesc{font-size:11px;color:#888}
+.upsell-item .uprix{color:#D4AF37;font-weight:bold;font-size:14px;flex-shrink:0;margin-left:10px}
+.upsell-non{background:#333;border:none;color:#aaa;padding:12px;border-radius:10px;width:100%;font-size:13px;cursor:pointer}
+
+/* BTNS */
+.btn{width:100%;padding:15px;border:none;border-radius:12px;font-size:15px;font-weight:bold;cursor:pointer;margin-bottom:10px;transition:all .2s}
 .btn-or{background:#D4AF37;color:#1A1A1A}
 .btn-outline{background:transparent;border:2px solid #D4AF37;color:#D4AF37}
 .btn-rouge{background:#C0392B;color:white}
@@ -66,43 +119,18 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 .loader{display:none;text-align:center;padding:50px}
 .spinner{width:40px;height:40px;border:4px solid #333;border-top:4px solid #D4AF37;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 14px}
 @keyframes spin{to{transform:rotate(360deg)}}
-.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#D4AF37;color:#1A1A1A;padding:10px 22px;border-radius:30px;font-weight:bold;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#D4AF37;color:#1A1A1A;padding:10px 22px;border-radius:30px;font-weight:bold;font-size:13px;z-index:998;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
 .version{text-align:center;padding:16px;color:#333;font-size:10px}
-
-/* MODAL BOISSON INCLUSE */
-.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:500;display:none;align-items:flex-end;justify-content:center}
-.modal-overlay.visible{display:flex}
-.modal-box{background:#1E1E1E;border-radius:20px 20px 0 0;padding:24px 16px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto;border-top:3px solid #D4AF37}
-.modal-box h3{color:#D4AF37;font-size:18px;font-weight:bold;margin-bottom:4px;text-align:center}
-.modal-sub{color:#888;font-size:12px;text-align:center;margin-bottom:20px}
-.modal-boisson-list{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
-.modal-boisson-item{background:#2A2A2A;border:2px solid #333;border-radius:12px;padding:14px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:all .2s}
-.modal-boisson-item:active{border-color:#D4AF37;background:#2E2A1A}
-.modal-boisson-item .bnom{font-size:14px;font-weight:bold;color:#fff}
-.modal-boisson-item .bdesc{font-size:11px;color:#888;margin-top:2px}
-.modal-boisson-item .bprix{color:#1A7A50;font-size:14px;font-weight:bold;flex-shrink:0;margin-left:10px}
-.modal-close{background:#333;border:none;color:#aaa;padding:12px;border-radius:10px;width:100%;font-size:13px;cursor:pointer;margin-top:4px}
-
-/* MODAL DESSERT */
-.modal-dessert{background:#1E1A0E;border-top:3px solid #D4AF37}
-.modal-dessert h3{color:#D4AF37}
-.upsell-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.9);z-index:600;display:none;align-items:flex-end;justify-content:center}
-.upsell-overlay.visible{display:flex}
-.upsell-box{background:#1E1E1E;border-radius:20px 20px 0 0;padding:24px 16px;width:100%;max-width:480px;border-top:3px solid #D4AF37;text-align:center}
-.upsell-box .upsell-emoji{font-size:48px;margin-bottom:12px}
-.upsell-box h3{color:#D4AF37;font-size:20px;font-weight:bold;margin-bottom:6px}
-.upsell-box p{color:#aaa;font-size:13px;margin-bottom:20px;line-height:1.5}
-.upsell-dessert-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;text-align:left}
-.upsell-dessert-item{background:#2A2A2A;border:2px solid #333;border-radius:10px;padding:12px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:all .2s}
-.upsell-dessert-item:active{border-color:#D4AF37;background:#2E2A1A}
-.upsell-dessert-item .dnom{font-size:14px;font-weight:bold;color:#fff}
-.upsell-dessert-item .ddesc{font-size:11px;color:#888;margin-top:2px}
-.upsell-dessert-item .dprix{color:#D4AF37;font-size:14px;font-weight:bold;flex-shrink:0;margin-left:10px}
-.upsell-non{background:#333;border:none;color:#aaa;padding:12px;border-radius:10px;width:100%;font-size:13px;cursor:pointer}
 </style>
 </head>
 <body>
+
+<!-- NOTIFICATION BANDEAU -->
+<div class="notif-banner" id="notifBanner">
+  <div class="notif-icon">✅</div>
+  <div id="notifText">Commande confirmée !</div>
+</div>
 
 <div class="header">
   <h1>🐚 MOULE & SMILE</h1>
@@ -110,8 +138,9 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 </div>
 <div class="toast" id="toast"></div>
 
+<!-- PANIER FLOTTANT -->
 <div class="panier-bar" id="panierBar" onclick="showScreen('screenPanier')">
-  <div class="panier-info">
+  <div>
     <div class="panier-nb" id="panierNb">0 article</div>
     <div class="panier-total" id="panierTotalBar">0,00 €</div>
   </div>
@@ -132,9 +161,9 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 <!-- CARTE -->
 <div class="screen" id="screenCarte">
   <div class="sec-title">Notre carte</div>
-  <div class="sec-sub">Ajoutez vos produits au panier — commandez autant de fois que vous voulez</div>
+  <div class="sec-sub">Commandez à tout moment — autant de fois que vous voulez</div>
   <div class="cat-tabs" id="catTabs"></div>
-  <div class="product-list" id="productList"></div>
+  <div id="productList"></div>
 </div>
 
 <!-- PANIER -->
@@ -142,17 +171,14 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   <div class="sec-title">🛒 Mon panier</div>
   <div class="sec-sub">Table <span id="panierTable"></span></div>
   <div id="panierItems"></div>
-  <div class="info-banner">🚶 Après validation, un serveur apporte vos boissons et votre cocotte, puis direction le passage pour les moules !</div>
-  <button class="btn btn-or" id="btnCommander" onclick="validerCommande()">✅ Commander maintenant</button>
+  <div class="info-banner">🚶 Après validation, un serveur apporte votre commande. Direction le passage pour les moules !</div>
+  <button class="btn btn-or" id="btnCommander" onclick="intercepterCommande()">✅ Commander maintenant</button>
   <button class="btn btn-outline" onclick="showScreen('screenCarte')">← Continuer à commander</button>
-  <button class="btn btn-rouge" onclick="demanderAddition()" style="margin-top:4px">🧾 Demander l'addition</button>
+  <button class="btn btn-rouge" onclick="demanderAddition()">🧾 Demander l'addition</button>
 </div>
 
 <!-- LOADER -->
-<div class="loader" id="loader">
-  <div class="spinner"></div>
-  <p style="color:#aaa">Envoi en cours...</p>
-</div>
+<div class="loader" id="loader"><div class="spinner"></div><p style="color:#aaa">Envoi...</p></div>
 
 <!-- CONFIRMATION -->
 <div class="screen" id="screenConfirm">
@@ -161,13 +187,13 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
     <h2 style="color:#D4AF37;font-size:22px;margin-bottom:8px">Commande envoyée !</h2>
     <p style="color:#aaa;font-size:13px;margin-bottom:16px">Table <strong id="confirmTable" style="color:#D4AF37"></strong></p>
     <div class="steps-list">
-      <div class="step-item"><div class="step-num">1</div><div class="step-text">Un serveur apporte vos <strong>boissons</strong> et votre <strong>cocotte</strong></div></div>
-      <div class="step-item"><div class="step-num">2</div><div class="step-text">Allez au <strong>passage self-service</strong> : Moules → Sauce → Frites</div></div>
+      <div class="step-item"><div class="step-num">1</div><div class="step-text">Un serveur prend en charge votre commande</div></div>
+      <div class="step-item"><div class="step-num">2</div><div class="step-text">Pour les moules → passage self-service : Moules → Sauce → Frites</div></div>
       <div class="step-item"><div class="step-num">3</div><div class="step-text">C'est <strong>à volonté</strong> — revenez autant que vous voulez 😄</div></div>
-      <div class="step-item"><div class="step-num">4</div><div class="step-text">Recommandez boissons ou desserts depuis la carte à tout moment</div></div>
+      <div class="step-item"><div class="step-num">4</div><div class="step-text">Recommandez depuis la carte à tout moment</div></div>
     </div>
     <button class="btn btn-or" onclick="commanderEncore()">🍺 Commander autre chose</button>
-    <button class="btn btn-rouge" onclick="demanderAddition()" style="margin-top:4px">🧾 Demander l'addition</button>
+    <button class="btn btn-rouge" onclick="demanderAddition()">🧾 Demander l'addition</button>
   </div>
 </div>
 
@@ -179,9 +205,40 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
       <div class="tlbl">TOTAL TABLE <span id="additionTable"></span></div>
       <div class="tamt" id="totalAmount">0,00 €</div>
     </div>
-    <div style="background:#2A2A2A;border-radius:12px;padding:14px;text-align:left;margin-bottom:16px" id="commandesList"></div>
-    <div class="info-banner">Un serveur arrive avec votre terminal de paiement 🙏<br>Merci de votre visite — à bientôt !</div>
+    <div id="commandesDetail"></div>
+    <div class="info-banner" style="margin-top:12px">Un serveur arrive avec votre terminal de paiement 🙏<br>Merci de votre visite !</div>
     <button class="btn btn-gris" onclick="showScreen('screenConfirm')">← Retour</button>
+  </div>
+</div>
+
+<!-- MODAL BOISSON INCLUSE -->
+<div class="modal-overlay" id="modalBoisson">
+  <div class="modal-box">
+    <h3>🍺 Votre boisson incluse</h3>
+    <div class="modal-sub" id="modalBoissonSub">Choisissez votre boisson offerte</div>
+    <div class="modal-list" id="modalBoissonList"></div>
+    <button class="modal-close" onclick="fermerModalBoisson()">Plus tard — je choisirai avec le serveur</button>
+  </div>
+</div>
+
+<!-- MODAL DESSERT INCLUS (Palier 3) -->
+<div class="modal-overlay" id="modalDessert">
+  <div class="modal-box">
+    <h3>🍮 Votre dessert inclus</h3>
+    <div class="modal-sub">Inclus dans votre Palier 3 — offert !</div>
+    <div class="modal-list" id="modalDessertList"></div>
+    <button class="modal-close" onclick="fermerModalDessert()">Plus tard — je choisirai avec le serveur</button>
+  </div>
+</div>
+
+<!-- UPSELL DESSERT -->
+<div class="upsell-overlay" id="upsellDessert">
+  <div class="upsell-box">
+    <div class="upsell-emoji">🍮</div>
+    <h3>Et un dessert ?</h3>
+    <p>Nos desserts maison pour finir en beauté...<br>À seulement <strong style="color:#D4AF37">3,50 €</strong> !</p>
+    <div class="upsell-list" id="upsellDessertList"></div>
+    <button class="upsell-non" onclick="refuserDessert()">Non merci, je commande sans dessert</button>
   </div>
 </div>
 
@@ -190,260 +247,307 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyDUb3LtVsMAq986DgtHwkMBeQFr8A8A2nU",
-  authDomain: "commandemoulesmile.firebaseapp.com",
-  projectId: "commandemoulesmile",
-  storageBucket: "commandemoulesmile.firebasestorage.app",
-  messagingSenderId: "303564394584",
-  appId: "1:303564394584:web:cbde6960f99cac83517a2d"
-};
+const firebaseConfig={apiKey:"AIzaSyDUb3LtVsMAq986DgtHwkMBeQFr8A8A2nU",authDomain:"commandemoulesmile.firebaseapp.com",projectId:"commandemoulesmile",storageBucket:"commandemoulesmile.firebasestorage.app",messagingSenderId:"303564394584",appId:"1:303564394584:web:cbde6960f99cac83517a2d"};
 firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+const db=firebase.firestore();
 
-let tableNum = null;
-let panier = [];
-let catActive = null;
-let carte = null;
+let tableNum=null, panier=[], catActive=null, carte=null, palierEnCours=null;
 
-const urlParams = new URLSearchParams(window.location.search);
-if (urlParams.get('table')) document.getElementById('tableInput').value = urlParams.get('table');
+// URL table
+const urlParams=new URLSearchParams(window.location.search);
+if(urlParams.get('table')) document.getElementById('tableInput').value=urlParams.get('table');
 
-const carteDefaut = { categories: [
-  { id:"formules", nom:"🐚 Formules", produits:[
-    {id:"p1",nom:"Palier 1 — Moules seules",desc:"Moules Bouzigues AOP + frites fraîches à volonté",emoji:"🐚",prix:21.90,actif:true},
-    {id:"p2",nom:"Palier 2 — Moules + boisson",desc:"Moules + frites + 1 boisson incluse",emoji:"🐚",prix:24.90,actif:true},
-    {id:"p3",nom:"Palier 3 — Complet",desc:"Moules + frites + boisson + dessert inclus",emoji:"🐚",prix:28.90,actif:true},
-    {id:"ca1",nom:"Calamars à volonté",desc:"Calamars frits maison + frites",emoji:"🦑",prix:19.90,actif:true},
-    {id:"fc1",nom:"Fish & chips maison",desc:"Cabillaud pané + frites fraîches",emoji:"🐟",prix:14.90,actif:true},
-    {id:"en1",nom:"Enfant 0-7 ans",desc:"1 enfant gratuit par adulte payant",emoji:"👧",prix:0.00,actif:true},
-    {id:"en2",nom:"Enfant / Ado 8-17 ans",desc:"À volonté — tarif unique",emoji:"🧒",prix:15.90,actif:true},
-  ]},
-  { id:"sauces", nom:"🥘 Sauces", produits:[
-    {id:"s1",nom:"Marinière",desc:"Vin blanc, échalotes, persil",emoji:"🌿",prix:0.00,actif:true},
-    {id:"s2",nom:"Roquefort",desc:"Roquefort, noix, cognac",emoji:"🧀",prix:0.00,actif:true},
-    {id:"s3",nom:"Curry",desc:"Curry, lait de coco, citron vert",emoji:"🌶️",prix:0.00,actif:true},
-    {id:"s4",nom:"Crème-échalote",desc:"Crème fraîche, échalotes confites",emoji:"🥛",prix:0.00,actif:true},
-    {id:"s5",nom:"Tomate-chorizo",desc:"Tomates, chorizo, piment doux",emoji:"🍅",prix:0.00,actif:true},
-    {id:"s6",nom:"Provençale",desc:"Tomates, herbes, ail, olives",emoji:"🌞",prix:0.00,actif:true},
-  ]},
-  { id:"softs", nom:"🥤 Softs", produits:[
-    {id:"b1",nom:"Coca-Cola",desc:"33cl",emoji:"🥤",prix:3.00,actif:true},
-    {id:"b2",nom:"Orangina",desc:"33cl",emoji:"🍊",prix:3.00,actif:true},
-    {id:"b3",nom:"Limonade",desc:"33cl",emoji:"🍋",prix:3.00,actif:true},
-    {id:"b4",nom:"Eau plate",desc:"50cl",emoji:"💧",prix:2.50,actif:true},
-    {id:"b5",nom:"Eau gazeuse",desc:"50cl",emoji:"💧",prix:2.50,actif:true},
-    {id:"b6",nom:"Jus de fruits",desc:"25cl",emoji:"🍹",prix:3.50,actif:true},
-  ]},
-  { id:"bieres", nom:"🍺 Bières", produits:[
-    {id:"b7",nom:"Bière pression",desc:"25cl",emoji:"🍺",prix:3.50,actif:true},
-    {id:"b8",nom:"Bière pression",desc:"50cl",emoji:"🍺",prix:5.50,actif:true},
-    {id:"b9",nom:"Bière bouteille",desc:"33cl",emoji:"🍺",prix:4.50,actif:true},
-    {id:"b10",nom:"Bière sans alcool",desc:"33cl",emoji:"🍺",prix:4.00,actif:true},
-  ]},
-  { id:"vins_blancs", nom:"🥂 Vins Blancs", produits:[
-    {id:"b11",nom:"Picpoul de Pinet AOP",desc:"Codet 25cl",emoji:"🥂",prix:4.50,actif:true},
-    {id:"b12",nom:"Picpoul de Pinet AOP",desc:"Pichet 50cl",emoji:"🥂",prix:9.50,actif:true},
-    {id:"b13",nom:"Picpoul de Pinet AOP",desc:"Bouteille 75cl",emoji:"🥂",prix:17.00,actif:true},
-    {id:"b14",nom:"La Clape Blanc AOP",desc:"Bouteille 75cl",emoji:"🥂",prix:19.00,actif:true},
-    {id:"b15",nom:"Gérard Bertrand Blanc",desc:"Bouteille 75cl",emoji:"🥂",prix:18.00,actif:true},
-    {id:"b16",nom:"Gérard Bertrand Blanc",desc:"Magnum 1,5L",emoji:"🥂",prix:32.00,actif:true},
-  ]},
-  { id:"vins_roses", nom:"🍷 Vins Rosés", produits:[
-    {id:"b17",nom:"Corbières Rosé AOP",desc:"Codet 25cl",emoji:"🍷",prix:4.50,actif:true},
-    {id:"b18",nom:"Corbières Rosé AOP",desc:"Pichet 50cl",emoji:"🍷",prix:9.50,actif:true},
-    {id:"b19",nom:"Corbières Rosé AOP",desc:"Bouteille 75cl",emoji:"🍷",prix:16.00,actif:true},
-    {id:"b20",nom:"La Clape Rosé AOP",desc:"Bouteille 75cl",emoji:"🍷",prix:19.00,actif:true},
-    {id:"b21",nom:"Gérard Bertrand Rosé",desc:"Bouteille 75cl",emoji:"🍷",prix:20.00,actif:true},
-    {id:"b22",nom:"Gérard Bertrand Rosé",desc:"Magnum 1,5L",emoji:"🍷",prix:36.00,actif:true},
-  ]},
-  { id:"vins_rouges", nom:"🍷 Vins Rouges", produits:[
-    {id:"b23",nom:"Minervois Rouge AOP",desc:"Bouteille 75cl",emoji:"🍷",prix:17.00,actif:true},
-    {id:"b24",nom:"Corbières Rouge AOP",desc:"Bouteille 75cl",emoji:"🍷",prix:16.00,actif:true},
-  ]},
-  { id:"cocktails", nom:"🍹 Cocktails", produits:[
-    {id:"b25",nom:"Spritz",desc:"Aperol, Prosecco, eau gazeuse — 25cl",emoji:"🥂",prix:8.00,actif:true},
-    {id:"b26",nom:"Mojito",desc:"Rhum, menthe fraîche, citron vert — 25cl",emoji:"🍹",prix:8.50,actif:true},
-    {id:"b27",nom:"Moscow Mule",desc:"Vodka, ginger beer, citron — 25cl",emoji:"🍹",prix:8.50,actif:true},
-    {id:"b28",nom:"Pastis / Ricard",desc:"4cl",emoji:"🥃",prix:4.00,actif:true},
-  ]},
-  { id:"sangria", nom:"🍷 Sangria", produits:[
-    {id:"b29",nom:"Sangria Maison",desc:"Verre 25cl — Vin rouge, fruits frais, épices",emoji:"🍷",prix:5.50,actif:true},
-    {id:"b30",nom:"Sangria Maison",desc:"Pichet 50cl",emoji:"🍷",prix:9.50,actif:true},
-    {id:"b31",nom:"Sangria Maison",desc:"Pichet 1L",emoji:"🍷",prix:16.00,actif:true},
-  ]},
-  { id:"desserts", nom:"🍮 Desserts", produits:[
-    {id:"d1",nom:"Dessert du jour",desc:"Demandez à votre serveur",emoji:"🍮",prix:3.50,actif:true},
-    {id:"d2",nom:"Glace italienne",desc:"Vanille ou chocolat",emoji:"🍦",prix:3.50,actif:true},
-    {id:"d3",nom:"Mousse au chocolat",desc:"Maison",emoji:"🍫",prix:3.50,actif:true},
-  ]},
-  { id:"digestifs", nom:"✨ Digestifs", produits:[
-    {id:"dg1",nom:"Cabanel Citron",desc:"Liqueur artisanale — Carcassonne 1868 — 4cl",emoji:"🍋",prix:4.50,actif:true},
-    {id:"dg2",nom:"Cabanel Menthe",desc:"Liqueur artisanale — Carcassonne 1868 — 4cl",emoji:"🌿",prix:4.50,actif:true},
-    {id:"dg3",nom:"Cabanel Clémentine",desc:"Liqueur artisanale — Carcassonne 1868 — 4cl",emoji:"🍊",prix:4.50,actif:true},
-  ]},
-  { id:"chauds", nom:"☕ Chauds", produits:[
-    {id:"b32",nom:"Café / Expresso",desc:"",emoji:"☕",prix:2.50,actif:true},
-    {id:"b33",nom:"Thé / Infusion",desc:"",emoji:"🍵",prix:2.50,actif:true},
-  ]},
-],
-// BOISSONS INCLUSES DANS LES MENUS (paliers 2 et 3)
-boissonsMenu: [
-  {id:"bm1", nom:"Coca-Cola", desc:"33cl", emoji:"🥤", actif:true},
-  {id:"bm2", nom:"Orangina", desc:"33cl", emoji:"🍊", actif:true},
-  {id:"bm3", nom:"Limonade", desc:"33cl", emoji:"🍋", actif:true},
-  {id:"bm4", nom:"Eau plate", desc:"50cl", emoji:"💧", actif:true},
-  {id:"bm5", nom:"Eau gazeuse", desc:"50cl", emoji:"💧", actif:true},
-  {id:"bm6", nom:"Jus de fruits", desc:"25cl", emoji:"🍹", actif:true},
-  {id:"bm7", nom:"Bière pression", desc:"25cl", emoji:"🍺", actif:true},
-  {id:"bm9", nom:"Verre de vin rosé", desc:"Codet 25cl — Corbières Rosé AOP", emoji:"🍷", actif:true},
-  {id:"bm10", nom:"Verre de vin blanc", desc:"Codet 25cl — Picpoul de Pinet AOP", emoji:"🥂", actif:true},
-]};
+// ============================================================
+// CARTE PAR DÉFAUT — ordre logique de prise de commande
+// ============================================================
+const carteDefaut={
+  categories:[
+    {id:"apero", nom:"🥂 Apéro & Boissons", produits:[
+      // Softs
+      {id:"b1",nom:"Coca-Cola",desc:"33cl",emoji:"🥤",prix:3.00,actif:true,subcat:"Softs"},
+      {id:"b2",nom:"Orangina",desc:"33cl",emoji:"🍊",prix:3.00,actif:true,subcat:"Softs"},
+      {id:"b3",nom:"Limonade",desc:"33cl",emoji:"🍋",prix:3.00,actif:true,subcat:"Softs"},
+      {id:"b4",nom:"Eau plate",desc:"50cl",emoji:"💧",prix:2.50,actif:true,subcat:"Softs"},
+      {id:"b5",nom:"Eau gazeuse",desc:"50cl",emoji:"💧",prix:2.50,actif:true,subcat:"Softs"},
+      {id:"b6",nom:"Jus de fruits",desc:"25cl",emoji:"🍹",prix:3.50,actif:true,subcat:"Softs"},
+      // Bières
+      {id:"b7",nom:"Bière pression",desc:"25cl",emoji:"🍺",prix:3.50,actif:true,subcat:"Bières"},
+      {id:"b8",nom:"Bière pression",desc:"50cl",emoji:"🍺",prix:5.50,actif:true,subcat:"Bières"},
+      {id:"b9",nom:"Bière bouteille",desc:"33cl",emoji:"🍺",prix:4.50,actif:true,subcat:"Bières"},
+      {id:"b10",nom:"Bière sans alcool",desc:"33cl",emoji:"🍺",prix:4.00,actif:true,subcat:"Bières"},
+      // Vins blancs
+      {id:"b11",nom:"Picpoul de Pinet AOP",desc:"Codet 25cl",emoji:"🥂",prix:4.50,actif:true,subcat:"Vins Blancs"},
+      {id:"b12",nom:"Picpoul de Pinet AOP",desc:"Pichet 50cl",emoji:"🥂",prix:9.50,actif:true,subcat:"Vins Blancs"},
+      {id:"b13",nom:"Picpoul de Pinet AOP",desc:"Bouteille 75cl",emoji:"🥂",prix:17.00,actif:true,subcat:"Vins Blancs"},
+      {id:"b14",nom:"La Clape Blanc AOP",desc:"Bouteille 75cl",emoji:"🥂",prix:19.00,actif:true,subcat:"Vins Blancs"},
+      {id:"b15",nom:"Gérard Bertrand Blanc",desc:"Bouteille 75cl",emoji:"🥂",prix:18.00,actif:true,subcat:"Vins Blancs"},
+      {id:"b16",nom:"Gérard Bertrand Blanc",desc:"Magnum 1,5L",emoji:"🥂",prix:32.00,actif:true,subcat:"Vins Blancs"},
+      // Vins rosés
+      {id:"b17",nom:"Corbières Rosé AOP",desc:"Codet 25cl",emoji:"🍷",prix:4.50,actif:true,subcat:"Vins Rosés"},
+      {id:"b18",nom:"Corbières Rosé AOP",desc:"Pichet 50cl",emoji:"🍷",prix:9.50,actif:true,subcat:"Vins Rosés"},
+      {id:"b19",nom:"Corbières Rosé AOP",desc:"Bouteille 75cl",emoji:"🍷",prix:16.00,actif:true,subcat:"Vins Rosés"},
+      {id:"b20",nom:"La Clape Rosé AOP",desc:"Bouteille 75cl",emoji:"🍷",prix:19.00,actif:true,subcat:"Vins Rosés"},
+      {id:"b21",nom:"Gérard Bertrand Rosé",desc:"Bouteille 75cl",emoji:"🍷",prix:20.00,actif:true,subcat:"Vins Rosés"},
+      {id:"b22",nom:"Gérard Bertrand Rosé",desc:"Magnum 1,5L",emoji:"🍷",prix:36.00,actif:true,subcat:"Vins Rosés"},
+      // Vins rouges
+      {id:"b23",nom:"Minervois Rouge AOP",desc:"Bouteille 75cl",emoji:"🍷",prix:17.00,actif:true,subcat:"Vins Rouges"},
+      {id:"b24",nom:"Corbières Rouge AOP",desc:"Bouteille 75cl",emoji:"🍷",prix:16.00,actif:true,subcat:"Vins Rouges"},
+      // Cocktails
+      {id:"b25",nom:"Spritz",desc:"Aperol, Prosecco, eau gazeuse — 25cl",emoji:"🥂",prix:8.00,actif:true,subcat:"Cocktails"},
+      {id:"b26",nom:"Mojito",desc:"Rhum, menthe fraîche, citron vert — 25cl",emoji:"🍹",prix:8.50,actif:true,subcat:"Cocktails"},
+      {id:"b27",nom:"Moscow Mule",desc:"Vodka, ginger beer, citron — 25cl",emoji:"🍹",prix:8.50,actif:true,subcat:"Cocktails"},
+      {id:"b28",nom:"Pastis / Ricard",desc:"4cl",emoji:"🥃",prix:4.00,actif:true,subcat:"Cocktails"},
+      // Sangria
+      {id:"b29",nom:"Sangria Maison",desc:"Verre 25cl — Vin rouge Corbières, fruits frais",emoji:"🍷",prix:5.50,actif:true,subcat:"Sangria"},
+      {id:"b30",nom:"Sangria Maison",desc:"Pichet 50cl",emoji:"🍷",prix:9.50,actif:true,subcat:"Sangria"},
+      {id:"b31",nom:"Sangria Maison",desc:"Pichet 1L",emoji:"🍷",prix:16.00,actif:true,subcat:"Sangria"},
+      // Chauds
+      {id:"b32",nom:"Café / Expresso",desc:"",emoji:"☕",prix:2.50,actif:true,subcat:"Chauds"},
+      {id:"b33",nom:"Thé / Infusion",desc:"",emoji:"🍵",prix:2.50,actif:true,subcat:"Chauds"},
+    ]},
+    {id:"formules", nom:"🐚 Formules", produits:[
+      {id:"p1",nom:"Palier 1 — Moules seules",desc:"Moules Bouzigues AOP + frites fraîches à volonté",emoji:"🐚",prix:21.90,actif:true},
+      {id:"p2",nom:"Palier 2 — Moules + boisson",desc:"Moules + frites + 1 boisson incluse au choix",emoji:"🐚",prix:24.90,actif:true},
+      {id:"p3",nom:"Palier 3 — Complet",desc:"Moules + frites + boisson + dessert inclus",emoji:"🐚",prix:28.90,actif:true},
+      {id:"ca1",nom:"Calamars à volonté",desc:"Calamars frits maison + frites",emoji:"🦑",prix:19.90,actif:true},
+      {id:"fc1",nom:"Fish & chips maison",desc:"Cabillaud pané + frites fraîches",emoji:"🐟",prix:14.90,actif:true},
+      {id:"en1",nom:"Enfant 0-7 ans",desc:"1 enfant gratuit par adulte payant",emoji:"👧",prix:0.00,actif:true},
+      {id:"en2",nom:"Enfant / Ado 8-17 ans",desc:"À volonté — tarif unique",emoji:"🧒",prix:15.90,actif:true},
+    ]},
+    {id:"desserts", nom:"🍮 Desserts", produits:[
+      {id:"d1",nom:"Dessert du jour",desc:"Demandez à votre serveur",emoji:"🍮",prix:3.50,actif:true},
+      {id:"d2",nom:"Glace italienne",desc:"Vanille ou chocolat",emoji:"🍦",prix:3.50,actif:true},
+      {id:"d3",nom:"Mousse au chocolat",desc:"Maison",emoji:"🍫",prix:3.50,actif:true},
+    ]},
+    {id:"digestifs", nom:"✨ Digestifs", produits:[
+      {id:"dg1",nom:"Cabanel Citron",desc:"Liqueur artisanale Carcassonne — 4cl",emoji:"🍋",prix:4.50,actif:true},
+      {id:"dg2",nom:"Cabanel Menthe",desc:"Liqueur artisanale Carcassonne — 4cl",emoji:"🌿",prix:4.50,actif:true},
+      {id:"dg3",nom:"Cabanel Clémentine",desc:"Liqueur artisanale Carcassonne — 4cl",emoji:"🍊",prix:4.50,actif:true},
+    ]},
+  ],
+  boissonsMenu:[
+    {id:"bm1",nom:"Coca-Cola",desc:"33cl",emoji:"🥤",actif:true},
+    {id:"bm2",nom:"Orangina",desc:"33cl",emoji:"🍊",actif:true},
+    {id:"bm3",nom:"Limonade",desc:"33cl",emoji:"🍋",actif:true},
+    {id:"bm4",nom:"Eau plate",desc:"50cl",emoji:"💧",actif:true},
+    {id:"bm5",nom:"Eau gazeuse",desc:"50cl",emoji:"💧",actif:true},
+    {id:"bm6",nom:"Jus de fruits",desc:"25cl",emoji:"🍹",actif:true},
+    {id:"bm7",nom:"Bière pression",desc:"25cl",emoji:"🍺",actif:true},
+    {id:"bm9",nom:"Verre de vin rosé",desc:"Codet 25cl — Corbières AOP",emoji:"🍷",actif:true},
+    {id:"bm10",nom:"Verre de vin blanc",desc:"Codet 25cl — Picpoul AOP",emoji:"🥂",actif:true},
+  ],
+  dessertsMenu:[
+    {id:"dm1",nom:"Dessert du jour",desc:"Demandez à votre serveur",emoji:"🍮",actif:true},
+    {id:"dm2",nom:"Glace italienne",desc:"Vanille ou chocolat",emoji:"🍦",actif:true},
+    {id:"dm3",nom:"Mousse au chocolat",desc:"Maison",emoji:"🍫",actif:true},
+  ]
+};
 
-// Écouter carte Firebase
-db.collection('config').doc('carte_v2').onSnapshot(doc => {
-  if (doc.exists && doc.data().categories && doc.data().categories.length) {
-    carte = doc.data();
-    // Si boissonsMenu absent → utiliser la valeur par défaut
-    if (!carte.boissonsMenu) carte.boissonsMenu = carteDefaut.boissonsMenu;
+// Ids boissons dans le menu (pour badge)
+let boissonMenuIds=new Set();
+
+// Firebase
+db.collection('config').doc('carte_v2').onSnapshot(doc=>{
+  if(doc.exists&&doc.data().categories&&doc.data().categories.length){
+    carte=doc.data();
+    if(!carte.boissonsMenu) carte.boissonsMenu=carteDefaut.boissonsMenu;
+    if(!carte.dessertsMenu) carte.dessertsMenu=carteDefaut.dessertsMenu;
   } else {
-    carte = carteDefaut;
+    carte=carteDefaut;
     db.collection('config').doc('carte_v2').set(carteDefaut).catch(()=>{});
   }
-  if (catActive) renderProduits(catActive);
+  boissonMenuIds=new Set((carte.boissonsMenu||[]).filter(b=>b.actif).map(b=>b.nom.toLowerCase()));
+  if(catActive) renderProduits(catActive);
   renderTabs();
 });
 
-function showScreen(id) {
-  if (id === 'screenPanier') renderPanierItems();
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('loader').style.display = 'none';
+// Écouter notifications caisse → téléphone client
+function ecouterNotifications(){
+  if(!tableNum) return;
+  db.collection('notifications').doc(`table_${tableNum}`).onSnapshot(doc=>{
+    if(!doc.exists) return;
+    const data=doc.data();
+    if(data&&data.message&&data.ts){
+      afficherNotification(data.message);
+      // Supprimer après lecture
+      db.collection('notifications').doc(`table_${tableNum}`).delete();
+    }
+  });
+}
+
+function afficherNotification(msg){
+  // Vibration
+  if(navigator.vibrate) navigator.vibrate([200,100,200]);
+  // Son
+  try{const ctx=new AudioContext();const osc=ctx.createOscillator();osc.connect(ctx.destination);osc.frequency.value=660;osc.start();setTimeout(()=>osc.stop(),300);}catch(e){}
+  // Bandeau
+  const banner=document.getElementById('notifBanner');
+  document.getElementById('notifText').textContent=msg;
+  banner.classList.add('show');
+  setTimeout(()=>banner.classList.remove('show'),4000);
+}
+
+// Navigation
+function showScreen(id){
+  if(id==='screenPanier') renderPanierItems();
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('loader').style.display='none';
   document.getElementById(id).classList.add('active');
   window.scrollTo(0,0);
 }
 
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 2000);
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2000);
 }
 
-function validerTable() {
-  const val = parseInt(document.getElementById('tableInput').value);
-  if (!val || val < 1 || val > 150) { showToast('⚠️ Numéro invalide'); return; }
-  tableNum = val;
-  document.getElementById('tableNumHeader').textContent = tableNum;
-  document.getElementById('tableBadge').style.display = 'inline-block';
-  catActive = (carte || carteDefaut).categories[0]?.id;
-  renderTabs();
-  renderProduits(catActive);
+// TABLE
+function validerTable(){
+  const val=parseInt(document.getElementById('tableInput').value);
+  if(!val||val<1||val>150){showToast('⚠️ Numéro invalide');return;}
+  tableNum=val;
+  document.getElementById('tableNumHeader').textContent=tableNum;
+  document.getElementById('tableBadge').style.display='inline-block';
+  catActive=(carte||carteDefaut).categories[0]?.id;
+  renderTabs();renderProduits(catActive);
+  ecouterNotifications();
   showScreen('screenCarte');
 }
 
-function renderTabs() {
-  const c = carte || carteDefaut;
-  document.getElementById('catTabs').innerHTML = c.categories.map(cat =>
+// TABS
+function renderTabs(){
+  const c=carte||carteDefaut;
+  document.getElementById('catTabs').innerHTML=c.categories.map(cat=>
     `<div class="cat-tab ${cat.id===catActive?'active':''}" onclick="selectCat('${cat.id}')">${cat.nom}</div>`
   ).join('');
 }
 
-function selectCat(id) {
-  catActive = id;
-  renderTabs();
-  renderProduits(id);
+function selectCat(id){catActive=id;renderTabs();renderProduits(id);}
+
+// PRODUITS avec sous-catégories et badge menu
+function renderProduits(catId){
+  const c=carte||carteDefaut;
+  const cat=c.categories.find(x=>x.id===catId);
+  if(!cat) return;
+  const container=document.getElementById('productList');
+  const produits=(cat.produits||[]);
+  if(!produits.length){container.innerHTML='<div style="text-align:center;color:#888;padding:30px">Aucun produit disponible</div>';return;}
+
+  let html='<div class="product-list">';
+  let lastSubcat='';
+
+  produits.forEach(p=>{
+    if(!p.actif) return;
+    // Sous-catégorie header (pour apéro/boissons)
+    if(p.subcat&&p.subcat!==lastSubcat){
+      html+=`<div class="subcat-header">${p.subcat}</div>`;
+      lastSubcat=p.subcat;
+    }
+    const dansMenu=boissonMenuIds.has(p.nom.toLowerCase());
+    const badgeMenu=dansMenu&&catId==='apero'?'<span class="badge-menu">Incluse formule 2&3</span>':'';
+    const prixDisplay=p.prix===0?'<span class="gratuit">Inclus</span>':`<span class="prix">${p.prix.toFixed(2).replace('.',',')} €</span>`;
+    html+=`
+      <div class="product-card">
+        <div class="info">
+          <div class="nom">${p.emoji?p.emoji+' ':''}${p.nom}${badgeMenu}</div>
+          ${p.desc?`<div class="desc">${p.desc}</div>`:''}
+        </div>
+        <div style="display:flex;align-items:center;flex-shrink:0">
+          ${prixDisplay}
+          <button class="add-btn" onclick="ajouterPanier('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${p.prix})">+</button>
+        </div>
+      </div>`;
+  });
+  html+='</div>';
+  container.innerHTML=html;
 }
 
-function renderProduits(catId) {
-  const c = carte || carteDefaut;
-  const cat = c.categories.find(x => x.id === catId);
-  if (!cat) return;
-  const container = document.getElementById('productList');
-  const produits = (cat.produits || []);
-  if (!produits.length) {
-    container.innerHTML = '<div style="text-align:center;color:#888;padding:30px">Aucun produit disponible</div>';
-    return;
-  }
-  container.innerHTML = produits.map(p => `
-    <div class="product-card ${p.actif?'':'disabled'}">
-      <div class="info">
-        <div class="nom">${p.emoji?p.emoji+' ':''}${p.nom}</div>
-        ${p.desc?`<div class="desc">${p.desc}</div>`:''}
-      </div>
-      <div style="display:flex;align-items:center;flex-shrink:0">
-        <div class="${p.prix===0?'gratuit':'prix'}">${p.prix===0?'Inclus':p.prix.toFixed(2).replace('.',',')+' €'}</div>
-        ${p.actif?`<button class="add-btn" onclick="ajouterPanier('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${p.prix})">+</button>`:''}
-      </div>
-    </div>
-  `).join('');
-}
+function esc(s){return s.replace(/'/g,"\\'").replace(/"/g,'\\"');}
 
-function esc(s){ return s.replace(/'/g,"\\'").replace(/"/g,'\\"'); }
-
-// Paliers avec boisson incluse
-const PALIERS_AVEC_BOISSON = ['p2', 'p3'];
-
-function ajouterPanier(id, nom, desc, prix) {
-  // Si c'est un palier avec boisson incluse → popup
-  if (PALIERS_AVEC_BOISSON.includes(id)) {
-    // Ajouter d'abord le palier
-    panier.push({id, nom, desc, prix, uid: Date.now()+Math.random()});
+// PANIER
+function ajouterPanier(id,nom,desc,prix){
+  if(['p2','p3'].includes(id)){
+    palierEnCours=id;
+    panier.push({id,nom,desc,prix,uid:Date.now()+Math.random()});
     updatePanierBar();
-    // Puis ouvrir le popup boisson incluse
     ouvrirModalBoisson(id);
   } else {
-    panier.push({id, nom, desc, prix, uid: Date.now()+Math.random()});
+    panier.push({id,nom,desc,prix,uid:Date.now()+Math.random()});
     updatePanierBar();
     showToast('✅ Ajouté !');
   }
 }
 
-function ouvrirModalBoisson(palierId) {
-  palierEnCours = palierId;
-  const c = carte || carteDefaut;
-  // Récupérer les boissons disponibles (softs + bières uniquement pour la boisson incluse)
-  // Lire les boissons depuis l'onglet "Boissons Menu" (géré dans l'Excel/admin)
-  const boissons = (c.boissonsMenu || []).filter(b => b.actif);
+function updatePanierBar(){
+  const total=panier.reduce((s,p)=>s+p.prix,0);
+  const nb=panier.length;
+  document.getElementById('panierNb').textContent=nb+' article'+(nb>1?'s':'');
+  document.getElementById('panierTotalBar').textContent=total.toFixed(2).replace('.',',')+' €';
+  document.getElementById('panierBar').classList.toggle('visible',nb>0);
+}
 
-  const sub = palierId === 'p3'
-    ? 'Incluse dans votre Palier 3 — offerte !'
-    : 'Incluse dans votre Palier 2 — offerte !';
-  document.getElementById('modalSub').textContent = sub;
-
-  document.getElementById('modalBoissonList').innerHTML = boissons.map(b => `
-    <div class="modal-boisson-item" onclick="choisirBoissonIncluse('${b.id}','${esc(b.nom)}','${esc(b.desc||'')}')">
-      <div>
-        <div class="bnom">${b.emoji||'🥤'} ${b.nom}</div>
-        ${b.desc ? `<div class="bdesc">${b.desc}</div>` : ''}
+function renderPanierItems(){
+  const container=document.getElementById('panierItems');
+  document.getElementById('panierTable').textContent=tableNum;
+  document.getElementById('btnCommander').style.display=panier.length?'block':'none';
+  if(!panier.length){
+    container.innerHTML='<div style="text-align:center;color:#888;padding:30px">Panier vide<br><br><button class="btn btn-outline" onclick="showScreen(\'screenCarte\')" style="width:auto;padding:10px 20px">← Voir la carte</button></div>';
+    return;
+  }
+  const total=panier.reduce((s,p)=>s+p.prix,0);
+  container.innerHTML=panier.map(p=>`
+    <div class="panier-item">
+      <div><div class="pnom">${p.nom}</div>${p.desc?`<div class="pdesc">${p.desc}</div>`:''}</div>
+      <div style="display:flex;align-items:center">
+        <div class="pprix">${p.prix===0?'Inclus':p.prix.toFixed(2).replace('.',',')+' €'}</div>
+        <button class="del-btn" onclick="supprimerPanier(${p.uid})">✕</button>
       </div>
-      <div class="bprix">OFFERTE</div>
-    </div>
-  `).join('');
+    </div>`).join('')+`
+    <div class="panier-total-row">
+      <span style="font-size:15px;font-weight:bold">TOTAL</span>
+      <span style="font-size:22px;font-weight:bold;color:#D4AF37">${total.toFixed(2).replace('.',',')} €</span>
+    </div>`;
+}
 
+function supprimerPanier(uid){
+  panier=panier.filter(p=>p.uid!=uid);
+  updatePanierBar();renderPanierItems();
+}
+
+// ============================================================
+// MODAL BOISSON INCLUSE
+// ============================================================
+function ouvrirModalBoisson(palierId){
+  const c=carte||carteDefaut;
+  const boissons=(c.boissonsMenu||[]).filter(b=>b.actif);
+  document.getElementById('modalBoissonSub').textContent=palierId==='p3'?'Incluse dans votre Palier 3 — offerte !':'Incluse dans votre Palier 2 — offerte !';
+  document.getElementById('modalBoissonList').innerHTML=boissons.map(b=>`
+    <div class="modal-item" onclick="choisirBoissonIncluse('${b.id}','${esc(b.nom)}','${esc(b.desc||'')}')">
+      <div><div class="mnom">${b.emoji||'🥤'} ${b.nom}</div>${b.desc?`<div class="mdesc">${b.desc}</div>`:''}</div>
+      <div class="mprix">OFFERTE</div>
+    </div>`).join('');
   document.getElementById('modalBoisson').classList.add('visible');
 }
 
-// Stocker le palier en cours pour savoir si on doit enchaîner avec le dessert
-let palierEnCours = null;
-
-function choisirBoissonIncluse(id, nom, desc) {
-  panier.push({id: id+'_inclus', nom: nom + ' (incluse)', desc, prix: 0, uid: Date.now()+Math.random()});
+function choisirBoissonIncluse(id,nom,desc){
+  panier.push({id:id+'_inclus',nom:nom+' (incluse)',desc,prix:0,uid:Date.now()+Math.random()});
   updatePanierBar();
   document.getElementById('modalBoisson').classList.remove('visible');
-  // Si palier 3 → enchaîner avec le popup dessert inclus
-  if (palierEnCours === 'p3') {
-    setTimeout(() => ouvrirModalDessertInclus(), 300);
+  if(palierEnCours==='p3'){
+    setTimeout(()=>ouvrirModalDessertInclus(),300);
   } else {
+    palierEnCours=null;
     showToast('✅ Formule + boisson ajoutées !');
   }
 }
 
-function fermerModal() {
+function fermerModalBoisson(){
   document.getElementById('modalBoisson').classList.remove('visible');
-  // Si palier 3 → enchaîner avec dessert inclus même si boisson non choisie
-  if (palierEnCours === 'p3') {
-    setTimeout(() => ouvrirModalDessertInclus(), 300);
+  if(palierEnCours==='p3'){
+    setTimeout(()=>ouvrirModalDessertInclus(),300);
   } else {
+    palierEnCours=null;
     showToast('✅ Formule ajoutée — boisson à choisir avec le serveur');
   }
 }
@@ -451,208 +555,156 @@ function fermerModal() {
 // ============================================================
 // MODAL DESSERT INCLUS (Palier 3)
 // ============================================================
-function ouvrirModalDessertInclus() {
-  const c = carte || carteDefaut;
-  const catDessert = c.categories.find(x => x.id === 'desserts');
-  const desserts = catDessert ? (catDessert.produits||[]).filter(d => d.actif) : [];
-
-  document.getElementById('modalDessertList').innerHTML = desserts.map(d => `
-    <div class="modal-boisson-item" onclick="choisirDessertInclus('${d.id}','${esc(d.nom)}','${esc(d.desc||'')}')">
-      <div>
-        <div class="bnom">${d.emoji||'🍮'} ${d.nom}</div>
-        ${d.desc ? `<div class="bdesc">${d.desc}</div>` : ''}
-      </div>
-      <div class="bprix">OFFERT</div>
-    </div>
-  `).join('');
-
+function ouvrirModalDessertInclus(){
+  const c=carte||carteDefaut;
+  const desserts=(c.dessertsMenu||[]).filter(d=>d.actif);
+  document.getElementById('modalDessertList').innerHTML=desserts.map(d=>`
+    <div class="modal-item" onclick="choisirDessertInclus('${d.id}','${esc(d.nom)}','${esc(d.desc||'')}')">
+      <div><div class="mnom">${d.emoji||'🍮'} ${d.nom}</div>${d.desc?`<div class="mdesc">${d.desc}</div>`:''}</div>
+      <div class="mprix">OFFERT</div>
+    </div>`).join('');
   document.getElementById('modalDessert').classList.add('visible');
 }
 
-function choisirDessertInclus(id, nom, desc) {
-  panier.push({id: id+'_inclus', nom: nom + ' (inclus)', desc, prix: 0, uid: Date.now()+Math.random()});
+function choisirDessertInclus(id,nom,desc){
+  panier.push({id:id+'_inclus',nom:nom+' (inclus)',desc,prix:0,uid:Date.now()+Math.random()});
   updatePanierBar();
-  fermerModalDessert();
+  document.getElementById('modalDessert').classList.remove('visible');
+  palierEnCours=null;
   showToast('✅ Formule complète ajoutée !');
 }
 
-function fermerModalDessert() {
+function fermerModalDessert(){
   document.getElementById('modalDessert').classList.remove('visible');
-  palierEnCours = null;
+  palierEnCours=null;
   showToast('✅ Formule ajoutée — dessert à choisir avec le serveur');
 }
 
 // ============================================================
-// UPSELL DESSERT (fin de commande — style McDonald's)
+// UPSELL DESSERT (fin de commande)
 // ============================================================
-function panierContientDessert() {
-  return panier.some(p =>
-    p.id.includes('dessert') || p.id.startsWith('d') ||
-    p.nom.toLowerCase().includes('dessert') || p.nom.toLowerCase().includes('glace') ||
-    p.nom.toLowerCase().includes('mousse') || p.nom.toLowerCase().includes('inclus')
+function panierContientDessert(){
+  return panier.some(p=>
+    p.id.includes('_inclus')&&p.nom.toLowerCase().includes('inclus')||
+    p.id.startsWith('d')||p.id.startsWith('dm')||
+    p.nom.toLowerCase().includes('dessert')||
+    p.nom.toLowerCase().includes('glace')||
+    p.nom.toLowerCase().includes('mousse')
   );
 }
 
-function ouvrirUpsellDessert() {
-  const c = carte || carteDefaut;
-  const catDessert = c.categories.find(x => x.id === 'desserts');
-  const desserts = catDessert ? (catDessert.produits||[]).filter(d => d.actif && d.prix > 0) : [];
+function intercepterCommande(){
+  if(!panier.length){showToast('⚠️ Panier vide');return;}
+  if(!panierContientDessert()){
+    ouvrirUpsellDessert();
+  } else {
+    validerCommande();
+  }
+}
 
-  document.getElementById('upsellDessertList').innerHTML = desserts.map(d => `
-    <div class="upsell-dessert-item" onclick="ajouterDessertUpsell('${d.id}','${esc(d.nom)}','${esc(d.desc||'')}',${d.prix})">
-      <div>
-        <div class="dnom">${d.emoji||'🍮'} ${d.nom}</div>
-        ${d.desc ? `<div class="ddesc">${d.desc}</div>` : ''}
-      </div>
-      <div class="dprix">${d.prix.toFixed(2).replace('.',',')} €</div>
-    </div>
-  `).join('');
-
+function ouvrirUpsellDessert(){
+  const c=carte||carteDefaut;
+  const desserts=(c.dessertsMenu||[]).filter(d=>d.actif);
+  document.getElementById('upsellDessertList').innerHTML=desserts.map(d=>`
+    <div class="upsell-item" onclick="ajouterDessertUpsell('${d.id}','${esc(d.nom)}','${esc(d.desc||'')}',3.50)">
+      <div><div class="unom">${d.emoji||'🍮'} ${d.nom}</div>${d.desc?`<div class="udesc">${d.desc}</div>`:''}</div>
+      <div class="uprix">3,50 €</div>
+    </div>`).join('');
   document.getElementById('upsellDessert').classList.add('visible');
 }
 
-function ajouterDessertUpsell(id, nom, desc, prix) {
-  panier.push({id, nom, desc, prix, uid: Date.now()+Math.random()});
+function ajouterDessertUpsell(id,nom,desc,prix){
+  panier.push({id,nom,desc,prix,uid:Date.now()+Math.random()});
   updatePanierBar();
   document.getElementById('upsellDessert').classList.remove('visible');
   showToast('🍮 Dessert ajouté !');
-  // Lancer la commande maintenant
   validerCommande();
 }
 
-function refuserDessert() {
+function refuserDessert(){
   document.getElementById('upsellDessert').classList.remove('visible');
-  // Continuer avec la commande sans dessert
   validerCommande();
 }
 
-function supprimerPanier(uid) {
-  panier = panier.filter(p => p.uid != uid);
-  updatePanierBar();
-  renderPanierItems();
-}
-
-function updatePanierBar() {
-  const total = panier.reduce((s,p)=>s+p.prix,0);
-  const nb = panier.length;
-  document.getElementById('panierNb').textContent = nb+' article'+(nb>1?'s':'');
-  document.getElementById('panierTotalBar').textContent = total.toFixed(2).replace('.',',')+' €';
-  document.getElementById('panierBar').classList.toggle('visible', nb>0);
-}
-
-function renderPanierItems() {
-  const container = document.getElementById('panierItems');
-  document.getElementById('panierTable').textContent = tableNum;
-  document.getElementById('btnCommander').style.display = panier.length?'block':'none';
-  if (!panier.length) {
-    container.innerHTML = '<div style="text-align:center;color:#888;padding:30px">Panier vide<br><br><button class="btn btn-outline" onclick="showScreen(\'screenCarte\')" style="width:auto;padding:10px 20px">← Voir la carte</button></div>';
-    return;
-  }
-  const total = panier.reduce((s,p)=>s+p.prix,0);
-  container.innerHTML = panier.map(p=>`
-    <div class="panier-item">
-      <div><div class="pnom">${p.nom}</div>${p.desc?`<div class="pdesc">${p.desc}</div>`:''}</div>
-      <div style="display:flex;align-items:center">
-        <div class="pprix">${p.prix===0?'Inclus':p.prix.toFixed(2).replace('.',',')+' €'}</div>
-        <button class="del-btn" onclick="supprimerPanier(${p.uid})">✕</button>
-      </div>
-    </div>
-  `).join('')+`
-    <div class="panier-total-row">
-      <span style="font-size:15px;font-weight:bold">TOTAL</span>
-      <span style="font-size:22px;font-weight:bold;color:#D4AF37">${total.toFixed(2).replace('.',',')} €</span>
-    </div>`;
-}
-
-async function validerCommande() {
-  if (!panier.length) { showToast('⚠️ Panier vide'); return; }
-  // UPSELL DESSERT — si pas de dessert dans le panier → popup McDonald's style
-  if (!panierContientDessert()) {
-    ouvrirUpsellDessert();
-    return; // On attend la décision client
-  }
+// ============================================================
+// VALIDER COMMANDE
+// ============================================================
+async function validerCommande(){
+  if(!panier.length){showToast('⚠️ Panier vide');return;}
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById('loader').style.display = 'block';
-  const total = panier.reduce((s,p)=>s+p.prix,0);
-  try {
+  document.getElementById('loader').style.display='block';
+  const total=panier.reduce((s,p)=>s+p.prix,0);
+  const heure=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  try{
     await db.collection('commandes').add({
-      table: tableNum,
-      items: panier.map(p=>({id:p.id, nom:p.nom, desc:p.desc, prix:p.prix})),
+      table:tableNum,
+      items:panier.map(p=>({id:p.id,nom:p.nom,desc:p.desc||'',prix:p.prix})),
       total,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-      statut: 'nouvelle',
-      heure: new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})
+      timestamp:firebase.firestore.FieldValue.serverTimestamp(),
+      statut:'nouvelle',
+      heure
     });
-    panier = [];
-    updatePanierBar();
-    document.getElementById('confirmTable').textContent = tableNum;
+    panier=[];updatePanierBar();
+    document.getElementById('confirmTable').textContent=tableNum;
     showScreen('screenConfirm');
-  } catch(e) {
+  }catch(e){
     showScreen('screenPanier');
-    showToast('❌ Erreur — réessayez');
+    showToast('❌ Erreur réseau — réessayez');
   }
 }
 
-function commanderEncore() {
-  catActive = (carte||carteDefaut).categories[0]?.id;
-  renderTabs();
-  renderProduits(catActive);
+function commanderEncore(){
+  catActive=(carte||carteDefaut).categories[0]?.id;
+  renderTabs();renderProduits(catActive);
   showScreen('screenCarte');
 }
 
-async function demanderAddition() {
-  document.getElementById('additionTable').textContent = tableNum;
-  const snap = await db.collection('commandes').where('table','==',tableNum).where('statut','!=','regle').get();
-  let total = 0; let html = '';
-  snap.forEach(doc=>{
-    const cmd = doc.data();
-    total += cmd.total||0;
-    (cmd.items||[]).forEach(item=>{
-      html+=`<div class="cmd-item"><span>${item.nom}</span><span style="color:#D4AF37">${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span></div>`;
+// ============================================================
+// ADDITION
+// ============================================================
+async function demanderAddition(){
+  document.getElementById('additionTable').textContent=tableNum;
+  try{
+    const snap=await db.collection('commandes')
+      .where('table','==',tableNum)
+      .where('statut','!=','regle')
+      .orderBy('statut')
+      .orderBy('timestamp','asc')
+      .get();
+
+    let total=0,html='';
+    snap.forEach(doc=>{
+      const cmd=doc.data();
+      total+=cmd.total||0;
+      const items=(cmd.items||[]);
+      if(!items.length) return;
+      html+=`<div class="commande-groupe">
+        <div class="cmd-heure">🕐 ${cmd.heure||'--:--'} — Commande</div>
+        ${items.map(item=>`
+          <div class="cmd-item">
+            <span>${item.nom}</span>
+            <span style="color:#D4AF37;font-weight:bold">${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span>
+          </div>`).join('')}
+        <div style="text-align:right;color:#D4AF37;font-size:12px;margin-top:6px;padding-top:6px;border-top:1px solid #333">Sous-total : ${(cmd.total||0).toFixed(2).replace('.',',')} €</div>
+      </div>`;
     });
-    html+=`<div style="border-top:1px solid #444;margin:4px 0"></div>`;
-  });
-  if(!html) html='<div class="cmd-item" style="color:#888">Aucune commande enregistrée</div>';
-  document.getElementById('commandesList').innerHTML = html;
-  document.getElementById('totalAmount').textContent = total.toFixed(2).replace('.',',')+' €';
-  await db.collection('additions').doc(`table_${tableNum}`).set({
-    table:tableNum, total, timestamp:firebase.firestore.FieldValue.serverTimestamp(), statut:'demandee'
-  });
-  showScreen('screenAddition');
+
+    if(!html) html='<div style="color:#888;text-align:center;padding:20px">Aucune commande enregistrée</div>';
+    document.getElementById('commandesDetail').innerHTML=html;
+    document.getElementById('totalAmount').textContent=total.toFixed(2).replace('.',',')+' €';
+
+    // Notifier la caisse
+    await db.collection('additions').doc(`table_${tableNum}`).set({
+      table:tableNum,total,
+      timestamp:firebase.firestore.FieldValue.serverTimestamp(),
+      statut:'demandee'
+    });
+    showScreen('screenAddition');
+  }catch(e){
+    showToast('❌ Erreur chargement addition');
+    console.error(e);
+  }
 }
 </script>
-
-<!-- MODAL BOISSON INCLUSE -->
-<div class="modal-overlay" id="modalBoisson">
-  <div class="modal-box">
-    <h3>🍺 Votre boisson incluse</h3>
-    <div class="modal-sub" id="modalSub">Choisissez votre boisson offerte avec cette formule</div>
-    <div class="modal-boisson-list" id="modalBoissonList"></div>
-    <button class="modal-close" onclick="fermerModal()">Plus tard — je choisirai avec le serveur</button>
-  </div>
-</div>
-
-
-<!-- MODAL DESSERT INCLUS (Palier 3) -->
-<div class="modal-overlay" id="modalDessert">
-  <div class="modal-box modal-dessert">
-    <h3>🍮 Votre dessert inclus</h3>
-    <div class="modal-sub">Inclus dans votre Palier 3 — offert !</div>
-    <div class="modal-boisson-list" id="modalDessertList"></div>
-    <button class="modal-close" onclick="fermerModalDessert()">Plus tard — je déciderai à la fin du repas</button>
-  </div>
-</div>
-
-<!-- UPSELL DESSERT (fin de commande) -->
-<div class="upsell-overlay" id="upsellDessert">
-  <div class="upsell-box">
-    <div class="upsell-emoji">🍮</div>
-    <h3>Et un dessert ?</h3>
-    <p>Nos desserts maison pour finir en beauté...<br>À seulement <strong style="color:#D4AF37">3,50 €</strong> !</p>
-    <div class="upsell-dessert-list" id="upsellDessertList"></div>
-    <button class="upsell-non" onclick="refuserDessert()">Non merci, je commande sans dessert →</button>
-  </div>
-</div>
-
 </body>
 </html>
