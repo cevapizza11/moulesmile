@@ -22,9 +22,10 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 .table-input{width:100%;padding:18px;font-size:36px;text-align:center;background:#2A2A2A;border:2px solid #D4AF37;border-radius:12px;color:#D4AF37;font-weight:bold;margin-bottom:16px}
 
 /* NOTIFICATION BANDEAU */
-.notif-banner{position:fixed;top:0;left:0;right:0;z-index:999;background:#1A7A50;color:white;padding:16px;text-align:center;font-size:15px;font-weight:bold;transform:translateY(-100%);transition:transform .4s ease;border-bottom:3px solid #D4AF37}
+.notif-banner{position:fixed;top:0;left:0;right:0;z-index:9999;background:#1A7A50;color:white;padding:20px 16px;text-align:center;font-size:16px;font-weight:bold;transform:translateY(-100%);transition:transform .5s cubic-bezier(.175,.885,.32,1.275);border-bottom:3px solid #D4AF37;box-shadow:0 4px 20px rgba(0,0,0,.5)}
 .notif-banner.show{transform:translateY(0)}
-.notif-banner .notif-icon{font-size:24px;margin-bottom:4px}
+.notif-banner .notif-icon{font-size:28px;margin-bottom:6px;display:block}
+.notif-banner .notif-text{font-size:15px;font-weight:bold}
 
 /* CATÉGORIES */
 .cat-tabs{display:flex;overflow-x:auto;gap:8px;padding:0 0 12px;scrollbar-width:none;margin-bottom:4px}
@@ -125,6 +126,13 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 </style>
 </head>
 <body>
+
+
+<!-- BANDEAU NOTIFICATION SERVEUR -->
+<div class="notif-banner" id="notifBanner">
+  <span class="notif-icon">✅</span>
+  <div class="notif-text" id="notifText">Un serveur s'occupe de votre commande !</div>
+</div>
 
 <div class="header">
   <h1>🐚 MOULE & SMILE</h1>
@@ -245,13 +253,13 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
     <div style="font-size:48px;margin-bottom:12px">👧</div>
     <h3 style="margin-bottom:8px">Confirmation enfant gratuit</h3>
     <div class="modal-sub" style="margin-bottom:20px">
-      L'offre enfant gratuit est réservée aux enfants de <strong style="color:#D4AF37">0 à 7 ans révolus</strong>.<br>
-      Au-delà de 7 ans, le tarif enfant/ado s'applique (15,90 €).
+      L'offre enfant gratuit est réservée aux enfants de <strong style="color:#D4AF37">0 à 5 ans révolus</strong>.<br>
+      À partir de 6 ans, le tarif enfant/ado s'applique (15,90 €).
     </div>
     <div style="background:#1A3A2A;border:1px solid #1A7A50;border-radius:10px;padding:14px;margin-bottom:20px;font-size:13px;color:#4ABA80">
-      ✋ En validant, vous confirmez que l'enfant<br>a <strong>7 ans ou moins</strong>.
+      ✋ En validant, vous confirmez que l'enfant<br>a <strong>5 ans ou moins</strong>.
     </div>
-    <button class="btn btn-or" onclick="confirmerEnfantGratuit()" style="margin-bottom:8px">✅ Oui, l'enfant a 7 ans ou moins</button>
+    <button class="btn btn-or" onclick="confirmerEnfantGratuit()" style="margin-bottom:8px">✅ Oui, l'enfant a 5 ans ou moins</button>
     <button class="modal-close" onclick="fermerModalEnfant()">Non — je prends le tarif enfant/ado (15,90 €)</button>
   </div>
 </div>
@@ -325,8 +333,8 @@ const carteDefaut={
       {id:"p3",nom:"Palier 3 — Complet",desc:"Moules + frites + boisson + dessert inclus",emoji:"🐚",prix:28.90,actif:true},
       {id:"ca1",nom:"Calamars à volonté",desc:"Calamars frits maison + frites",emoji:"🦑",prix:19.90,actif:true},
       {id:"fc1",nom:"Fish & chips maison",desc:"Cabillaud pané + frites fraîches",emoji:"🐟",prix:14.90,actif:true},
-      {id:"en1",nom:"Enfant 0-7 ans",desc:"1 enfant gratuit par adulte payant",emoji:"👧",prix:0.00,actif:true},
-      {id:"en2",nom:"Enfant / Ado 8-17 ans",desc:"À volonté — tarif unique",emoji:"🧒",prix:15.90,actif:true},
+      {id:"en1",nom:"Enfant 0-5 ans",desc:"1 enfant gratuit par adulte payant",emoji:"👧",prix:0.00,actif:true},
+      {id:"en2",nom:"Enfant / Ado 6-17 ans",desc:"À volonté — tarif unique",emoji:"🧒",prix:15.90,actif:true},
     ]},
     {id:"desserts", nom:"🍮 Desserts", produits:[
       {id:"d1",nom:"Dessert du jour",desc:"Demandez à votre serveur",emoji:"🍮",prix:3.50,actif:true},
@@ -407,15 +415,19 @@ function jouerSon(freq, duree, delai=0){
 
 function afficherNotification(msg){
   // Vibration (Android)
-  if(navigator.vibrate) navigator.vibrate([200,100,200,100,200]);
-  // Double son (marche sur iPhone aussi)
-  jouerSon(880, 300, 0);
-  jouerSon(660, 300, 400);
-  // Bandeau
+  if(navigator.vibrate) navigator.vibrate([300,100,300,100,300]);
+  // Double son — compatible iPhone (webkitAudioContext) ET Android
+  jouerSon(880, 350, 0);
+  jouerSon(660, 350, 450);
+  // Bandeau — message fixe rassurant pour le client
   const banner=document.getElementById('notifBanner');
-  document.getElementById('notifText').textContent=msg;
-  banner.classList.add('show');
-  setTimeout(()=>banner.classList.remove('show'),4000);
+  const textEl=document.getElementById('notifText');
+  if(textEl) textEl.textContent="Un serveur s'occupe de votre commande !!!";
+  if(banner){
+    banner.classList.add('show');
+    // Garder affiché 5 secondes
+    setTimeout(()=>banner.classList.remove('show'), 5000);
+  }
 }
 
 // Navigation
@@ -475,8 +487,7 @@ function renderProduits(catId){
       html+=`<div class="subcat-header">${p.subcat}</div>`;
       lastSubcat=p.subcat;
     }
-    const dansMenu=boissonMenuIds.has(p.nom.toLowerCase());
-    const badgeMenu=dansMenu&&catId==='apero'?'<span class="badge-menu">Incluse formule 2&3</span>':'';
+    const badgeMenu=''; // Badge supprimé sur demande
     const prixDisplay=p.prix===0?'<span class="gratuit">Inclus</span>':`<span class="prix">${p.prix.toFixed(2).replace('.',',')} €</span>`;
     html+=`
       <div class="product-card">
@@ -891,7 +902,7 @@ function fermerModalEnfant(){
   document.getElementById('modalEnfant').classList.remove('visible');
   enfantEnAttente=null;
   // Proposer le tarif ado à la place
-  showToast('💡 Ajoutez le tarif Enfant/Ado 8-17 ans à 15,90 €');
+  showToast('💡 Ajoutez le tarif Enfant/Ado 6-17 ans à 15,90 €');
 }
 </script>
 </body>
