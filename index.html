@@ -20,6 +20,12 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 .table-screen h2{color:#D4AF37;font-size:22px;margin-bottom:6px}
 .table-screen p{color:#aaa;font-size:13px;margin-bottom:30px}
 .table-input{width:100%;padding:18px;font-size:36px;text-align:center;background:#2A2A2A;border:2px solid #D4AF37;border-radius:12px;color:#D4AF37;font-weight:bold;margin-bottom:16px}
+.couverts-grid{display:flex;gap:12px;justify-content:center}
+.couverts-btn{flex:1;background:#2A2A2A;border:2px solid #D4AF37;border-radius:14px;padding:24px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;transition:all .2s}
+.couverts-btn:active{background:#D4AF37}
+.couverts-btn:active .couverts-num,.couverts-btn:active .couverts-lbl{color:#1A1A1A}
+.couverts-num{font-size:32px;font-weight:bold;color:#D4AF37}
+.couverts-lbl{font-size:12px;color:#aaa}
 
 /* NOTIFICATION BANDEAU */
 .notif-banner{position:fixed;top:0;left:0;right:0;z-index:9999;background:#1A7A50;color:white;padding:20px 16px;text-align:center;font-size:16px;font-weight:bold;transform:translateY(-100%);transition:transform .5s cubic-bezier(.175,.885,.32,1.275);border-bottom:3px solid #D4AF37;box-shadow:0 4px 20px rgba(0,0,0,.5)}
@@ -156,8 +162,35 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
     <h2>Bienvenue !</h2>
     <p>Saisissez votre numéro de table pour commencer</p>
     <input type="number" class="table-input" id="tableInput" placeholder="N° de table" min="1" max="150">
-    <button class="btn btn-or" onclick="validerTable()">Commencer →</button>
+    <button class="btn btn-or" onclick="allerVersCouverts()">Commencer →</button>
     <button class="btn btn-outline" onclick="retrouverCommande()" style="margin-top:4px">🔍 Retrouver ma commande en cours</button>
+    <div id="bannerIOSAjout" style="display:none;background:#2A2A2A;border:1px solid #D4AF37;border-radius:12px;padding:14px;margin-top:20px;text-align:left;font-size:13px;color:#ccc">
+      📲 <strong style="color:#D4AF37">Astuce iPhone :</strong> pour être notifié dès qu'un serveur s'occupe de votre commande, ajoutez cette page à votre écran d'accueil : appuyez sur <strong>Partager</strong> (icône carrée avec flèche) puis <strong>"Sur l'écran d'accueil"</strong>.
+    </div>
+  </div>
+</div>
+
+<!-- NOMBRE DE COUVERTS -->
+<div class="screen" id="screenCouverts">
+  <div class="table-screen">
+    <div class="logo">👥</div>
+    <h2>Vous êtes combien ?</h2>
+    <p>Pour mieux organiser le service</p>
+    <div class="couverts-grid">
+      <button class="couverts-btn" onclick="validerTable(2)">
+        <span class="couverts-num">2</span>
+        <span class="couverts-lbl">personnes</span>
+      </button>
+      <button class="couverts-btn" onclick="validerTable(3)">
+        <span class="couverts-num">3-4</span>
+        <span class="couverts-lbl">personnes</span>
+      </button>
+      <button class="couverts-btn" onclick="validerTable(5)">
+        <span class="couverts-num">5+</span>
+        <span class="couverts-lbl">personnes</span>
+      </button>
+    </div>
+    <button class="btn btn-outline" onclick="showScreen('screenTable')" style="margin-top:16px">← Retour</button>
   </div>
 </div>
 
@@ -268,6 +301,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js"></script>
 <script>
 const firebaseConfig={apiKey:"AIzaSyDUb3LtVsMAq986DgtHwkMBeQFr8A8A2nU",authDomain:"commandemoulesmile.firebaseapp.com",projectId:"commandemoulesmile",storageBucket:"commandemoulesmile.firebasestorage.app",messagingSenderId:"303564394584",appId:"1:303564394584:web:cbde6960f99cac83517a2d"};
 firebase.initializeApp(firebaseConfig);
@@ -395,6 +429,76 @@ function ecouterNotifications(){
       db.collection('notifications').doc(`table_${tableNum}`).delete();
     }
   });
+  activerNotificationsPush();
+}
+
+// ============================================================
+// NOTIFICATIONS PUSH (Firebase Cloud Messaging)
+// Fonctionne même téléphone verrouillé / app en arrière-plan
+// Android : fonctionne toujours si autorisé
+// iPhone : fonctionne uniquement si la page a été ajoutée à l'écran d'accueil
+// ============================================================
+
+// Détection iPhone Safari pas encore en mode "ajouté à l'écran d'accueil"
+(function afficherBanniereIOSSiUtile(){
+  const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isStandalone=window.navigator.standalone===true || window.matchMedia('(display-mode: standalone)').matches;
+  if(isIOS && !isStandalone){
+    const banner=document.getElementById('bannerIOSAjout');
+    if(banner) banner.style.display='block';
+  }
+})();
+let messagingInstance=null;
+const VAPID_KEY="BJUDhURhwEPhOTUnXdYe6gto9AlKBCdr91A4mXTPAU15C8RirXp29mC_8o8qWPS1MZdtubnRwsRjRtamnCvs-fM";
+
+async function activerNotificationsPush(){
+  if(!tableNum) return;
+  // Le navigateur doit supporter les Service Workers + Notifications
+  if(!('serviceWorker' in navigator) || !('Notification' in window)){
+    console.log('Push non supporté sur ce navigateur');
+    return;
+  }
+
+  try{
+    // Enregistrer le service worker dédié aux notifications
+    const registration=await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+
+    // Demander la permission si pas encore fait
+    let permission=Notification.permission;
+    if(permission==='default'){
+      permission=await Notification.requestPermission();
+    }
+    if(permission!=='granted'){
+      console.log('Permission notification refusée par le client');
+      return;
+    }
+
+    messagingInstance=firebase.messaging();
+    const token=await messagingInstance.getToken(messagingInstance,{
+      vapidKey:VAPID_KEY,
+      serviceWorkerRegistration:registration
+    });
+
+    if(token){
+      // Sauvegarder le token lié à cette table pour que la caisse puisse envoyer une notif ciblée
+      await db.collection('push_tokens').doc(`table_${tableNum}`).set({
+        token,
+        table:tableNum,
+        updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+      console.log('✅ Notifications push activées pour la table',tableNum);
+    }
+
+    // Notification reçue pendant que l'app est ouverte au premier plan
+    messagingInstance.onMessage(payload=>{
+      const msg=payload.notification?.body||"Un serveur s'occupe de votre commande !";
+      afficherNotification(msg);
+    });
+
+  }catch(e){
+    console.log('Notifications push non disponibles:',e.message);
+    // Pas grave — le bandeau in-app + son continuent de fonctionner normalement
+  }
 }
 
 function jouerSon(freq, duree, delai=0){
@@ -446,10 +550,17 @@ function showToast(msg){
 }
 
 // TABLE
-function validerTable(){
+let nbCouverts=null;
+
+function allerVersCouverts(){
   const val=parseInt(document.getElementById('tableInput').value);
   if(!val||val<1||val>150){showToast('⚠️ Numéro invalide');return;}
   tableNum=val;
+  showScreen('screenCouverts');
+}
+
+function validerTable(couverts){
+  nbCouverts=couverts;
   document.getElementById('tableNumHeader').textContent=tableNum;
   document.getElementById('tableBadge').style.display='inline-block';
   catActive=(carte||carteDefaut).categories[0]?.id;
@@ -710,6 +821,7 @@ async function validerCommande(){
   try{
     await db.collection('commandes').add({
       table:tableNum,
+      couverts:nbCouverts||null,
       items:panier.map(p=>({id:p.id,nom:p.nom,desc:p.desc||'',prix:p.prix})),
       total,
       timestamp:firebase.firestore.FieldValue.serverTimestamp(),

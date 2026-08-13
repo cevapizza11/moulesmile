@@ -36,6 +36,10 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
 .btn-filtre{padding:6px 12px;border-radius:20px;font-size:11px;font-weight:bold;cursor:pointer;border:1px solid #333;background:#2A2A2A;color:#aaa;transition:all .2s}
 .btn-filtre.actif{background:#D4AF37;color:#1A1A1A;border-color:#D4AF37}
 .btn-sm{padding:6px 12px;border-radius:20px;font-size:11px;cursor:pointer;border:1px solid #C0392B;background:#2A2A2A;color:#C0392B}
+.recherche-bar{display:flex;gap:8px;margin-bottom:12px}
+.recherche-input{flex:1;background:#1E1E1E;border:2px solid #333;border-radius:10px;padding:12px 14px;color:#fff;font-size:16px;outline:none;transition:border-color .2s}
+.recherche-input:focus{border-color:#D4AF37}
+.recherche-input::placeholder{color:#666}
 
 /* GRILLE COMMANDES */
 .commandes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
@@ -45,6 +49,8 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
 .cmd-card.nouvelle{border-color:#D4AF37;animation:pulse 2s infinite}
 .cmd-card.en_addition{border-color:#1A7A50}
 .cmd-card.regle{opacity:.4;border-color:#333}
+.cmd-card.cmd-prioritaire{box-shadow:0 0 0 2px #4ABAFF inset}
+.badge-prio{display:inline-block;background:#4ABAFF;color:#0A2A3A;font-size:10px;font-weight:bold;padding:2px 8px;border-radius:20px;margin-left:6px;vertical-align:middle}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(212,175,55,.4)}50%{box-shadow:0 0 0 8px rgba(212,175,55,0)}}
 .cmd-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
 .cmd-table{font-size:24px;font-weight:bold;color:#D4AF37}
@@ -124,6 +130,9 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
   <div class="nav-tab actif" id="tab-btn-commandes" onclick="switchTab('commandes')">
     📋 Commandes <span class="badge-r" id="badgeCmd" style="display:none">0</span>
   </div>
+  <div class="nav-tab" id="tab-btn-deux" onclick="switchTab('deux')">
+    👥 Tables 2 pers. <span class="badge-r" id="badgeDeux" style="display:none">0</span>
+  </div>
   <div class="nav-tab" id="tab-btn-additions" onclick="switchTab('additions')">
     🧾 Additions <span class="badge-r" id="badgeAdd" style="display:none">0</span>
   </div>
@@ -148,9 +157,21 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
   </div>
 </div>
 
+<!-- ===== ONGLET TABLES 2 PERSONNES (renfort) ===== -->
+<div class="tab-content" id="tab-deux">
+  <div class="status-bar"><div class="dot"></div>⚡ Vue dédiée renfort — uniquement les commandes des tables de 2 personnes, priorité rotation rapide</div>
+  <div class="commandes-grid" id="commandesGridDeux">
+    <div class="empty"><div class="em">👥</div><p>Aucune commande de table 2 personnes</p></div>
+  </div>
+</div>
+
 <!-- ===== ONGLET ADDITIONS ===== -->
 <div class="tab-content" id="tab-additions">
   <div class="status-bar"><div class="dot"></div>Tables dont l'addition est demandée ou en cours</div>
+  <div class="recherche-bar">
+    <input type="text" id="rechercheTable" class="recherche-input" placeholder="🔍 Rechercher par numéro de table..." inputmode="numeric" oninput="filtrerAdditions()">
+    <button class="btn-sm" onclick="viderRecherche()" id="btnViderRecherche" style="display:none">✕ Effacer</button>
+  </div>
   <div id="additionsList">
     <div class="empty"><div class="em">🧾</div><p>Aucune addition en cours</p></div>
   </div>
@@ -247,26 +268,70 @@ function switchTab(nom){
   document.getElementById('tab-btn-'+nom).classList.add('actif');
   // Actions spéciales
   if(nom==='historique') chargerHistorique();
+  if(nom==='deux') renderCommandesDeux();
+  if(nom==='additions') filtrerAdditions();
 }
 
 // ============================================================
-// ÉCOUTE FIRESTORE — COMMANDES
+// ÉCOUTE FIRESTORE — COMMANDES (uniquement le service en cours)
 // ============================================================
-db.collection('commandes').onSnapshot(snap=>{
-  let hasNew=false;
-  snap.docChanges().forEach(change=>{
-    if(change.type==='added' && !allCommandes[change.doc.id]) hasNew=true;
-    if(change.type==='removed'){
-      delete allCommandes[change.doc.id];
-    } else {
-      allCommandes[change.doc.id]={id:change.doc.id,...change.doc.data()};
-    }
-  });
-  if(hasNew) playBeep(1);
-  renderCommandes();
-  renderCA();
-  updateStats();
-}, err=>{console.error('Commandes listener error:',err);});
+const HEURE_COUPURE_SERVICE=5; // 5h du matin — heure à laquelle un nouveau service commence
+
+function getDebutService(){
+  const d=new Date();
+  // Si on est avant 5h du matin, le "service en cours" a démarré la veille à 5h
+  if(d.getHours()<HEURE_COUPURE_SERVICE){
+    d.setDate(d.getDate()-1);
+  }
+  d.setHours(HEURE_COUPURE_SERVICE,0,0,0);
+  return firebase.firestore.Timestamp.fromDate(d);
+}
+
+let unsubscribeCommandes=null;
+
+function demarrerEcouteCommandes(){
+  if(unsubscribeCommandes) unsubscribeCommandes(); // stoppe l'ancien listener si déjà actif
+
+  unsubscribeCommandes=db.collection('commandes')
+    .where('timestamp','>=',getDebutService())
+    .onSnapshot(snap=>{
+      let hasNew=false;
+      snap.docChanges().forEach(change=>{
+        if(change.type==='added' && !allCommandes[change.doc.id]) hasNew=true;
+        if(change.type==='removed'){
+          delete allCommandes[change.doc.id];
+        } else {
+          allCommandes[change.doc.id]={id:change.doc.id,...change.doc.data()};
+        }
+      });
+      if(hasNew) playBeep(1);
+      renderCommandes();
+      renderCommandesDeux();
+      renderCA();
+      updateStats();
+    }, err=>{console.error('Commandes listener error:',err);});
+}
+
+demarrerEcouteCommandes();
+
+// Re-filtrer automatiquement à 5h du matin si la caisse reste ouverte sans rafraîchissement
+// (heure choisie car aucun service ne tourne encore à cette heure-là, donc aucune commande
+// de la veille ne peut être perdue de vue avant d'être encaissée)
+(function planifierReinitService(){
+  const maintenant=new Date();
+  const prochaineCoupure=new Date(maintenant);
+  prochaineCoupure.setHours(HEURE_COUPURE_SERVICE,0,5,0); // 05:00:05
+  if(prochaineCoupure<=maintenant){
+    prochaineCoupure.setDate(prochaineCoupure.getDate()+1);
+  }
+  const delaiMs=prochaineCoupure-maintenant;
+  setTimeout(()=>{
+    allCommandes={}; // on repart sur une base propre pour le nouveau service
+    demarrerEcouteCommandes();
+    showToast('🌅 Nouveau service — commandes réinitialisées');
+    planifierReinitService(); // reprogrammer pour le lendemain
+  }, delaiMs);
+})();
 
 // ============================================================
 // ÉCOUTE FIRESTORE — ADDITIONS
@@ -369,14 +434,17 @@ function passerEnModeRush(){
 }
 
 function getCommandesFiltrees(){
-  const ordre={nouvelle:0,en_addition:1,vue:2,regle:3};
-  let cmds=Object.values(allCommandes);
+  const ordre={nouvelle:0,vue:1,regle:2};
+  // Les commandes en_addition ne s'affichent plus ici — elles vivent dans l'onglet Addition
+  let cmds=Object.values(allCommandes).filter(c=>c.statut!=='en_addition');
   if(filtreCourant==='actives') cmds=cmds.filter(c=>c.statut!=='regle');
-  // "nouvelles" = seulement les commandes pas encore traitées (pas en_addition, pas réglées)
+  // "nouvelles" = seulement les commandes pas encore traitées
   if(filtreCourant==='nouvelles') cmds=cmds.filter(c=>c.statut==='nouvelle');
   return cmds.sort((a,b)=>{
     const s=(ordre[a.statut]||0)-(ordre[b.statut]||0);
-    return s!==0?s:(a.table||0)-(b.table||0);
+    if(s!==0) return s;
+    // Ordre chronologique (par heure de commande)
+    return (a.heure||'').localeCompare(b.heure||'');
   });
 }
 
@@ -392,9 +460,10 @@ function renderCommandes(){
   grid.innerHTML=cmds.map(cmd=>{
     const items=cmd.items||[];
     const estRegle=cmd.statut==='regle';
+    const estDeux=cmd.couverts===2;
     return `<div class="cmd-card ${cmd.statut||'nouvelle'}">
       <div class="cmd-header">
-        <div class="cmd-table">Table ${cmd.table}</div>
+        <div class="cmd-table">Table ${cmd.table} ${estDeux?'<span class="badge-prio">👥 2 pers.</span>':''}</div>
         <div class="cmd-meta">
           <div class="cmd-heure">🕐 ${cmd.heure||'--:--'}</div>
           <div class="cmd-statut" style="color:${statutColors[cmd.statut]||'#888'}">${statutLabels[cmd.statut]||''}</div>
@@ -417,6 +486,57 @@ function renderCommandes(){
       </div>
     </div>`;
   }).join('');
+}
+
+// ============================================================
+// ONGLET DÉDIÉ — TABLES 2 PERSONNES (renfort)
+// ============================================================
+function renderCommandesDeux(){
+  const grid=document.getElementById('commandesGridDeux');
+  if(!grid) return;
+  // Uniquement les tables de 2, pas encore basculées en addition, dans l'ordre chronologique
+  const cmds=Object.values(allCommandes)
+    .filter(c=>c.couverts===2 && c.statut!=='regle' && c.statut!=='en_addition')
+    .sort((a,b)=>(a.heure||'').localeCompare(b.heure||''));
+
+  if(!cmds.length){
+    grid.innerHTML='<div class="empty"><div class="em">👥</div><p>Aucune commande de table 2 personnes</p></div>';
+  } else {
+    const statutColors={nouvelle:'#D4AF37',vue:'#4ABA80'};
+    const statutLabels={nouvelle:'🟡 Nouvelle',vue:'✅ Vue'};
+    grid.innerHTML=cmds.map(cmd=>{
+      const items=cmd.items||[];
+      return `<div class="cmd-card ${cmd.statut||'nouvelle'}">
+        <div class="cmd-header">
+          <div class="cmd-table">Table ${cmd.table} <span class="badge-prio">👥 2 pers.</span></div>
+          <div class="cmd-meta">
+            <div class="cmd-heure">🕐 ${cmd.heure||'--:--'}</div>
+            <div class="cmd-statut" style="color:${statutColors[cmd.statut]||'#888'}">${statutLabels[cmd.statut]||''}</div>
+          </div>
+        </div>
+        <div class="cmd-items">
+          ${items.map(item=>`
+            <div class="cmd-item-row">
+              <span>${item.nom}</span>
+              <span style="color:#D4AF37;font-weight:bold">${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span>
+            </div>`).join('')}
+        </div>
+        <div class="cmd-total">Total : ${(cmd.total||0).toFixed(2).replace('.',',')} €</div>
+        <div class="cmd-actions">
+          <button class="btn-vu" onclick="marquerVuEtAddition('${cmd.id}',${cmd.table})">✓ Vu → Addition</button>
+          <button class="btn-archive" onclick="archiverCommande('${cmd.id}',${cmd.table})">🗑 Archiver</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Badge compteur sur l'onglet
+  const badgeDeux=document.getElementById('badgeDeux');
+  if(badgeDeux){
+    const nbNouv=cmds.filter(c=>c.statut==='nouvelle').length;
+    badgeDeux.textContent=nbNouv;
+    badgeDeux.style.display=nbNouv>0?'inline':'none';
+  }
 }
 
 // ============================================================
@@ -492,14 +612,40 @@ async function resetJour(){
 // ============================================================
 // RENDER — ADDITIONS
 // ============================================================
+// ============================================================
+// RECHERCHE ADDITIONS PAR NUMÉRO DE TABLE
+// ============================================================
+function filtrerAdditions(){
+  const recherche=(document.getElementById('rechercheTable')?.value||'').trim();
+  const btnVider=document.getElementById('btnViderRecherche');
+  if(btnVider) btnVider.style.display=recherche?'inline-block':'none';
+  renderAdditions();
+}
+
+function viderRecherche(){
+  const input=document.getElementById('rechercheTable');
+  if(input) input.value='';
+  document.getElementById('btnViderRecherche').style.display='none';
+  renderAdditions();
+}
+
 function renderAdditions(){
   const container=document.getElementById('additionsList');
-  const adds=Object.values(allAdditions)
+  const recherche=(document.getElementById('rechercheTable')?.value||'').trim();
+  let adds=Object.values(allAdditions)
     .filter(a=>a.statut!=='regle')
     .sort((a,b)=>(a.table||0)-(b.table||0));
 
+  // Filtre recherche par numéro de table
+  if(recherche){
+    adds=adds.filter(a=>String(a.table).includes(recherche));
+  }
+
   if(!adds.length){
-    container.innerHTML='<div class="empty"><div class="em">🧾</div><p>Aucune addition en cours</p></div>';
+    const msg=recherche
+      ?`<div class="empty"><div class="em">🔍</div><p>Aucune table trouvée pour "${recherche}"</p></div>`
+      :'<div class="empty"><div class="em">🧾</div><p>Aucune addition en cours</p></div>';
+    container.innerHTML=msg;
     return;
   }
 
