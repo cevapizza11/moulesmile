@@ -401,14 +401,21 @@ function renderAlertes(){
   const container=document.getElementById('alertesContainer');
   const alertes=Object.values(allAlertes).filter(a=>a.statut==='nouvelle');
   if(!alertes.length){container.innerHTML='';return;}
-  container.innerHTML=alertes.map(a=>`
+  container.innerHTML=alertes.map(a=>{
+    const estServeur=a.type==='serveur';
+    const titre=estServeur?`🙋 Table ${a.table} appelle un serveur`:`🔔 Table ${a.table} demande l'addition`;
+    const sub=estServeur
+      ?`🕐 ${a.heure||'--:--'}`
+      :`🕐 ${a.heure||'--:--'} — Total estimé : <strong style="color:#D4AF37">${(a.total||0).toFixed(2).replace('.',',')} €</strong>`;
+    return `
     <div class="alerte-card">
       <div class="alerte-info">
-        <div class="alerte-titre">🔔 Table ${a.table} demande l'addition</div>
-        <div class="alerte-sub">🕐 ${a.heure||'--:--'} — Total estimé : <strong style="color:#D4AF37">${(a.total||0).toFixed(2).replace('.',',')} €</strong></div>
+        <div class="alerte-titre">${titre}</div>
+        <div class="alerte-sub">${sub}</div>
       </div>
       <button class="btn-ack" onclick="acquitterAlerte('${a.id}')">✓ Vu</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 async function acquitterAlerte(id){

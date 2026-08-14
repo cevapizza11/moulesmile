@@ -68,6 +68,23 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 .toast.show{opacity:1}
 .badge{background:#D4AF37;color:#1A1A1A;font-size:10px;font-weight:bold;padding:2px 6px;border-radius:10px;margin-left:6px}
 .version{text-align:center;padding:16px;color:#333;font-size:10px}
+
+/* MODAL ÉDITION PRODUIT */
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:500;display:none;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.visible{display:flex}
+.modal-box{background:#1E1E1E;border:2px solid #D4AF37;border-radius:16px;padding:20px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto}
+.modal-box h3{color:#D4AF37;font-size:16px;margin-bottom:14px}
+.modal-actions{display:flex;gap:10px;margin-top:14px}
+.btn-annuler{background:#333;color:#aaa;border:none;padding:11px;border-radius:8px;font-weight:bold;font-size:13px;cursor:pointer;flex:1}
+.item-info{cursor:pointer}
+.item-info:active{opacity:.7}
+
+/* GLISSER-DÉPOSER PRODUITS */
+.item-row{cursor:default}
+.drag-handle{cursor:grab;color:#666;font-size:16px;padding:0 6px;user-select:none}
+.drag-handle:active{cursor:grabbing}
+.item-row.dragging{opacity:.4}
+.item-row.drag-over{border-top:2px solid #D4AF37}
 </style>
 </head>
 <body>
@@ -79,11 +96,34 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   <div class="nav-tab active" onclick="switchNav('Carte',this)" style="flex-shrink:0">📋 Carte</div>
   <div class="nav-tab" onclick="switchNav('BoissonMenu',this)" style="flex-shrink:0">🍺 Menu</div>
   <div class="nav-tab" onclick="switchNav('EnfantMenu',this)" style="flex-shrink:0">🧒 Enfant</div>
+  <div class="nav-tab" onclick="switchNav('Reglages',this)" style="flex-shrink:0">⚙️ Réglages</div>
   <div class="nav-tab" onclick="switchNav('Ajouter',this)" style="flex-shrink:0">➕ Ajouter</div>
   <div class="nav-tab" onclick="switchNav('Importer',this)" style="flex-shrink:0">📥 Excel</div>
   <div class="nav-tab" onclick="switchNav('Actions',this)" style="flex-shrink:0">⚡ Actions</div>
 </div>
 <div class="toast" id="toast"></div>
+
+<!-- MODAL ÉDITION PRODUIT -->
+<div class="modal-overlay" id="modalEdition">
+  <div class="modal-box">
+    <h3>✏️ Modifier le produit</h3>
+    <div class="form-row">
+      <div class="form-group" style="flex:1;min-width:80px"><label>Emoji</label><input type="text" id="editEmoji" maxlength="4"></div>
+      <div class="form-group" style="flex:2"><label>Nom *</label><input type="text" id="editNom"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Description</label><input type="text" id="editDesc"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="flex:1"><label>Prix (€)</label><input type="number" id="editPrix" step="0.10" min="0"></div>
+      <div class="form-group" style="flex:1"><label>Sous-catégorie</label><input type="text" id="editSubcat" placeholder="Ex: Rouge, Softs..."></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-annuler" onclick="fermerModalEdition()">Annuler</button>
+      <button class="btn-add-prod" onclick="validerEdition()" style="flex:2">✅ Enregistrer</button>
+    </div>
+  </div>
+</div>
 
 <!-- CARTE -->
 <div id="navCarte" class="content">
@@ -137,6 +177,28 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   <div style="background:#2A2A2A;border-radius:10px;padding:12px;margin-top:14px;font-size:12px;color:#888;line-height:1.7">
     💡 Ces produits apparaissent dans le popup <strong style="color:#D4AF37">Menu Enfant</strong> quand le client confirme un enfant de 0-5 ans.<br>
     C'est gratuit — inclus dans l'offre enfant.
+  </div>
+</div>
+
+<!-- RÉGLAGES -->
+<div id="navReglages" class="content" style="display:none">
+  <div class="status-bar"><div class="dot"></div>Réglages globaux de l'application client</div>
+
+  <div class="section">
+    <h2>🔢 Compteur +/- sur la carte</h2>
+    <div class="item-row" style="border-bottom:none">
+      <div class="item-info" style="cursor:default">
+        <div class="item-nom">Afficher un compteur +/- sur tous les produits</div>
+        <div class="item-detail">Si désactivé : simple bouton "+" sans quantité visible</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="compteurToggle" onchange="toggleCompteurGlobal(this.checked)"><span class="toggle-slider"></span></label>
+    </div>
+  </div>
+
+  <div class="section" style="margin-top:14px">
+    <h2>👁️ Catégories visibles sur la carte</h2>
+    <div style="color:#888;font-size:12px;margin-bottom:10px">Désactivez une catégorie entière pour la masquer côté client (ex: pas de cocktails cette saison)</div>
+    <div id="categoriesReglagesList"></div>
   </div>
 </div>
 
@@ -264,9 +326,8 @@ const db=firebase.firestore();
 let carte=null,catActive=null,importedData=null;
 
 const CATS=[
-  {id:"formules",nom:"🐚 Formules"},{id:"sauces",nom:"🥘 Sauces"},{id:"softs",nom:"🥤 Softs"},
-  {id:"bieres",nom:"🍺 Bières"},{id:"vins_blancs",nom:"🥂 Vins Blancs"},{id:"vins_roses",nom:"🍷 Vins Rosés"},
-  {id:"vins_rouges",nom:"🍷 Vins Rouges"},{id:"cocktails",nom:"🍹 Cocktails"},{id:"sangria",nom:"🍷 Sangria"},
+  {id:"formules",nom:"🐚 Formules"},{id:"sauces",nom:"🌿 Sauces"},{id:"softs",nom:"🥤 Softs"},
+  {id:"bieres",nom:"🍺 Bières"},{id:"vins",nom:"🍷 Vins"},{id:"cocktails",nom:"🍹 Cocktails & Sangria"},
   {id:"desserts",nom:"🍮 Desserts"},{id:"digestifs",nom:"✨ Digestifs"},{id:"chauds",nom:"☕ Chauds"},
 ];
 
@@ -307,10 +368,11 @@ db.collection('config').doc('carte_v2').onSnapshot(doc=>{
 function switchNav(tab,el){
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
-  ['navCarte','navBoissonMenu','navEnfantMenu','navAjouter','navImporter','navActions'].forEach(id=>document.getElementById(id).style.display='none');
+  ['navCarte','navBoissonMenu','navEnfantMenu','navReglages','navAjouter','navImporter','navActions'].forEach(id=>document.getElementById(id).style.display='none');
   document.getElementById('nav'+tab).style.display='block';
   if(tab==='BoissonMenu') renderBoissonMenu();
   if(tab==='EnfantMenu') renderEnfantMenu();
+  if(tab==='Reglages') renderReglages();
 }
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
@@ -322,14 +384,93 @@ function render(){
   if(!cat)return;
   const nb=(cat.produits||[]).filter(p=>p.actif).length;
   document.getElementById('catContent').innerHTML=`<div class="section"><h2>${cat.nom} <span class="badge">${nb} actifs</span></h2>${(cat.produits||[]).map((p,idx)=>`
-    <div class="item-row">
-      <div class="item-info"><div class="item-nom">${p.emoji||''} ${p.nom}</div><div class="item-detail">${p.desc||''}</div></div>
+    <div class="item-row" draggable="true" data-idx="${idx}"
+      ondragstart="dragStart(event,${idx})" ondragover="dragOver(event)"
+      ondragleave="dragLeave(event)" ondrop="dragDrop(event,${idx})" ondragend="dragEnd(event)">
+      <span class="drag-handle" title="Glisser pour réordonner">⠿</span>
+      <div class="item-info" onclick="ouvrirModalEdition('${catActive}',${idx})"><div class="item-nom">${p.emoji||''} ${p.nom}</div><div class="item-detail">${p.desc||''}${p.subcat?' · '+p.subcat:''}</div></div>
       <div style="display:flex;align-items:center;gap:4px">
         ${p.prix>0?`<input type="number" class="prix-input" value="${p.prix}" step="0.10" onchange="updatePrix('${catActive}',${idx},this.value)"> €`:'<span style="color:#1A7A50;font-size:10px;font-weight:bold">Inclus</span>'}
         <label class="toggle"><input type="checkbox" ${p.actif?'checked':''} onchange="toggleItem('${catActive}',${idx},this.checked)"><span class="toggle-slider"></span></label>
         <button class="del-prod-btn" onclick="supprimerProduit('${catActive}',${idx})">🗑</button>
       </div>
     </div>`).join('')}</div>`;
+}
+
+// ============================================================
+// GLISSER-DÉPOSER PRODUITS (réordonner dans une catégorie)
+// ============================================================
+let dragSrcIdx=null;
+
+function dragStart(e,idx){
+  dragSrcIdx=idx;
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed='move';
+}
+function dragOver(e){
+  e.preventDefault();
+  e.currentTarget.classList.add('drag-over');
+}
+function dragLeave(e){
+  e.currentTarget.classList.remove('drag-over');
+}
+function dragEnd(e){
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.item-row.drag-over').forEach(el=>el.classList.remove('drag-over'));
+}
+function dragDrop(e,targetIdx){
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if(dragSrcIdx===null||dragSrcIdx===targetIdx)return;
+  const cat=carte.categories.find(c=>c.id===catActive);
+  if(!cat)return;
+  const [moved]=cat.produits.splice(dragSrcIdx,1);
+  cat.produits.splice(targetIdx,0,moved);
+  dragSrcIdx=null;
+  sauvegarder();render();
+  showToast('✅ Ordre mis à jour');
+}
+
+// ============================================================
+// ÉDITION D'UN PRODUIT (clic sur son nom)
+// ============================================================
+let editionCatId=null,editionIdx=null;
+
+function ouvrirModalEdition(catId,idx){
+  const cat=carte.categories.find(c=>c.id===catId);
+  if(!cat)return;
+  const p=cat.produits[idx];
+  if(!p)return;
+  editionCatId=catId;editionIdx=idx;
+  document.getElementById('editEmoji').value=p.emoji||'';
+  document.getElementById('editNom').value=p.nom||'';
+  document.getElementById('editDesc').value=p.desc||'';
+  document.getElementById('editPrix').value=p.prix||0;
+  document.getElementById('editSubcat').value=p.subcat||'';
+  document.getElementById('modalEdition').classList.add('visible');
+}
+
+function fermerModalEdition(){
+  document.getElementById('modalEdition').classList.remove('visible');
+  editionCatId=null;editionIdx=null;
+}
+
+function validerEdition(){
+  if(editionCatId===null||editionIdx===null)return;
+  const cat=carte.categories.find(c=>c.id===editionCatId);
+  if(!cat)return;
+  const p=cat.produits[editionIdx];
+  if(!p)return;
+  const nom=document.getElementById('editNom').value.trim();
+  if(!nom){showToast('⚠️ Nom obligatoire');return;}
+  p.nom=nom;
+  p.emoji=document.getElementById('editEmoji').value.trim();
+  p.desc=document.getElementById('editDesc').value.trim();
+  p.prix=parseFloat(document.getElementById('editPrix').value)||0;
+  const subcat=document.getElementById('editSubcat').value.trim();
+  if(subcat) p.subcat=subcat; else delete p.subcat;
+  sauvegarder();render();fermerModalEdition();
+  showToast(`✅ "${nom}" modifié !`);
 }
 
 function selectCat(id){catActive=id;render();}
@@ -371,9 +512,9 @@ function handleFile(file){
     r.onload=e=>{
       try{
         const wb=XLSX.read(e.target.result,{type:'array'});
-        // Parcourir tous les onglets sauf INSTRUCTIONS et Export Firebase
+        // Parcourir tous les onglets produits — exclut les onglets non-produits (instructions, menus spéciaux à colonnes différentes)
         let allRows=[];
-        wb.SheetNames.filter(n=>!['INSTRUCTIONS','Export Firebase'].includes(n)).forEach(n=>{
+        wb.SheetNames.filter(n=>!['INSTRUCTIONS','Export Firebase','Boissons Menu','Desserts Menu','Menu Enfant'].includes(n)).forEach(n=>{
           const ws=wb.Sheets[n];
           const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
           // Chercher la ligne header
@@ -395,23 +536,25 @@ function csvToRows(text){return text.split('\n').filter(l=>l.trim()).map(l=>l.sp
 function parseRows(rows){
   const produits=[];
   rows.forEach((row,i)=>{
-    if(!row||!row[2]||String(row[2]).trim()==='')return;
-    const nom=String(row[2]||'').trim();
+    if(!row||!row[3]||String(row[3]).trim()==='')return;
+    const nom=String(row[3]||'').trim();
     if(!nom||nom.toLowerCase()==='nom')return;
     const id=String(row[0]||'').trim()||'p_'+i;
     const cat=String(row[1]||'formules').trim().toLowerCase().replace(/\s+/g,'_').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-    const desc=String(row[3]||'').trim();
-    const emoji=String(row[4]||'').trim();
-    const prix=parseFloat(String(row[5]||'0').replace(',','.'))||0;
-    const actif=String(row[6]||'OUI').trim().toUpperCase()!=='NON';
-    produits.push({id,cat,nom,desc,emoji,prix,actif});
+    const subcat=String(row[2]||'').trim();
+    const desc=String(row[4]||'').trim();
+    const emoji=String(row[5]||'').trim();
+    const prix=parseFloat(String(row[6]||'0').replace(',','.'))||0;
+    const actif=String(row[7]||'OUI').trim().toUpperCase()!=='NON';
+    const ordre=parseInt(row[8])||9999;
+    produits.push({id,cat,subcat,nom,desc,emoji,prix,actif,ordre});
   });
   if(!produits.length){showToast('⚠️ Aucun produit trouvé');return;}
   importedData=produits;
   document.getElementById('previewCount').textContent=produits.length;
   document.getElementById('previewList').innerHTML=produits.slice(0,25).map(p=>`
     <div class="preview-item">
-      <span style="color:#888;font-size:10px">[${p.cat}]</span>
+      <span style="color:#888;font-size:10px">[${p.cat}${p.subcat?' / '+p.subcat:''}]</span>
       <span style="color:#ddd;margin-left:6px">${p.emoji||''} ${p.nom}</span>
       <span style="color:#D4AF37;font-weight:bold">${p.prix===0?'Inclus':p.prix.toFixed(2).replace('.',',')+' €'} ${p.actif?'✅':'❌'}</span>
     </div>`).join('')+(produits.length>25?`<div style="color:#888;font-size:11px;padding:6px">...et ${produits.length-25} autres</div>`:'');
@@ -424,12 +567,29 @@ function confirmerImport(){
   if(!importedData||!importedData.length)return;
   const newCarte={categories:[]};
   CATS.forEach(catDef=>{
-    const prods=importedData.filter(p=>p.cat===catDef.id||catDef.id.includes(p.cat)).map(p=>({id:p.id,nom:p.nom,desc:p.desc,emoji:p.emoji,prix:p.prix,actif:p.actif}));
-    if(prods.length)newCarte.categories.push({id:catDef.id,nom:catDef.nom,produits:prods});
+    let prods=importedData.filter(p=>p.cat===catDef.id||catDef.id.includes(p.cat));
+    prods.sort((a,b)=>(a.ordre||9999)-(b.ordre||9999));
+    const mapped=prods.map(p=>{
+      const item={id:p.id,nom:p.nom,desc:p.desc,emoji:p.emoji,prix:p.prix,actif:p.actif};
+      if(p.subcat) item.subcat=p.subcat;
+      return item;
+    });
+    if(mapped.length)newCarte.categories.push({id:catDef.id,nom:catDef.nom,produits:mapped});
   });
   const knownIds=CATS.map(c=>c.id);
   const others=importedData.filter(p=>!knownIds.includes(p.cat));
-  if(others.length)newCarte.categories.push({id:'autres',nom:'📦 Autres',produits:others.map(p=>({id:p.id,nom:p.nom,desc:p.desc,emoji:p.emoji,prix:p.prix,actif:p.actif}))});
+  if(others.length){
+    others.sort((a,b)=>(a.ordre||9999)-(b.ordre||9999));
+    newCarte.categories.push({id:'autres',nom:'📦 Autres',produits:others.map(p=>({id:p.id,nom:p.nom,desc:p.desc,emoji:p.emoji,prix:p.prix,actif:p.actif}))});
+  }
+  // Conserver les réglages existants (compteur global, catégories actives, menus spéciaux) lors d'un import
+  if(carte){
+    newCarte.compteurActif=carte.compteurActif;
+    newCarte.categoriesActives=carte.categoriesActives;
+    newCarte.boissonsMenu=carte.boissonsMenu;
+    newCarte.enfantMenu=carte.enfantMenu;
+    newCarte.dessertsMenu=carte.dessertsMenu;
+  }
   carte=newCarte;catActive=newCarte.categories[0]?.id;
   sauvegarder();render();annulerImport();
   showToast(`✅ ${importedData?importedData.length:0} produits importés !`);
@@ -575,6 +735,39 @@ function ajouterEnfantMenu() {
   sauvegarder();
   renderEnfantMenu();
   showToast(`✅ "${nom}" ajouté au menu enfant !`);
+}
+
+// ============================================================
+// RÉGLAGES GLOBAUX
+// ============================================================
+function renderReglages(){
+  if(!carte)return;
+  document.getElementById('compteurToggle').checked=carte.compteurActif!==false;
+
+  if(!carte.categoriesActives) carte.categoriesActives={};
+  document.getElementById('categoriesReglagesList').innerHTML=carte.categories.map(c=>{
+    const active=carte.categoriesActives[c.id]!==false;
+    return `<div class="item-row">
+      <div class="item-info" style="cursor:default"><div class="item-nom">${c.nom}</div></div>
+      <label class="toggle"><input type="checkbox" ${active?'checked':''} onchange="toggleCategorieActive('${c.id}',this.checked)"><span class="toggle-slider"></span></label>
+    </div>`;
+  }).join('');
+}
+
+function toggleCompteurGlobal(val){
+  if(!carte)return;
+  carte.compteurActif=val;
+  sauvegarder();
+  showToast(val?'✅ Compteur +/- activé partout':'✅ Compteur +/- désactivé — simple bouton +');
+}
+
+function toggleCategorieActive(catId,val){
+  if(!carte)return;
+  if(!carte.categoriesActives) carte.categoriesActives={};
+  carte.categoriesActives[catId]=val;
+  sauvegarder();
+  const cat=carte.categories.find(c=>c.id===catId);
+  showToast(`${cat?cat.nom:catId} ${val?'✅ visible':'❌ masquée'} côté client`);
 }
 
 // ============================================================

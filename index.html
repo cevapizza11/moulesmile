@@ -217,6 +217,16 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   <div class="sec-title">Que souhaitez-vous commander ?</div>
   <div class="sec-sub">Choisissez une catégorie</div>
   <div class="tuiles-grid" id="tuilesGrid"></div>
+  <button class="btn btn-outline" onclick="appelerServeur()" style="margin-top:20px">🙋 Appeler un serveur</button>
+  <button class="btn btn-rouge" onclick="intercepterAddition()" style="margin-top:8px">🧾 Demander l'addition</button>
+</div>
+
+<!-- SOUS-TUILES (ex: Vins → Rouge / Rosé / Blanc) -->
+<div class="screen" id="screenSousTuiles">
+  <div class="sec-title" id="sousTuilesTitre">Choisissez</div>
+  <div class="sec-sub">Précisez votre choix</div>
+  <button class="btn btn-outline" onclick="showScreen('screenAccueil')" style="margin-bottom:12px">← Toutes les catégories</button>
+  <div class="tuiles-grid" id="sousTuilesGrid"></div>
 </div>
 
 <!-- CARTE -->
@@ -282,6 +292,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
     <h3>Avant l'addition...</h3>
     <p>Un dessert ou un café pour finir en beauté ?</p>
     <div class="upsell-list" id="upsellDessertList"></div>
+    <button class="btn btn-or" onclick="validerAvantAddition()">✅ Valider et passer à l'addition</button>
     <button class="upsell-non" onclick="refuserDessert()">Non merci, passer à l'addition</button>
   </div>
 </div>
@@ -335,48 +346,51 @@ if(urlParams.get('table')) document.getElementById('tableInput').value=urlParams
 // ============================================================
 const carteDefaut={
   categories:[
-    {id:"apero", nom:"🥂 Apéro & Boissons", produits:[
-      // Softs
-      {id:"b1",nom:"Coca-Cola",desc:"33cl",emoji:"🥤",prix:3.00,actif:true,subcat:"Softs"},
-      {id:"b2",nom:"Orangina",desc:"33cl",emoji:"🍊",prix:3.00,actif:true,subcat:"Softs"},
-      {id:"b3",nom:"Limonade",desc:"33cl",emoji:"🍋",prix:3.00,actif:true,subcat:"Softs"},
-      {id:"b4",nom:"Eau plate",desc:"50cl",emoji:"💧",prix:2.50,actif:true,subcat:"Softs"},
-      {id:"b5",nom:"Eau gazeuse",desc:"50cl",emoji:"💧",prix:2.50,actif:true,subcat:"Softs"},
-      {id:"b6",nom:"Jus de fruits",desc:"25cl",emoji:"🍹",prix:3.50,actif:true,subcat:"Softs"},
-      // Bières
-      {id:"b7",nom:"Bière pression",desc:"25cl",emoji:"🍺",prix:3.50,actif:true,subcat:"Bières"},
-      {id:"b8",nom:"Bière pression",desc:"50cl",emoji:"🍺",prix:5.50,actif:true,subcat:"Bières"},
-      {id:"b9",nom:"Bière bouteille",desc:"33cl",emoji:"🍺",prix:4.50,actif:true,subcat:"Bières"},
-      {id:"b10",nom:"Bière sans alcool",desc:"33cl",emoji:"🍺",prix:4.00,actif:true,subcat:"Bières"},
+    {id:"softs", nom:"🥤 Softs", produits:[
+      {id:"b1",nom:"Coca-Cola",desc:"33cl",emoji:"🥤",prix:3.00,actif:true},
+      {id:"b2",nom:"Orangina",desc:"33cl",emoji:"🍊",prix:3.00,actif:true},
+      {id:"b3",nom:"Limonade",desc:"33cl",emoji:"🍋",prix:3.00,actif:true},
+      {id:"b4",nom:"Eau plate",desc:"50cl",emoji:"💧",prix:2.50,actif:true},
+      {id:"b5",nom:"Eau gazeuse",desc:"50cl",emoji:"💧",prix:2.50,actif:true},
+      {id:"b6",nom:"Jus de fruits",desc:"25cl",emoji:"🍹",prix:3.50,actif:true},
+    ]},
+    {id:"bieres", nom:"🍺 Bières", produits:[
+      {id:"b7",nom:"Bière pression",desc:"25cl",emoji:"🍺",prix:3.50,actif:true},
+      {id:"b8",nom:"Bière pression",desc:"50cl",emoji:"🍺",prix:5.50,actif:true},
+      {id:"b9",nom:"Bière bouteille",desc:"33cl",emoji:"🍺",prix:4.50,actif:true},
+      {id:"b10",nom:"Bière sans alcool",desc:"33cl",emoji:"🍺",prix:4.00,actif:true},
+    ]},
+    {id:"vins", nom:"🍷 Vins", sousTuiles:true, produits:[
       // Vins blancs
-      {id:"b11",nom:"Picpoul de Pinet AOP",desc:"Codet 25cl",emoji:"🥂",prix:4.50,actif:true,subcat:"Vins Blancs"},
-      {id:"b12",nom:"Picpoul de Pinet AOP",desc:"Pichet 50cl",emoji:"🥂",prix:9.50,actif:true,subcat:"Vins Blancs"},
-      {id:"b13",nom:"Picpoul de Pinet AOP",desc:"Bouteille 75cl",emoji:"🥂",prix:17.00,actif:true,subcat:"Vins Blancs"},
-      {id:"b14",nom:"La Clape Blanc AOP",desc:"Bouteille 75cl",emoji:"🥂",prix:19.00,actif:true,subcat:"Vins Blancs"},
-      {id:"b15",nom:"Gérard Bertrand Blanc",desc:"Bouteille 75cl",emoji:"🥂",prix:18.00,actif:true,subcat:"Vins Blancs"},
-      {id:"b16",nom:"Gérard Bertrand Blanc",desc:"Magnum 1,5L",emoji:"🥂",prix:32.00,actif:true,subcat:"Vins Blancs"},
+      {id:"b11",nom:"Picpoul de Pinet AOP",desc:"Codet 25cl",emoji:"🥂",prix:4.50,actif:true,subcat:"Blanc"},
+      {id:"b12",nom:"Picpoul de Pinet AOP",desc:"Pichet 50cl",emoji:"🥂",prix:9.50,actif:true,subcat:"Blanc"},
+      {id:"b13",nom:"Picpoul de Pinet AOP",desc:"Bouteille 75cl",emoji:"🥂",prix:17.00,actif:true,subcat:"Blanc"},
+      {id:"b14",nom:"La Clape Blanc AOP",desc:"Bouteille 75cl",emoji:"🥂",prix:19.00,actif:true,subcat:"Blanc"},
+      {id:"b15",nom:"Gérard Bertrand Blanc",desc:"Bouteille 75cl",emoji:"🥂",prix:18.00,actif:true,subcat:"Blanc"},
+      {id:"b16",nom:"Gérard Bertrand Blanc",desc:"Magnum 1,5L",emoji:"🥂",prix:32.00,actif:true,subcat:"Blanc"},
       // Vins rosés
-      {id:"b17",nom:"Corbières Rosé AOP",desc:"Codet 25cl",emoji:"🍷",prix:4.50,actif:true,subcat:"Vins Rosés"},
-      {id:"b18",nom:"Corbières Rosé AOP",desc:"Pichet 50cl",emoji:"🍷",prix:9.50,actif:true,subcat:"Vins Rosés"},
-      {id:"b19",nom:"Corbières Rosé AOP",desc:"Bouteille 75cl",emoji:"🍷",prix:16.00,actif:true,subcat:"Vins Rosés"},
-      {id:"b20",nom:"La Clape Rosé AOP",desc:"Bouteille 75cl",emoji:"🍷",prix:19.00,actif:true,subcat:"Vins Rosés"},
-      {id:"b21",nom:"Gérard Bertrand Rosé",desc:"Bouteille 75cl",emoji:"🍷",prix:20.00,actif:true,subcat:"Vins Rosés"},
-      {id:"b22",nom:"Gérard Bertrand Rosé",desc:"Magnum 1,5L",emoji:"🍷",prix:36.00,actif:true,subcat:"Vins Rosés"},
+      {id:"b17",nom:"Corbières Rosé AOP",desc:"Codet 25cl",emoji:"🍷",prix:4.50,actif:true,subcat:"Rosé"},
+      {id:"b18",nom:"Corbières Rosé AOP",desc:"Pichet 50cl",emoji:"🍷",prix:9.50,actif:true,subcat:"Rosé"},
+      {id:"b19",nom:"Corbières Rosé AOP",desc:"Bouteille 75cl",emoji:"🍷",prix:16.00,actif:true,subcat:"Rosé"},
+      {id:"b20",nom:"La Clape Rosé AOP",desc:"Bouteille 75cl",emoji:"🍷",prix:19.00,actif:true,subcat:"Rosé"},
+      {id:"b21",nom:"Gérard Bertrand Rosé",desc:"Bouteille 75cl",emoji:"🍷",prix:20.00,actif:true,subcat:"Rosé"},
+      {id:"b22",nom:"Gérard Bertrand Rosé",desc:"Magnum 1,5L",emoji:"🍷",prix:36.00,actif:true,subcat:"Rosé"},
       // Vins rouges
-      {id:"b23",nom:"Minervois Rouge AOP",desc:"Bouteille 75cl",emoji:"🍷",prix:17.00,actif:true,subcat:"Vins Rouges"},
-      {id:"b24",nom:"Corbières Rouge AOP",desc:"Bouteille 75cl",emoji:"🍷",prix:16.00,actif:true,subcat:"Vins Rouges"},
-      // Cocktails
+      {id:"b23",nom:"Minervois Rouge AOP",desc:"Bouteille 75cl",emoji:"🍷",prix:17.00,actif:true,subcat:"Rouge"},
+      {id:"b24",nom:"Corbières Rouge AOP",desc:"Bouteille 75cl",emoji:"🍷",prix:16.00,actif:true,subcat:"Rouge"},
+    ]},
+    {id:"cocktails", nom:"🍹 Cocktails & Sangria", produits:[
       {id:"b25",nom:"Spritz",desc:"Aperol, Prosecco, eau gazeuse — 25cl",emoji:"🥂",prix:8.00,actif:true,subcat:"Cocktails"},
       {id:"b26",nom:"Mojito",desc:"Rhum, menthe fraîche, citron vert — 25cl",emoji:"🍹",prix:8.50,actif:true,subcat:"Cocktails"},
       {id:"b27",nom:"Moscow Mule",desc:"Vodka, ginger beer, citron — 25cl",emoji:"🍹",prix:8.50,actif:true,subcat:"Cocktails"},
       {id:"b28",nom:"Pastis / Ricard",desc:"4cl",emoji:"🥃",prix:4.00,actif:true,subcat:"Cocktails"},
-      // Sangria
       {id:"b29",nom:"Sangria Maison",desc:"Verre 25cl — Vin rouge Corbières, fruits frais",emoji:"🍷",prix:5.50,actif:true,subcat:"Sangria"},
       {id:"b30",nom:"Sangria Maison",desc:"Pichet 50cl",emoji:"🍷",prix:9.50,actif:true,subcat:"Sangria"},
       {id:"b31",nom:"Sangria Maison",desc:"Pichet 1L",emoji:"🍷",prix:16.00,actif:true,subcat:"Sangria"},
-      // Chauds
-      {id:"b32",nom:"Café / Expresso",desc:"",emoji:"☕",prix:2.50,actif:true,subcat:"Chauds"},
-      {id:"b33",nom:"Thé / Infusion",desc:"",emoji:"🍵",prix:2.50,actif:true,subcat:"Chauds"},
+    ]},
+    {id:"chauds", nom:"☕ Chauds", produits:[
+      {id:"b32",nom:"Café / Expresso",desc:"",emoji:"☕",prix:2.50,actif:true},
+      {id:"b33",nom:"Thé / Infusion",desc:"",emoji:"🍵",prix:2.50,actif:true},
     ]},
     {id:"formules", nom:"🐚 Formules", produits:[
       {id:"p1",nom:"Moules-frites à volonté",desc:"Moules Bouzigues AOP + frites fraîches à volonté",emoji:"🐚",prix:21.90,actif:true},
@@ -384,6 +398,14 @@ const carteDefaut={
       {id:"fc1",nom:"Fish & chips maison",desc:"Cabillaud pané + frites fraîches",emoji:"🐟",prix:14.90,actif:true},
       {id:"en1",nom:"Enfant 0-5 ans",desc:"1 enfant gratuit par adulte payant",emoji:"👧",prix:0.00,actif:true},
       {id:"en2",nom:"Enfant / Ado 6-17 ans",desc:"À volonté — tarif unique",emoji:"🧒",prix:15.90,actif:true},
+    ]},
+    {id:"sauces", nom:"🌿 Sauces", produits:[
+      {id:"s1",nom:"Marinière",desc:"Vin blanc, échalotes, persil frais",emoji:"🌿",prix:0.00,actif:true},
+      {id:"s2",nom:"Roquefort",desc:"Roquefort, noix, cognac",emoji:"🧀",prix:0.00,actif:true},
+      {id:"s3",nom:"Curry",desc:"Curry, lait de coco, citron vert",emoji:"🌶️",prix:0.00,actif:true},
+      {id:"s4",nom:"Crème-échalote",desc:"Crème fraîche, échalotes confites",emoji:"🥛",prix:0.00,actif:true},
+      {id:"s5",nom:"Tomate-chorizo",desc:"Tomates concassées, chorizo, piment doux",emoji:"🍅",prix:0.00,actif:true},
+      {id:"s6",nom:"Provençale",desc:"Tomates, herbes de Provence, ail, olives",emoji:"🌞",prix:0.00,actif:true},
     ]},
     {id:"desserts", nom:"🍮 Desserts", produits:[
       {id:"d1",nom:"Dessert du jour",desc:"Demandez à votre serveur",emoji:"🍮",prix:3.50,actif:true},
@@ -418,6 +440,14 @@ const carteDefaut={
     {id:"me3",nom:"Steak haché & frites",desc:"Steak haché + frites fraîches",emoji:"🍔",actif:true},
     {id:"me4",nom:"Glace enfant",desc:"1 boule au choix",emoji:"🍦",actif:true},
     {id:"me5",nom:"Sirop à l'eau",desc:"Fraise, menthe ou grenadine",emoji:"🧃",actif:true},
+  ],
+  sauces:[
+    {id:"s1",nom:"Marinière",desc:"Vin blanc, échalotes, persil frais",emoji:"🌿",actif:true},
+    {id:"s2",nom:"Roquefort",desc:"Roquefort, noix, cognac",emoji:"🧀",actif:true},
+    {id:"s3",nom:"Curry",desc:"Curry, lait de coco, citron vert",emoji:"🌶️",actif:true},
+    {id:"s4",nom:"Crème-échalote",desc:"Crème fraîche, échalotes confites",emoji:"🥛",actif:true},
+    {id:"s5",nom:"Tomate-chorizo",desc:"Tomates concassées, chorizo, piment doux",emoji:"🍅",actif:true},
+    {id:"s6",nom:"Provençale",desc:"Tomates, herbes de Provence, ail, olives",emoji:"🌞",actif:true},
   ]
 };
 
@@ -428,6 +458,7 @@ db.collection('config').doc('carte_v2').onSnapshot(doc=>{
     if(!carte.boissonsMenu) carte.boissonsMenu=carteDefaut.boissonsMenu;
     if(!carte.dessertsMenu) carte.dessertsMenu=carteDefaut.dessertsMenu;
     if(!carte.enfantMenu) carte.enfantMenu=carteDefaut.enfantMenu;
+    if(!carte.sauces) carte.sauces=carteDefaut.sauces;
   } else {
     carte=carteDefaut;
     db.collection('config').doc('carte_v2').set(carteDefaut).catch(()=>{});
@@ -592,18 +623,64 @@ function validerTable(couverts){
 // TABS
 function renderTabs(){
   const c=carte||carteDefaut;
-  document.getElementById('catTabs').innerHTML=c.categories.map(cat=>
-    `<div class="cat-tab ${cat.id===catActive?'active':''}" onclick="selectCat('${cat.id}')">${cat.nom}</div>`
-  ).join('');
+  const categoriesActives=c.categoriesActives||{};
+  document.getElementById('catTabs').innerHTML=c.categories
+    .filter(cat=>categoriesActives[cat.id]!==false)
+    .map(cat=>
+      `<div class="cat-tab ${cat.id===catActive?'active':''}" onclick="selectCat('${cat.id}')">${cat.nom}</div>`
+    ).join('');
 }
 
 function selectCat(id){
-  catActive=id;
-  renderTabs();renderProduits(id);
   const c=carte||carteDefaut;
   const cat=c.categories.find(x=>x.id===id);
+
+  // Catégorie avec sous-tuiles (ex: Vins → Rouge/Rosé/Blanc) → écran intermédiaire
+  if(cat&&cat.sousTuiles){
+    catActive=id;
+    renderSousTuiles(cat);
+    showScreen('screenSousTuiles');
+    return;
+  }
+
+  catActive=id;
+  subcatActive=null;
+  renderTabs();renderProduits(id);
   const titreEl=document.getElementById('carteTitreCat');
   if(titreEl) titreEl.textContent=cat?cat.nom:'Notre carte';
+  showScreen('screenCarte');
+}
+
+// ============================================================
+// SOUS-TUILES (2e niveau, ex: Vins → Rouge / Rosé / Blanc)
+// Générées dynamiquement depuis les "subcat" distincts des produits de la catégorie
+// ============================================================
+let subcatActive=null;
+
+function renderSousTuiles(cat){
+  const grid=document.getElementById('sousTuilesGrid');
+  const titreEl=document.getElementById('sousTuilesTitre');
+  if(titreEl) titreEl.textContent=cat.nom;
+  if(!grid) return;
+
+  const subcats=[...new Set((cat.produits||[]).filter(p=>p.actif&&p.subcat).map(p=>p.subcat))];
+
+  const emojisSubcat={'Rouge':'🍷','Rosé':'🌹','Blanc':'🥂'};
+  grid.innerHTML=subcats.map(sc=>`
+    <div class="tuile-cat" onclick="selectSubcat('${cat.id}','${esc(sc)}')">
+      <div class="tuile-emoji">${emojisSubcat[sc]||'🍷'}</div>
+      <div class="tuile-nom">${sc}</div>
+    </div>`).join('');
+}
+
+function selectSubcat(catId,subcat){
+  catActive=catId;
+  subcatActive=subcat;
+  const c=carte||carteDefaut;
+  const cat=c.categories.find(x=>x.id===catId);
+  renderTabs();renderProduits(catId,subcat);
+  const titreEl=document.getElementById('carteTitreCat');
+  if(titreEl) titreEl.textContent=(cat?cat.nom:'Notre carte')+' — '+subcat;
   showScreen('screenCarte');
 }
 
@@ -615,16 +692,19 @@ function renderTuilesAccueil(){
   const c=carte||carteDefaut;
   const grid=document.getElementById('tuilesGrid');
   if(!grid) return;
-  grid.innerHTML=c.categories.map(cat=>{
-    // Emoji de la catégorie déjà présent dans son nom (ex: "🐚 Formules") → on le sépare pour l'agrandir
-    const match=cat.nom.match(/^(\S+)\s*(.*)$/);
-    const emoji=match?match[1]:'🍽️';
-    const label=match?match[2]:cat.nom;
-    return `<div class="tuile-cat" onclick="selectCat('${cat.id}')">
-      <div class="tuile-emoji">${emoji}</div>
-      <div class="tuile-nom">${label}</div>
-    </div>`;
-  }).join('');
+  const categoriesActives=c.categoriesActives||{};
+  grid.innerHTML=c.categories
+    .filter(cat=>categoriesActives[cat.id]!==false)
+    .map(cat=>{
+      // Emoji de la catégorie déjà présent dans son nom (ex: "🐚 Formules") → on le sépare pour l'agrandir
+      const match=cat.nom.match(/^(\S+)\s*(.*)$/);
+      const emoji=match?match[1]:'🍽️';
+      const label=match?match[2]:cat.nom;
+      return `<div class="tuile-cat" onclick="selectCat('${cat.id}')">
+        <div class="tuile-emoji">${emoji}</div>
+        <div class="tuile-nom">${label}</div>
+      </div>`;
+    }).join('');
 }
 
 // PRODUITS avec sous-catégories et compteur quantité
@@ -632,29 +712,38 @@ function qteDansPanier(id){
   return panier.filter(p=>p.id===id).length;
 }
 
-function renderProduits(catId){
+function renderProduits(catId,filtreSubcat){
   const c=carte||carteDefaut;
   const cat=c.categories.find(x=>x.id===catId);
   if(!cat) return;
   const container=document.getElementById('productList');
-  const produits=(cat.produits||[]);
+  let produits=(cat.produits||[]);
+  if(filtreSubcat) produits=produits.filter(p=>p.subcat===filtreSubcat);
   if(!produits.length){container.innerHTML='<div style="text-align:center;color:#888;padding:30px">Aucun produit disponible</div>';return;}
+
+  const compteurActif=c.compteurActif!==false; // réglage global piloté par Excel/admin, actif par défaut
 
   let html='<div class="product-list">';
   let lastSubcat='';
 
   produits.forEach(p=>{
     if(!p.actif) return;
-    // Sous-catégorie header (pour apéro/boissons)
-    if(p.subcat&&p.subcat!==lastSubcat){
+    // Sous-catégorie header — masqué si on a déjà filtré sur une seule sous-catégorie
+    if(!filtreSubcat&&p.subcat&&p.subcat!==lastSubcat){
       html+=`<div class="subcat-header">${p.subcat}</div>`;
       lastSubcat=p.subcat;
     }
     const prixDisplay=p.prix===0?'<span class="gratuit">Inclus</span>':`<span class="prix">${p.prix.toFixed(2).replace('.',',')} €</span>`;
     const qte=qteDansPanier(p.id);
-    const compteurHtml=qte>0
-      ? `<button class="qty-btn qty-minus" onclick="retirerUnite('${p.id}')">−</button><span class="qty-num">${qte}</span><button class="qty-btn qty-plus" onclick="ajouterPanier('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${p.prix})">+</button>`
-      : `<button class="add-btn" onclick="ajouterPanier('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${p.prix})">+</button>`;
+    let compteurHtml;
+    if(!compteurActif){
+      // Réglage global désactivé → simple bouton + sans jamais de compteur visible
+      compteurHtml=`<button class="add-btn" onclick="ajouterPanier('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${p.prix})">+</button>`;
+    } else {
+      compteurHtml=qte>0
+        ? `<button class="qty-btn qty-minus" onclick="retirerUnite('${p.id}')">−</button><span class="qty-num">${qte}</span><button class="qty-btn qty-plus" onclick="ajouterPanier('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${p.prix})">+</button>`
+        : `<button class="add-btn" onclick="ajouterPanier('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${p.prix})">+</button>`;
+    }
     html+=`
       <div class="product-card" id="prodcard_${p.id}">
         <div class="info">
@@ -674,7 +763,7 @@ function renderProduits(catId){
 // Rafraîchit uniquement les compteurs visibles (perf, évite un re-render complet)
 function rafraichirCompteursProduits(){
   if(!catActive) return;
-  renderProduits(catActive);
+  renderProduits(catActive,subcatActive);
 }
 
 function esc(s){return s.replace(/'/g,"\\'").replace(/"/g,'\\"');}
@@ -709,9 +798,9 @@ function ajouterPanier(id,nom,desc,prix){
   }
 
   // Tous les autres — ajout silencieux (pas de toast)
-  panier.push({id,nom,desc,prix,uid:Date.now()+Math.random()});
+  const uid=Date.now()+Math.random();
+  panier.push({id,nom,desc,prix,uid});
   updatePanierBar();
-  // Petit feedback visuel discret sur le bouton (pas de toast)
 }
 
 function updatePanierBar(){
@@ -721,6 +810,7 @@ function updatePanierBar(){
   document.getElementById('panierTotalBar').textContent=total.toFixed(2).replace('.',',')+' €';
   document.getElementById('panierBar').classList.toggle('visible',nb>0);
   updateTotalBadgeHeader();
+  rafraichirCompteursProduits();
 }
 
 // ============================================================
@@ -779,7 +869,6 @@ function renderPanierItems(){
 function supprimerPanier(uid){
   panier=panier.filter(p=>p.uid!=uid);
   updatePanierBar();renderPanierItems();
-  rafraichirCompteursProduits();
 }
 
 // Retire une unité d'un produit depuis la carte (bouton −)
@@ -789,7 +878,6 @@ function retirerUnite(id){
   if(idx===-1) return;
   panier.splice(idx,1);
   updatePanierBar();
-  rafraichirCompteursProduits();
 }
 
 // ============================================================
@@ -801,51 +889,110 @@ function intercepterCommande(){
 }
 
 // ============================================================
+// APPEL SERVEUR
+// ============================================================
+async function appelerServeur(){
+  if(!tableNum){showToast('⚠️ Aucune table sélectionnée');return;}
+  try{
+    await db.collection('alertes').add({
+      type:'serveur',
+      table:tableNum,
+      heure:new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}),
+      timestamp:firebase.firestore.FieldValue.serverTimestamp(),
+      statut:'nouvelle'
+    });
+    showToast('🙋 Un serveur a été prévenu !');
+  }catch(e){
+    showToast('❌ Erreur — réessayez');
+  }
+}
+
+// ============================================================
 // POPUP DESSERT/CAFÉ — proposé UNE SEULE FOIS, juste avant l'addition
 // ============================================================
 function intercepterAddition(){
   ouvrirUpsellAvantAddition();
 }
 
+let panierAvantAddition=[]; // mini-panier local pour le popup dessert/café final
+let propositionsAvantAddition=[]; // liste des produits proposés (pour re-render)
+
+function qteAvantAddition(id){
+  return panierAvantAddition.filter(p=>p.id===id).length;
+}
+
 function ouvrirUpsellAvantAddition(){
   const c=carte||carteDefaut;
   const desserts=(c.dessertsMenu||[]).filter(d=>d.actif);
-  // Cafés/boissons chaudes — recherchés par sous-catégorie "Chauds" dans TOUTES les catégories
-  // (plus robuste qu'une catégorie fixe "chauds", car ces produits vivent dans "apero" par défaut)
+  // Cafés/boissons chaudes — catégorie "chauds" dédiée, ou fallback sur subcat "Chauds" (compat ancienne structure)
   let chauds=[];
-  c.categories.forEach(cat=>{
-    (cat.produits||[]).forEach(p=>{
-      if(p.actif && p.subcat==='Chauds') chauds.push(p);
+  const catChauds=c.categories.find(x=>x.id==='chauds');
+  if(catChauds){
+    chauds=(catChauds.produits||[]).filter(p=>p.actif);
+  } else {
+    c.categories.forEach(cat=>{
+      (cat.produits||[]).forEach(p=>{
+        if(p.actif && p.subcat==='Chauds') chauds.push(p);
+      });
     });
-  });
-  const propositions=[...desserts.map(d=>({...d,type:'dessert'})),...chauds.map(p=>({...p,type:'chaud'}))];
+  }
+  propositionsAvantAddition=[...desserts.map(d=>({...d,type:'dessert'})),...chauds.map(p=>({...p,type:'chaud'}))];
 
-  if(!propositions.length){
+  if(!propositionsAvantAddition.length){
     // Rien à proposer → on passe directement à l'addition
     demanderAddition();
     return;
   }
 
-  document.getElementById('upsellDessertList').innerHTML=propositions.map(p=>{
-    const prix=p.type==='dessert'?3.50:(p.prix||2.50);
-    return `<div class="upsell-item" onclick="ajouterAvantAddition('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${prix})">
-      <div><div class="unom">${p.emoji||(p.type==='dessert'?'🍮':'☕')} ${p.nom}</div>${p.desc?`<div class="udesc">${p.desc}</div>`:''}</div>
-      <div class="uprix">${prix.toFixed(2).replace('.',',')} €</div>
-    </div>`;
-  }).join('');
+  panierAvantAddition=[];
+  renderUpsellList();
   document.getElementById('upsellDessert').classList.add('visible');
 }
 
-// Ajoute le dessert/café choisi comme une VRAIE commande envoyée à Firestore, puis ouvre l'addition
-async function ajouterAvantAddition(id,nom,desc,prix){
+function renderUpsellList(){
+  document.getElementById('upsellDessertList').innerHTML=propositionsAvantAddition.map(p=>{
+    const prix=p.type==='dessert'?3.50:(p.prix||2.50);
+    const qte=qteAvantAddition(p.id);
+    const compteurHtml=qte>0
+      ? `<button class="qty-btn qty-minus" onclick="retirerUpsell('${p.id}')">−</button><span class="qty-num">${qte}</span><button class="qty-btn qty-plus" onclick="ajouterUpsell('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${prix})">+</button>`
+      : `<button class="add-btn" onclick="ajouterUpsell('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${prix})">+</button>`;
+    return `<div class="upsell-item">
+      <div><div class="unom">${p.emoji||(p.type==='dessert'?'🍮':'☕')} ${p.nom}</div>${p.desc?`<div class="udesc">${p.desc}</div>`:''}</div>
+      <div style="display:flex;align-items:center;gap:4px">
+        <span class="uprix">${prix.toFixed(2).replace('.',',')} €</span>
+        ${compteurHtml}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function ajouterUpsell(id,nom,desc,prix){
+  panierAvantAddition.push({id,nom,desc,prix});
+  renderUpsellList();
+}
+
+function retirerUpsell(id){
+  const idx=panierAvantAddition.map(p=>p.id).lastIndexOf(id);
+  if(idx===-1) return;
+  panierAvantAddition.splice(idx,1);
+  renderUpsellList();
+}
+
+// Envoie tous les desserts/cafés choisis en UNE seule commande Firestore, puis ouvre l'addition
+async function validerAvantAddition(){
   document.getElementById('upsellDessert').classList.remove('visible');
+  if(!panierAvantAddition.length){
+    demanderAddition();
+    return;
+  }
   const heure=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  const total=panierAvantAddition.reduce((s,p)=>s+p.prix,0);
   try{
     await db.collection('commandes').add({
       table:tableNum,
       couverts:nbCouverts||null,
-      items:[{id,nom,desc:desc||'',prix}],
-      total:prix,
+      items:panierAvantAddition.map(p=>({id:p.id,nom:p.nom,desc:p.desc||'',prix:p.prix})),
+      total,
       timestamp:firebase.firestore.FieldValue.serverTimestamp(),
       statut:'nouvelle',
       heure
@@ -854,11 +1001,13 @@ async function ajouterAvantAddition(id,nom,desc,prix){
   }catch(e){
     showToast('❌ Erreur réseau');
   }
+  panierAvantAddition=[];
   demanderAddition();
 }
 
 function refuserDessert(){
   document.getElementById('upsellDessert').classList.remove('visible');
+  panierAvantAddition=[];
   demanderAddition();
 }
 
@@ -1062,7 +1211,6 @@ function confirmerEnfantGratuit(){
   updatePanierBar();
   document.getElementById('modalEnfant').classList.remove('visible');
   enfantEnAttente=null;
-  rafraichirCompteursProduits();
   // Enchaîne sur le choix du menu enfant (issu de l'onglet Excel "Menu Enfant")
   setTimeout(()=>ouvrirModalMenuEnfant(),300);
 }
@@ -1087,7 +1235,6 @@ function ouvrirModalMenuEnfant(){
   document.getElementById('modalMenuEnfantList').innerHTML=items.map(p=>`
     <div class="modal-item" onclick="choisirMenuEnfant('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}')">
       <div><div class="mnom">${p.emoji||'🧒'} ${p.nom}</div>${p.desc?`<div class="mdesc">${p.desc}</div>`:''}</div>
-      <div class="mprix">INCLUS</div>
     </div>`).join('');
   document.getElementById('modalMenuEnfant').classList.add('visible');
 }
@@ -1096,7 +1243,6 @@ function choisirMenuEnfant(id,nom,desc){
   panier.push({id:id+'_inclus',nom:nom+' (menu enfant)',desc,prix:0,uid:Date.now()+Math.random()});
   updatePanierBar();
   document.getElementById('modalMenuEnfant').classList.remove('visible');
-  rafraichirCompteursProduits();
   showToast('✅ Menu enfant ajouté !');
 }
 
