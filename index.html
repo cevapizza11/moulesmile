@@ -5,12 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="theme-color" content="#1A1A1A">
 <title>Moule & Smile — Commander</title>
+<link rel="manifest" href="./manifest.json">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh;padding-bottom:80px}
 .header{background:#111;padding:12px 16px;text-align:center;border-bottom:2px solid #D4AF37;position:sticky;top:0;z-index:100}
 .header h1{color:#D4AF37;font-size:20px;letter-spacing:2px}
-.table-badge{background:#D4AF37;color:#1A1A1A;font-size:11px;font-weight:bold;padding:2px 10px;border-radius:20px;display:inline-block;margin-top:3px}
+.header-badges{display:flex;gap:8px;justify-content:center;margin-top:5px;flex-wrap:wrap}
+.table-badge{background:#D4AF37;color:#1A1A1A;font-size:11px;font-weight:bold;padding:2px 10px;border-radius:20px;display:inline-block}
+.total-badge{background:#2A2A2A;border:1px solid #D4AF37;color:#D4AF37;font-size:11px;font-weight:bold;padding:2px 10px;border-radius:20px;display:inline-block}
 .screen{display:none;padding:16px;max-width:480px;margin:0 auto}
 .screen.active{display:block}
 
@@ -39,6 +42,14 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 .cat-tab{flex-shrink:0;padding:8px 14px;background:#2A2A2A;border:2px solid #333;border-radius:20px;font-size:12px;font-weight:bold;cursor:pointer;color:#aaa;white-space:nowrap;transition:all .2s}
 .cat-tab.active{background:#D4AF37;color:#1A1A1A;border-color:#D4AF37}
 
+/* TUILES ACCUEIL (façon borne) */
+.tuiles-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.tuile-cat{background:#2A2A2A;border:2px solid #333;border-radius:18px;padding:26px 10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;transition:all .15s;min-height:130px;text-align:center}
+.tuile-cat:active{background:#D4AF37;transform:scale(.96)}
+.tuile-cat:active .tuile-emoji,.tuile-cat:active .tuile-nom{color:#1A1A1A}
+.tuile-emoji{font-size:40px}
+.tuile-nom{font-size:14px;font-weight:bold;color:#fff;line-height:1.2}
+
 /* SOUS-CATÉGORIES */
 .subcat-header{color:#D4AF37;font-size:12px;font-weight:bold;padding:10px 0 6px;letter-spacing:1px;border-bottom:1px solid #333;margin-bottom:8px;margin-top:4px}
 
@@ -52,6 +63,10 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 .badge-menu{display:inline-block;background:#1A3A2A;border:1px solid #1A7A50;color:#4ABA80;font-size:9px;font-weight:bold;padding:1px 6px;border-radius:10px;margin-left:6px;vertical-align:middle}
 .add-btn{background:#D4AF37;border:none;border-radius:8px;color:#1A1A1A;font-size:22px;font-weight:bold;width:38px;height:38px;cursor:pointer;flex-shrink:0;margin-left:10px;display:flex;align-items:center;justify-content:center}
 .add-btn:active{background:#C49A2F;transform:scale(.95)}
+.qty-btn{background:#D4AF37;border:none;border-radius:8px;color:#1A1A1A;font-size:20px;font-weight:bold;width:34px;height:34px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1}
+.qty-btn.qty-minus{background:#333;color:#D4AF37;border:2px solid #D4AF37}
+.qty-btn:active{transform:scale(.9)}
+.qty-num{color:#fff;font-size:16px;font-weight:bold;min-width:22px;text-align:center}
 .prix{color:#D4AF37;font-size:16px;font-weight:bold;text-align:right;margin-left:12px;white-space:nowrap}
 .gratuit{color:#1A7A50;font-size:13px;font-weight:bold}
 
@@ -142,7 +157,10 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 
 <div class="header">
   <h1>🐚 MOULE & SMILE</h1>
-  <div id="tableBadge" style="display:none" class="table-badge">Table <span id="tableNumHeader"></span></div>
+  <div class="header-badges">
+    <div id="tableBadge" style="display:none" class="table-badge">Table <span id="tableNumHeader"></span></div>
+    <div id="totalBadgeHeader" style="display:none" class="total-badge">💰 Total : <span id="totalBadgeAmount">0,00 €</span></div>
+  </div>
 </div>
 <div class="toast" id="toast"></div>
 
@@ -194,10 +212,18 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
+<!-- ACCUEIL — GROSSES TUILES CATÉGORIES (façon borne) -->
+<div class="screen" id="screenAccueil">
+  <div class="sec-title">Que souhaitez-vous commander ?</div>
+  <div class="sec-sub">Choisissez une catégorie</div>
+  <div class="tuiles-grid" id="tuilesGrid"></div>
+</div>
+
 <!-- CARTE -->
 <div class="screen" id="screenCarte">
-  <div class="sec-title">Notre carte</div>
+  <div class="sec-title" id="carteTitreCat">Notre carte</div>
   <div class="sec-sub">Commandez à tout moment — autant de fois que vous voulez</div>
+  <button class="btn btn-outline" onclick="showScreen('screenAccueil')" style="margin-bottom:12px">← Toutes les catégories</button>
   <div class="cat-tabs" id="catTabs"></div>
   <div id="productList"></div>
 </div>
@@ -210,7 +236,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   <div class="info-banner">🚶 Après validation, un serveur apporte votre commande. Direction le passage pour les moules !</div>
   <button class="btn btn-or" id="btnCommander" onclick="intercepterCommande()">✅ Commander maintenant</button>
   <button class="btn btn-outline" onclick="showScreen('screenCarte')">← Continuer à commander</button>
-  <button class="btn btn-rouge" onclick="demanderAddition()">🧾 Demander l'addition</button>
+  <button class="btn btn-rouge" onclick="intercepterAddition()">🧾 Demander l'addition</button>
 </div>
 
 <!-- LOADER -->
@@ -229,7 +255,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
       <div class="step-item"><div class="step-num">4</div><div class="step-text">Recommandez depuis la carte à tout moment</div></div>
     </div>
     <button class="btn btn-or" onclick="commanderEncore()">🍺 Commander autre chose</button>
-    <button class="btn btn-rouge" onclick="demanderAddition()">🧾 Demander l'addition</button>
+    <button class="btn btn-rouge" onclick="intercepterAddition()">🧾 Demander l'addition</button>
   </div>
 </div>
 
@@ -249,34 +275,14 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 </div>
 
 
-<!-- MODAL BOISSON INCLUSE -->
-<div class="modal-overlay" id="modalBoisson">
-  <div class="modal-box">
-    <h3>🍺 Votre boisson incluse</h3>
-    <div class="modal-sub" id="modalBoissonSub">Choisissez votre boisson offerte</div>
-    <div class="modal-list" id="modalBoissonList"></div>
-    <button class="modal-close" onclick="fermerModalBoisson()">Plus tard — je choisirai avec le serveur</button>
-  </div>
-</div>
-
-<!-- MODAL DESSERT INCLUS (Palier 3) -->
-<div class="modal-overlay" id="modalDessert">
-  <div class="modal-box">
-    <h3>🍮 Votre dessert inclus</h3>
-    <div class="modal-sub">Inclus dans votre Palier 3 — offert !</div>
-    <div class="modal-list" id="modalDessertList"></div>
-    <button class="modal-close" onclick="fermerModalDessert()">Plus tard — je choisirai avec le serveur</button>
-  </div>
-</div>
-
 <!-- UPSELL DESSERT -->
 <div class="upsell-overlay" id="upsellDessert">
   <div class="upsell-box">
     <div class="upsell-emoji">🍮</div>
-    <h3>Et un dessert ?</h3>
-    <p>Nos desserts maison pour finir en beauté...<br>À seulement <strong style="color:#D4AF37">3,50 €</strong> !</p>
+    <h3>Avant l'addition...</h3>
+    <p>Un dessert ou un café pour finir en beauté ?</p>
     <div class="upsell-list" id="upsellDessertList"></div>
-    <button class="upsell-non" onclick="refuserDessert()">Non merci, je commande sans dessert</button>
+    <button class="upsell-non" onclick="refuserDessert()">Non merci, passer à l'addition</button>
   </div>
 </div>
 
@@ -297,6 +303,16 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
+<!-- MODAL CHOIX MENU ENFANT -->
+<div class="modal-overlay" id="modalMenuEnfant">
+  <div class="modal-box">
+    <h3>🧒 Menu enfant</h3>
+    <div class="modal-sub">Qu'est-ce que votre enfant souhaite manger ?</div>
+    <div class="modal-list" id="modalMenuEnfantList"></div>
+    <button class="modal-close" onclick="fermerModalMenuEnfant()">Plus tard — je choisirai avec le serveur</button>
+  </div>
+</div>
+
 <div class="version">v.12/08/2026 14:00 — Moule & Smile</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -307,7 +323,8 @@ const firebaseConfig={apiKey:"AIzaSyDUb3LtVsMAq986DgtHwkMBeQFr8A8A2nU",authDomai
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 
-let tableNum=null, panier=[], catActive=null, carte=null, palierEnCours=null;
+let tableNum=null, panier=[], catActive=null, carte=null;
+let totalDejaCommande=0; // Somme des commandes déjà envoyées (hors panier en cours)
 
 // URL table
 const urlParams=new URLSearchParams(window.location.search);
@@ -362,9 +379,7 @@ const carteDefaut={
       {id:"b33",nom:"Thé / Infusion",desc:"",emoji:"🍵",prix:2.50,actif:true,subcat:"Chauds"},
     ]},
     {id:"formules", nom:"🐚 Formules", produits:[
-      {id:"p1",nom:"Palier 1 — Moules seules",desc:"Moules Bouzigues AOP + frites fraîches à volonté",emoji:"🐚",prix:21.90,actif:true},
-      {id:"p2",nom:"Palier 2 — Moules + boisson",desc:"Moules + frites + 1 boisson incluse au choix",emoji:"🐚",prix:24.90,actif:true},
-      {id:"p3",nom:"Palier 3 — Complet",desc:"Moules + frites + boisson + dessert inclus",emoji:"🐚",prix:28.90,actif:true},
+      {id:"p1",nom:"Moules-frites à volonté",desc:"Moules Bouzigues AOP + frites fraîches à volonté",emoji:"🐚",prix:21.90,actif:true},
       {id:"ca1",nom:"Calamars à volonté",desc:"Calamars frits maison + frites",emoji:"🦑",prix:19.90,actif:true},
       {id:"fc1",nom:"Fish & chips maison",desc:"Cabillaud pané + frites fraîches",emoji:"🐟",prix:14.90,actif:true},
       {id:"en1",nom:"Enfant 0-5 ans",desc:"1 enfant gratuit par adulte payant",emoji:"👧",prix:0.00,actif:true},
@@ -396,11 +411,15 @@ const carteDefaut={
     {id:"dm1",nom:"Dessert du jour",desc:"Demandez à votre serveur",emoji:"🍮",actif:true},
     {id:"dm2",nom:"Glace italienne",desc:"Vanille ou chocolat",emoji:"🍦",actif:true},
     {id:"dm3",nom:"Mousse au chocolat",desc:"Maison",emoji:"🍫",actif:true},
+  ],
+  enfantMenu:[
+    {id:"me1",nom:"Mini moules-frites",desc:"Portion enfant adaptée + frites",emoji:"🐚",actif:true},
+    {id:"me2",nom:"Nuggets & frites",desc:"5 nuggets maison + frites",emoji:"🍗",actif:true},
+    {id:"me3",nom:"Steak haché & frites",desc:"Steak haché + frites fraîches",emoji:"🍔",actif:true},
+    {id:"me4",nom:"Glace enfant",desc:"1 boule au choix",emoji:"🍦",actif:true},
+    {id:"me5",nom:"Sirop à l'eau",desc:"Fraise, menthe ou grenadine",emoji:"🧃",actif:true},
   ]
 };
-
-// Ids boissons dans le menu (pour badge)
-let boissonMenuIds=new Set();
 
 // Firebase
 db.collection('config').doc('carte_v2').onSnapshot(doc=>{
@@ -408,13 +427,14 @@ db.collection('config').doc('carte_v2').onSnapshot(doc=>{
     carte=doc.data();
     if(!carte.boissonsMenu) carte.boissonsMenu=carteDefaut.boissonsMenu;
     if(!carte.dessertsMenu) carte.dessertsMenu=carteDefaut.dessertsMenu;
+    if(!carte.enfantMenu) carte.enfantMenu=carteDefaut.enfantMenu;
   } else {
     carte=carteDefaut;
     db.collection('config').doc('carte_v2').set(carteDefaut).catch(()=>{});
   }
-  boissonMenuIds=new Set((carte.boissonsMenu||[]).filter(b=>b.actif).map(b=>b.nom.toLowerCase()));
   if(catActive) renderProduits(catActive);
   renderTabs();
+  renderTuilesAccueil();
 });
 
 // Écouter notifications caisse → téléphone client
@@ -461,7 +481,7 @@ async function activerNotificationsPush(){
 
   try{
     // Enregistrer le service worker dédié aux notifications
-    const registration=await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    const registration=await navigator.serviceWorker.register('./firebase-messaging-sw.js');
 
     // Demander la permission si pas encore fait
     let permission=Notification.permission;
@@ -563,10 +583,10 @@ function validerTable(couverts){
   nbCouverts=couverts;
   document.getElementById('tableNumHeader').textContent=tableNum;
   document.getElementById('tableBadge').style.display='inline-block';
-  catActive=(carte||carteDefaut).categories[0]?.id;
-  renderTabs();renderProduits(catActive);
+  renderTuilesAccueil();
   ecouterNotifications();
-  showScreen('screenCarte');
+  rafraichirTotalDejaCommande();
+  showScreen('screenAccueil');
 }
 
 // TABS
@@ -577,9 +597,41 @@ function renderTabs(){
   ).join('');
 }
 
-function selectCat(id){catActive=id;renderTabs();renderProduits(id);}
+function selectCat(id){
+  catActive=id;
+  renderTabs();renderProduits(id);
+  const c=carte||carteDefaut;
+  const cat=c.categories.find(x=>x.id===id);
+  const titreEl=document.getElementById('carteTitreCat');
+  if(titreEl) titreEl.textContent=cat?cat.nom:'Notre carte';
+  showScreen('screenCarte');
+}
 
-// PRODUITS avec sous-catégories et badge menu
+// ============================================================
+// ÉCRAN D'ACCUEIL — GROSSES TUILES CATÉGORIES (façon borne)
+// Généré dynamiquement depuis carte.categories (piloté par l'admin/Excel)
+// ============================================================
+function renderTuilesAccueil(){
+  const c=carte||carteDefaut;
+  const grid=document.getElementById('tuilesGrid');
+  if(!grid) return;
+  grid.innerHTML=c.categories.map(cat=>{
+    // Emoji de la catégorie déjà présent dans son nom (ex: "🐚 Formules") → on le sépare pour l'agrandir
+    const match=cat.nom.match(/^(\S+)\s*(.*)$/);
+    const emoji=match?match[1]:'🍽️';
+    const label=match?match[2]:cat.nom;
+    return `<div class="tuile-cat" onclick="selectCat('${cat.id}')">
+      <div class="tuile-emoji">${emoji}</div>
+      <div class="tuile-nom">${label}</div>
+    </div>`;
+  }).join('');
+}
+
+// PRODUITS avec sous-catégories et compteur quantité
+function qteDansPanier(id){
+  return panier.filter(p=>p.id===id).length;
+}
+
 function renderProduits(catId){
   const c=carte||carteDefaut;
   const cat=c.categories.find(x=>x.id===catId);
@@ -598,17 +650,20 @@ function renderProduits(catId){
       html+=`<div class="subcat-header">${p.subcat}</div>`;
       lastSubcat=p.subcat;
     }
-    const badgeMenu=''; // Badge supprimé sur demande
     const prixDisplay=p.prix===0?'<span class="gratuit">Inclus</span>':`<span class="prix">${p.prix.toFixed(2).replace('.',',')} €</span>`;
+    const qte=qteDansPanier(p.id);
+    const compteurHtml=qte>0
+      ? `<button class="qty-btn qty-minus" onclick="retirerUnite('${p.id}')">−</button><span class="qty-num">${qte}</span><button class="qty-btn qty-plus" onclick="ajouterPanier('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${p.prix})">+</button>`
+      : `<button class="add-btn" onclick="ajouterPanier('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${p.prix})">+</button>`;
     html+=`
-      <div class="product-card">
+      <div class="product-card" id="prodcard_${p.id}">
         <div class="info">
-          <div class="nom">${p.emoji?p.emoji+' ':''}${p.nom}${badgeMenu}</div>
+          <div class="nom">${p.emoji?p.emoji+' ':''}${p.nom}</div>
           ${p.desc?`<div class="desc">${p.desc}</div>`:''}
         </div>
-        <div style="display:flex;align-items:center;flex-shrink:0">
+        <div style="display:flex;align-items:center;flex-shrink:0;gap:4px">
           ${prixDisplay}
-          <button class="add-btn" onclick="ajouterPanier('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${p.prix})">+</button>
+          ${compteurHtml}
         </div>
       </div>`;
   });
@@ -616,11 +671,17 @@ function renderProduits(catId){
   container.innerHTML=html;
 }
 
+// Rafraîchit uniquement les compteurs visibles (perf, évite un re-render complet)
+function rafraichirCompteursProduits(){
+  if(!catActive) return;
+  renderProduits(catActive);
+}
+
 function esc(s){return s.replace(/'/g,"\\'").replace(/"/g,'\\"');}
 
 // PANIER
 // IDs des adultes payants (paliers + calamars + fish)
-const IDS_ADULTES=['p1','p2','p3','ca1','fc1','en2'];
+const IDS_ADULTES=['p1','ca1','fc1','en2'];
 
 function nbAdultesPayants(){
   return panier.filter(p=>IDS_ADULTES.includes(p.id)).length;
@@ -647,15 +708,6 @@ function ajouterPanier(id,nom,desc,prix){
     return;
   }
 
-  // Paliers avec boisson incluse
-  if(['p2','p3'].includes(id)){
-    palierEnCours=id;
-    panier.push({id,nom,desc,prix,uid:Date.now()+Math.random()});
-    updatePanierBar();
-    ouvrirModalBoisson(id);
-    return;
-  }
-
   // Tous les autres — ajout silencieux (pas de toast)
   panier.push({id,nom,desc,prix,uid:Date.now()+Math.random()});
   updatePanierBar();
@@ -668,6 +720,37 @@ function updatePanierBar(){
   document.getElementById('panierNb').textContent=nb+' article'+(nb>1?'s':'');
   document.getElementById('panierTotalBar').textContent=total.toFixed(2).replace('.',',')+' €';
   document.getElementById('panierBar').classList.toggle('visible',nb>0);
+  updateTotalBadgeHeader();
+}
+
+// ============================================================
+// TOTAL TABLE VISIBLE EN PERMANENCE (header)
+// ============================================================
+async function rafraichirTotalDejaCommande(){
+  if(!tableNum) return;
+  try{
+    const snap=await db.collection('commandes').where('table','==',tableNum).get();
+    let total=0;
+    snap.forEach(doc=>{
+      const d=doc.data();
+      if(d.statut==='regle') return;
+      total+=d.total||0;
+    });
+    totalDejaCommande=total;
+  }catch(e){
+    console.error('Erreur calcul total table',e);
+  }
+  updateTotalBadgeHeader();
+}
+
+function updateTotalBadgeHeader(){
+  const badge=document.getElementById('totalBadgeHeader');
+  const amountEl=document.getElementById('totalBadgeAmount');
+  if(!badge||!amountEl||!tableNum) return;
+  const totalPanier=panier.reduce((s,p)=>s+p.prix,0);
+  const totalGlobal=totalDejaCommande+totalPanier;
+  amountEl.textContent=totalGlobal.toFixed(2).replace('.',',')+' €';
+  badge.style.display='inline-block';
 }
 
 function renderPanierItems(){
@@ -696,117 +779,87 @@ function renderPanierItems(){
 function supprimerPanier(uid){
   panier=panier.filter(p=>p.uid!=uid);
   updatePanierBar();renderPanierItems();
+  rafraichirCompteursProduits();
 }
 
-// ============================================================
-// MODAL BOISSON INCLUSE
-// ============================================================
-function ouvrirModalBoisson(palierId){
-  const c=carte||carteDefaut;
-  const boissons=(c.boissonsMenu||[]).filter(b=>b.actif);
-  document.getElementById('modalBoissonSub').textContent=palierId==='p3'?'Incluse dans votre Palier 3 — offerte !':'Incluse dans votre Palier 2 — offerte !';
-  document.getElementById('modalBoissonList').innerHTML=boissons.map(b=>`
-    <div class="modal-item" onclick="choisirBoissonIncluse('${b.id}','${esc(b.nom)}','${esc(b.desc||'')}')">
-      <div><div class="mnom">${b.emoji||'🥤'} ${b.nom}</div>${b.desc?`<div class="mdesc">${b.desc}</div>`:''}</div>
-      <div class="mprix">OFFERTE</div>
-    </div>`).join('');
-  document.getElementById('modalBoisson').classList.add('visible');
-}
-
-function choisirBoissonIncluse(id,nom,desc){
-  panier.push({id:id+'_inclus',nom:nom+' (incluse)',desc,prix:0,uid:Date.now()+Math.random()});
+// Retire une unité d'un produit depuis la carte (bouton −)
+// Si c'est un palier p2/p3, retire aussi un item inclus lié (boisson/dessert) pour garder la cohérence
+function retirerUnite(id){
+  const idx=panier.map(p=>p.id).lastIndexOf(id);
+  if(idx===-1) return;
+  panier.splice(idx,1);
   updatePanierBar();
-  document.getElementById('modalBoisson').classList.remove('visible');
-  if(palierEnCours==='p3'){
-    setTimeout(()=>ouvrirModalDessertInclus(),300);
-  } else {
-    palierEnCours=null;
-    showToast('✅ Formule + boisson ajoutées !');
-  }
-}
-
-function fermerModalBoisson(){
-  document.getElementById('modalBoisson').classList.remove('visible');
-  if(palierEnCours==='p3'){
-    setTimeout(()=>ouvrirModalDessertInclus(),300);
-  } else {
-    palierEnCours=null;
-    showToast('✅ Formule ajoutée — boisson à choisir avec le serveur');
-  }
-}
-
-// ============================================================
-// MODAL DESSERT INCLUS (Palier 3)
-// ============================================================
-function ouvrirModalDessertInclus(){
-  const c=carte||carteDefaut;
-  const desserts=(c.dessertsMenu||[]).filter(d=>d.actif);
-  document.getElementById('modalDessertList').innerHTML=desserts.map(d=>`
-    <div class="modal-item" onclick="choisirDessertInclus('${d.id}','${esc(d.nom)}','${esc(d.desc||'')}')">
-      <div><div class="mnom">${d.emoji||'🍮'} ${d.nom}</div>${d.desc?`<div class="mdesc">${d.desc}</div>`:''}</div>
-      <div class="mprix">OFFERT</div>
-    </div>`).join('');
-  document.getElementById('modalDessert').classList.add('visible');
-}
-
-function choisirDessertInclus(id,nom,desc){
-  panier.push({id:id+'_inclus',nom:nom+' (inclus)',desc,prix:0,uid:Date.now()+Math.random()});
-  updatePanierBar();
-  document.getElementById('modalDessert').classList.remove('visible');
-  palierEnCours=null;
-  showToast('✅ Formule complète ajoutée !');
-}
-
-function fermerModalDessert(){
-  document.getElementById('modalDessert').classList.remove('visible');
-  palierEnCours=null;
-  showToast('✅ Formule ajoutée — dessert à choisir avec le serveur');
+  rafraichirCompteursProduits();
 }
 
 // ============================================================
 // UPSELL DESSERT (fin de commande)
 // ============================================================
-function panierContientDessert(){
-  return panier.some(p=>
-    p.id.includes('_inclus')&&p.nom.toLowerCase().includes('inclus')||
-    p.id.startsWith('d')||p.id.startsWith('dm')||
-    p.nom.toLowerCase().includes('dessert')||
-    p.nom.toLowerCase().includes('glace')||
-    p.nom.toLowerCase().includes('mousse')
-  );
-}
-
 function intercepterCommande(){
   if(!panier.length){showToast('⚠️ Panier vide');return;}
-  if(!panierContientDessert()){
-    ouvrirUpsellDessert();
-  } else {
-    validerCommande();
-  }
+  validerCommande();
 }
 
-function ouvrirUpsellDessert(){
+// ============================================================
+// POPUP DESSERT/CAFÉ — proposé UNE SEULE FOIS, juste avant l'addition
+// ============================================================
+function intercepterAddition(){
+  ouvrirUpsellAvantAddition();
+}
+
+function ouvrirUpsellAvantAddition(){
   const c=carte||carteDefaut;
   const desserts=(c.dessertsMenu||[]).filter(d=>d.actif);
-  document.getElementById('upsellDessertList').innerHTML=desserts.map(d=>`
-    <div class="upsell-item" onclick="ajouterDessertUpsell('${d.id}','${esc(d.nom)}','${esc(d.desc||'')}',3.50)">
-      <div><div class="unom">${d.emoji||'🍮'} ${d.nom}</div>${d.desc?`<div class="udesc">${d.desc}</div>`:''}</div>
-      <div class="uprix">3,50 €</div>
-    </div>`).join('');
+  // Cafés/boissons chaudes — recherchés par sous-catégorie "Chauds" dans TOUTES les catégories
+  // (plus robuste qu'une catégorie fixe "chauds", car ces produits vivent dans "apero" par défaut)
+  let chauds=[];
+  c.categories.forEach(cat=>{
+    (cat.produits||[]).forEach(p=>{
+      if(p.actif && p.subcat==='Chauds') chauds.push(p);
+    });
+  });
+  const propositions=[...desserts.map(d=>({...d,type:'dessert'})),...chauds.map(p=>({...p,type:'chaud'}))];
+
+  if(!propositions.length){
+    // Rien à proposer → on passe directement à l'addition
+    demanderAddition();
+    return;
+  }
+
+  document.getElementById('upsellDessertList').innerHTML=propositions.map(p=>{
+    const prix=p.type==='dessert'?3.50:(p.prix||2.50);
+    return `<div class="upsell-item" onclick="ajouterAvantAddition('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${prix})">
+      <div><div class="unom">${p.emoji||(p.type==='dessert'?'🍮':'☕')} ${p.nom}</div>${p.desc?`<div class="udesc">${p.desc}</div>`:''}</div>
+      <div class="uprix">${prix.toFixed(2).replace('.',',')} €</div>
+    </div>`;
+  }).join('');
   document.getElementById('upsellDessert').classList.add('visible');
 }
 
-function ajouterDessertUpsell(id,nom,desc,prix){
-  panier.push({id,nom,desc,prix,uid:Date.now()+Math.random()});
-  updatePanierBar();
+// Ajoute le dessert/café choisi comme une VRAIE commande envoyée à Firestore, puis ouvre l'addition
+async function ajouterAvantAddition(id,nom,desc,prix){
   document.getElementById('upsellDessert').classList.remove('visible');
-  showToast('🍮 Dessert ajouté !');
-  validerCommande();
+  const heure=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  try{
+    await db.collection('commandes').add({
+      table:tableNum,
+      couverts:nbCouverts||null,
+      items:[{id,nom,desc:desc||'',prix}],
+      total:prix,
+      timestamp:firebase.firestore.FieldValue.serverTimestamp(),
+      statut:'nouvelle',
+      heure
+    });
+    showToast('🍮 Ajouté !');
+  }catch(e){
+    showToast('❌ Erreur réseau');
+  }
+  demanderAddition();
 }
 
 function refuserDessert(){
   document.getElementById('upsellDessert').classList.remove('visible');
-  validerCommande();
+  demanderAddition();
 }
 
 // ============================================================
@@ -830,6 +883,7 @@ async function validerCommande(){
     });
     panier=[];updatePanierBar();
     document.getElementById('confirmTable').textContent=tableNum;
+    await rafraichirTotalDejaCommande();
     showScreen('screenConfirm');
   }catch(e){
     showScreen('screenPanier');
@@ -849,6 +903,8 @@ async function retrouverCommande(){
   if(!catActive) catActive=(carte||carteDefaut).categories[0]?.id;
   if(!carte) carte=carteDefaut;
   renderTabs();renderProduits(catActive);
+  renderTuilesAccueil();
+  rafraichirTotalDejaCommande();
 
   try{
     // 1. Chercher dans les commandes actives
@@ -916,9 +972,7 @@ async function retrouverCommande(){
 }
 
 function commanderEncore(){
-  catActive=(carte||carteDefaut).categories[0]?.id;
-  renderTabs();renderProduits(catActive);
-  showScreen('screenCarte');
+  showScreen('screenAccueil');
 }
 
 // ============================================================
@@ -1008,6 +1062,9 @@ function confirmerEnfantGratuit(){
   updatePanierBar();
   document.getElementById('modalEnfant').classList.remove('visible');
   enfantEnAttente=null;
+  rafraichirCompteursProduits();
+  // Enchaîne sur le choix du menu enfant (issu de l'onglet Excel "Menu Enfant")
+  setTimeout(()=>ouvrirModalMenuEnfant(),300);
 }
 
 function fermerModalEnfant(){
@@ -1015,6 +1072,37 @@ function fermerModalEnfant(){
   enfantEnAttente=null;
   // Proposer le tarif ado à la place
   showToast('💡 Ajoutez le tarif Enfant/Ado 6-17 ans à 15,90 €');
+}
+
+// ============================================================
+// MODAL CHOIX MENU ENFANT (après confirmation d'âge 0-5 ans)
+// ============================================================
+function ouvrirModalMenuEnfant(){
+  const c=carte||carteDefaut;
+  const items=(c.enfantMenu||[]).filter(p=>p.actif);
+  if(!items.length){
+    // Rien de configuré → on ne bloque pas le client
+    return;
+  }
+  document.getElementById('modalMenuEnfantList').innerHTML=items.map(p=>`
+    <div class="modal-item" onclick="choisirMenuEnfant('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}')">
+      <div><div class="mnom">${p.emoji||'🧒'} ${p.nom}</div>${p.desc?`<div class="mdesc">${p.desc}</div>`:''}</div>
+      <div class="mprix">INCLUS</div>
+    </div>`).join('');
+  document.getElementById('modalMenuEnfant').classList.add('visible');
+}
+
+function choisirMenuEnfant(id,nom,desc){
+  panier.push({id:id+'_inclus',nom:nom+' (menu enfant)',desc,prix:0,uid:Date.now()+Math.random()});
+  updatePanierBar();
+  document.getElementById('modalMenuEnfant').classList.remove('visible');
+  rafraichirCompteursProduits();
+  showToast('✅ Menu enfant ajouté !');
+}
+
+function fermerModalMenuEnfant(){
+  document.getElementById('modalMenuEnfant').classList.remove('visible');
+  showToast('✅ Enfant gratuit ajouté — menu à choisir avec le serveur');
 }
 </script>
 </body>

@@ -78,6 +78,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 <div class="nav-tabs" style="overflow-x:auto;display:flex">
   <div class="nav-tab active" onclick="switchNav('Carte',this)" style="flex-shrink:0">📋 Carte</div>
   <div class="nav-tab" onclick="switchNav('BoissonMenu',this)" style="flex-shrink:0">🍺 Menu</div>
+  <div class="nav-tab" onclick="switchNav('EnfantMenu',this)" style="flex-shrink:0">🧒 Enfant</div>
   <div class="nav-tab" onclick="switchNav('Ajouter',this)" style="flex-shrink:0">➕ Ajouter</div>
   <div class="nav-tab" onclick="switchNav('Importer',this)" style="flex-shrink:0">📥 Excel</div>
   <div class="nav-tab" onclick="switchNav('Actions',this)" style="flex-shrink:0">⚡ Actions</div>
@@ -112,6 +113,30 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   <div style="background:#2A2A2A;border-radius:10px;padding:12px;margin-top:14px;font-size:12px;color:#888;line-height:1.7">
     💡 Ces boissons apparaissent <strong style="color:#D4AF37">gratuitement</strong> dans le popup du client quand il choisit le palier 2 ou 3.<br>
     Les autres boissons restent sur la carte et sont <strong style="color:#D4AF37">facturées normalement</strong>.
+  </div>
+</div>
+
+<!-- MENU ENFANT -->
+<div id="navEnfantMenu" class="content" style="display:none">
+  <div class="status-bar"><div class="dot"></div>Choix proposé au client après confirmation d'âge (Enfant 0-5 ans gratuit)</div>
+  <div class="section">
+    <h2>🧒 Produits du menu enfant</h2>
+    <div id="enfantMenuList"></div>
+  </div>
+  <div class="section" style="margin-top:14px">
+    <h2>➕ Ajouter un produit au menu enfant</h2>
+    <div class="form-row">
+      <div class="form-group" style="flex:1;min-width:80px"><label>Emoji</label><input type="text" id="emEmoji" placeholder="🍗" maxlength="4"></div>
+      <div class="form-group" style="flex:2"><label>Nom *</label><input type="text" id="emNom" placeholder="Ex: Nuggets & frites"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Description</label><input type="text" id="emDesc" placeholder="Ex: 5 nuggets maison + frites"></div>
+    </div>
+    <button class="btn-add-prod" onclick="ajouterEnfantMenu()">✅ Ajouter au menu enfant</button>
+  </div>
+  <div style="background:#2A2A2A;border-radius:10px;padding:12px;margin-top:14px;font-size:12px;color:#888;line-height:1.7">
+    💡 Ces produits apparaissent dans le popup <strong style="color:#D4AF37">Menu Enfant</strong> quand le client confirme un enfant de 0-5 ans.<br>
+    C'est gratuit — inclus dans l'offre enfant.
   </div>
 </div>
 
@@ -261,10 +286,19 @@ const boissonsMenuDefaut = [
   {id:"bm10", nom:"Verre de vin blanc", desc:"Codet 25cl — Picpoul de Pinet AOP", emoji:"🥂", actif:true},
 ];
 
+const enfantMenuDefaut = [
+  {id:"me1", nom:"Mini moules-frites", desc:"Portion enfant adaptée + frites", emoji:"🐚", actif:true},
+  {id:"me2", nom:"Nuggets & frites", desc:"5 nuggets maison + frites", emoji:"🍗", actif:true},
+  {id:"me3", nom:"Steak haché & frites", desc:"Steak haché + frites fraîches", emoji:"🍔", actif:true},
+  {id:"me4", nom:"Glace enfant", desc:"1 boule au choix", emoji:"🍦", actif:true},
+  {id:"me5", nom:"Sirop à l'eau", desc:"Fraise, menthe ou grenadine", emoji:"🧃", actif:true},
+];
+
 db.collection('config').doc('carte_v2').onSnapshot(doc=>{
   if(doc.exists&&doc.data().categories){
     carte=doc.data();
     if(!carte.boissonsMenu) carte.boissonsMenu = boissonsMenuDefaut;
+    if(!carte.enfantMenu) carte.enfantMenu = enfantMenuDefaut;
     if(!catActive)catActive=carte.categories[0]?.id;
     render();loadStats();
   }
@@ -273,9 +307,10 @@ db.collection('config').doc('carte_v2').onSnapshot(doc=>{
 function switchNav(tab,el){
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
-  ['navCarte','navBoissonMenu','navAjouter','navImporter','navActions'].forEach(id=>document.getElementById(id).style.display='none');
+  ['navCarte','navBoissonMenu','navEnfantMenu','navAjouter','navImporter','navActions'].forEach(id=>document.getElementById(id).style.display='none');
   document.getElementById('nav'+tab).style.display='block';
   if(tab==='BoissonMenu') renderBoissonMenu();
+  if(tab==='EnfantMenu') renderEnfantMenu();
 }
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
@@ -479,36 +514,67 @@ function ajouterBoissonMenu() {
 }
 
 // ============================================================
-// CONFIG WIFI + TOKEN
+// MENU ENFANT
 // ============================================================
-async function chargerConfig() {
-  try {
-    const doc = await db.collection('config').doc('securite').get();
-    if (doc.exists) {
-      const data = doc.data();
-      if (data.wifiNom) document.getElementById('wifiNom').value = data.wifiNom;
-      if (data.token) document.getElementById('tokenVal').value = data.token;
-    } else {
-      document.getElementById('wifiNom').value = 'Moule & Smile';
-      document.getElementById('tokenVal').value = 'MS2027';
-    }
-  } catch(e) { console.error('Erreur chargement config', e); }
+function renderEnfantMenu() {
+  if (!carte) return;
+  const em = carte.enfantMenu || [];
+  const container = document.getElementById('enfantMenuList');
+  if (!em.length) {
+    container.innerHTML = '<div style="color:#888;text-align:center;padding:20px">Aucun produit configuré</div>';
+    return;
+  }
+  container.innerHTML = em.map((p, idx) => `
+    <div class="item-row">
+      <div class="item-info">
+        <div class="item-nom">${p.emoji||'🧒'} ${p.nom}</div>
+        <div class="item-detail">${p.desc||''}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <label class="toggle">
+          <input type="checkbox" ${p.actif?'checked':''} onchange="toggleEnfantMenu(${idx},this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+        <button class="del-prod-btn" onclick="supprimerEnfantMenu(${idx})">🗑</button>
+      </div>
+    </div>
+  `).join('');
 }
 
-async function sauvegarderConfig() {
-  const wifiNom = document.getElementById('wifiNom').value.trim();
-  const token = document.getElementById('tokenVal').value.trim();
-  if (!wifiNom || !token) { showToast('⚠️ Remplissez les deux champs'); return; }
-  try {
-    await db.collection('config').doc('securite').set({ wifiNom, token });
-    showToast('✅ Configuration sauvegardée !');
-    // Mettre à jour la carte aussi
-    if (carte) {
-      carte.wifiNom = wifiNom;
-      carte.tokenSecret = token;
-      await db.collection('config').doc('carte_v2').set(carte);
-    }
-  } catch(e) { showToast('❌ Erreur sauvegarde'); }
+function toggleEnfantMenu(idx, val) {
+  if (!carte.enfantMenu) return;
+  carte.enfantMenu[idx].actif = val;
+  showToast(`${carte.enfantMenu[idx].nom} ${val?'✅ activé':'❌ désactivé'} du menu enfant`);
+  sauvegarder();
+}
+
+function supprimerEnfantMenu(idx) {
+  if (!carte.enfantMenu) return;
+  const nom = carte.enfantMenu[idx].nom;
+  if (!confirm(`Retirer "${nom}" du menu enfant ?`)) return;
+  carte.enfantMenu.splice(idx, 1);
+  sauvegarder();
+  renderEnfantMenu();
+  showToast(`🗑️ ${nom} retiré du menu enfant`);
+}
+
+function ajouterEnfantMenu() {
+  const nom = document.getElementById('emNom').value.trim();
+  const desc = document.getElementById('emDesc').value.trim();
+  const emoji = document.getElementById('emEmoji').value.trim();
+  if (!nom) { showToast('⚠️ Nom obligatoire'); return; }
+  if (!carte) { showToast('⚠️ Carte non chargée'); return; }
+  if (!carte.enfantMenu) carte.enfantMenu = [];
+  carte.enfantMenu.push({
+    id: 'me_' + Date.now(),
+    nom, desc, emoji, actif: true
+  });
+  document.getElementById('emNom').value = '';
+  document.getElementById('emDesc').value = '';
+  document.getElementById('emEmoji').value = '';
+  sauvegarder();
+  renderEnfantMenu();
+  showToast(`✅ "${nom}" ajouté au menu enfant !`);
 }
 
 // ============================================================
