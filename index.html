@@ -325,11 +325,22 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 </div>
 
 <!-- MODAL CHOIX SAUCE (à chaque formule moules) -->
-<div class="modal-overlay" id="modalSauce">
+<!-- MODAL OPTIONS GÉNÉRIQUE (coulis, croquant, nappage, sauce... piloté depuis l'Excel) -->
+<div class="modal-overlay" id="modalOption">
   <div class="modal-box">
-    <h3>🌿 Choisissez votre sauce</h3>
-    <div class="modal-sub">Pour accompagner vos moules à volonté</div>
-    <div class="modal-list" id="modalSauceList"></div>
+    <h3 id="modalOptionTitre">Choisissez une option</h3>
+    <div class="modal-list" id="modalOptionList"></div>
+    <button class="modal-close" onclick="fermerModalOption()">Plus tard — je choisirai avec le serveur</button>
+  </div>
+</div>
+
+<!-- MODAL CHOIX MENU ADO 6-17 ANS -->
+<div class="modal-overlay" id="modalMenuAdo">
+  <div class="modal-box">
+    <h3>🧒 Menu Enfant / Ado</h3>
+    <div class="modal-sub">À volonté — que souhaite-t-il manger ?</div>
+    <div class="modal-list" id="modalMenuAdoList"></div>
+    <button class="modal-close" onclick="fermerModalMenuAdo()">Plus tard — je choisirai avec le serveur</button>
   </div>
 </div>
 
@@ -408,7 +419,7 @@ const carteDefaut={
       {id:"en1",nom:"Enfant 0-5 ans",desc:"1 enfant gratuit par adulte payant",emoji:"👧",prix:0.00,actif:true},
       {id:"en2",nom:"Enfant / Ado 6-17 ans",desc:"À volonté — tarif unique",emoji:"🧒",prix:15.90,actif:true},
     ]},
-    {id:"sauces", nom:"🌿 Sauces", consultationSeule:true, produits:[
+    {id:"sauces", nom:"🌿 Sauces", produits:[
       {id:"s1",nom:"Marinière",desc:"Vin blanc, échalotes, persil frais",emoji:"🌿",prix:0.00,actif:true},
       {id:"s2",nom:"Roquefort",desc:"Roquefort, noix, cognac",emoji:"🧀",prix:0.00,actif:true},
       {id:"s3",nom:"Curry",desc:"Curry, lait de coco, citron vert",emoji:"🌶️",prix:0.00,actif:true},
@@ -457,7 +468,24 @@ const carteDefaut={
     {id:"s4",nom:"Crème-échalote",desc:"Crème fraîche, échalotes confites",emoji:"🥛",actif:true},
     {id:"s5",nom:"Tomate-chorizo",desc:"Tomates concassées, chorizo, piment doux",emoji:"🍅",actif:true},
     {id:"s6",nom:"Provençale",desc:"Tomates, herbes de Provence, ail, olives",emoji:"🌞",actif:true},
-  ]
+  ],
+  // Système générique d'options par étapes (sauce, coulis, croquant, nappage...)
+  famillesOptions:{
+    sauce:{id:"sauce",nom:"Sauce",options:[
+      {id:"s1",nom:"Marinière",supplement:0,actif:true},
+      {id:"s2",nom:"Roquefort",supplement:0,actif:true},
+      {id:"s3",nom:"Curry",supplement:0,actif:true},
+      {id:"s4",nom:"Crème-échalote",supplement:0,actif:true},
+      {id:"s5",nom:"Tomate-chorizo",supplement:0,actif:true},
+      {id:"s6",nom:"Provençale",supplement:0,actif:true},
+      {id:"s0",nom:"Pas de sauce",supplement:0,actif:true},
+    ]},
+  },
+  // Assignation produit → étapes d'options (dans l'ordre)
+  optionsProduits:{
+    p1:[{idFamille:"sauce",etape:1}],
+  },
+  categoriesConsultationSeule:{sauces:true}
 };
 
 // Firebase
@@ -468,9 +496,13 @@ db.collection('config').doc('carte_v2').onSnapshot(doc=>{
     if(!carte.dessertsMenu) carte.dessertsMenu=carteDefaut.dessertsMenu;
     if(!carte.enfantMenu) carte.enfantMenu=carteDefaut.enfantMenu;
     if(!carte.sauces) carte.sauces=carteDefaut.sauces;
+    if(!carte.categoriesConsultationSeule) carte.categoriesConsultationSeule={sauces:true};
+    if(!carte.famillesOptions) carte.famillesOptions=carteDefaut.famillesOptions;
+    if(!carte.optionsProduits) carte.optionsProduits=carteDefaut.optionsProduits;
   } else {
     carte=carteDefaut;
-    db.collection('config').doc('carte_v2').set(carteDefaut).catch(()=>{});
+    carte.categoriesConsultationSeule={sauces:true};
+    db.collection('config').doc('carte_v2').set(carte).catch(()=>{});
   }
   if(catActive) renderProduits(catActive);
   renderTabs();
@@ -731,7 +763,8 @@ function renderProduits(catId,filtreSubcat){
   if(!produits.length){container.innerHTML='<div style="text-align:center;color:#888;padding:30px">Aucun produit disponible</div>';return;}
 
   const compteurActif=c.compteurActif!==false; // réglage global piloté par Excel/admin, actif par défaut
-  const consultationSeule=cat.consultationSeule===true; // ex: Sauces — visible mais non ajoutable (choisie via popup formule)
+  const catsConsultation=c.categoriesConsultationSeule||{};
+  const consultationSeule=catsConsultation[catId]===true; // ex: Sauces — visible mais non ajoutable (choisie via popup formule), piloté depuis l'admin (survit à l'import Excel)
 
   let html='<div class="product-list">';
   let lastSubcat='';
@@ -810,15 +843,87 @@ function ajouterPanier(id,nom,desc,prix){
     return;
   }
 
+  // Menu Enfant/Ado 6-17 ans → popup choix du plat (moules ou calamars)
+  if(id==='en2'){
+    const uid=Date.now()+Math.random();
+    panier.push({id,nom,desc,prix,uid});
+    updatePanierBar();
+    ouvrirModalMenuAdo(uid);
+    return;
+  }
+
   // Tous les autres — ajout silencieux (pas de toast)
   const uid=Date.now()+Math.random();
   panier.push({id,nom,desc,prix,uid});
   updatePanierBar();
 
-  // Formule moules à volonté → popup sauce systématique (la sauce se choisit ici, pas via la carte)
-  if(id==='p1'){
-    ouvrirModalSauce(uid);
+  // Système générique d'options par étapes (coulis, croquant, nappage, sauce...)
+  // piloté depuis l'Excel/admin — enchaîne les popups un par un
+  const etapes=getEtapesOptions(id);
+  if(etapes.length){
+    ouvrirProchainePopupOption(uid,etapes,0);
   }
+}
+
+// ============================================================
+// SYSTÈME GÉNÉRIQUE D'OPTIONS PAR ÉTAPES
+// (coulis, croquant, nappage, sauce... piloté depuis l'Excel "Familles Options" / "Options Produits")
+// ============================================================
+function getEtapesOptions(produitId){
+  const c=carte||carteDefaut;
+  const optionsProduits=c.optionsProduits||{};
+  return optionsProduits[produitId]||[];
+}
+
+function ouvrirProchainePopupOption(uidItem,etapes,index){
+  if(index>=etapes.length) return; // toutes les étapes traitées
+  const c=carte||carteDefaut;
+  const famillesOptions=c.famillesOptions||{};
+  const etape=etapes[index];
+  const famille=famillesOptions[etape.idFamille];
+  if(!famille||!famille.options||!famille.options.length){
+    // Famille introuvable ou vide → on passe à l'étape suivante sans bloquer
+    ouvrirProchainePopupOption(uidItem,etapes,index+1);
+    return;
+  }
+  optionEnCours={uidItem,etapes,index,famille};
+  document.getElementById('modalOptionTitre').textContent=famille.nom||'Choisissez une option';
+  const options=famille.options.filter(o=>o.actif);
+  document.getElementById('modalOptionList').innerHTML=options.map(o=>`
+    <div class="modal-item" onclick="choisirOption('${o.id}','${esc(o.nom)}',${o.supplement||0})">
+      <div><div class="mnom">${o.nom}</div></div>
+      ${o.supplement>0?`<div class="mprix">+${o.supplement.toFixed(2).replace('.',',')} €</div>`:''}
+    </div>`).join('');
+  document.getElementById('modalOption').classList.add('visible');
+}
+
+let optionEnCours=null;
+
+function choisirOption(optionId,optionNom,supplement){
+  if(!optionEnCours) return;
+  const {uidItem,etapes,index,famille}=optionEnCours;
+  const item=panier.find(p=>p.uid===uidItem);
+  if(item){
+    item.desc=(item.desc?item.desc+' — ':'')+`${famille.nom} : ${optionNom}`;
+    if(supplement>0){
+      item.prix+=supplement;
+      item.desc+=` (+${supplement.toFixed(2).replace('.',',')} €)`;
+    }
+  }
+  document.getElementById('modalOption').classList.remove('visible');
+  updatePanierBar();
+  renderPanierItems();
+  // Enchaîner sur l'étape suivante (ex: coulis → croquant)
+  setTimeout(()=>ouvrirProchainePopupOption(uidItem,etapes,index+1),250);
+}
+
+function fermerModalOption(){
+  document.getElementById('modalOption').classList.remove('visible');
+  if(optionEnCours){
+    const {uidItem,etapes,index}=optionEnCours;
+    setTimeout(()=>ouvrirProchainePopupOption(uidItem,etapes,index+1),250);
+  }
+  optionEnCours=null;
 }
 
 function updatePanierBar(){
@@ -1270,40 +1375,39 @@ function fermerModalMenuEnfant(){
 }
 
 // ============================================================
-// MODAL CHOIX SAUCE (systématique à chaque formule moules)
-// La sauce se choisit UNIQUEMENT ici — elle n'est pas ajoutable depuis la carte Sauces (consultation seule)
+// MODAL CHOIX MENU ADO 6-17 ANS (choix fixe : moules ou calamars)
+// Le choix vient s'inscrire SOUS la ligne du menu, comme pour les sauces
 // ============================================================
-let formuleEnAttenteSauce=null; // uid de l'item formule qui attend sa sauce
+let adoEnAttenteUid=null;
 
-function ouvrirModalSauce(uidFormule){
-  formuleEnAttenteSauce=uidFormule;
-  const c=carte||carteDefaut;
-  const catSauces=c.categories.find(x=>x.id==='sauces');
-  const sauces=catSauces?(catSauces.produits||[]).filter(s=>s.actif):(c.sauces||[]).filter(s=>s.actif);
-  const listHtml=sauces.map(s=>`
-    <div class="modal-item" onclick="choisirSauce('${s.id}','${esc(s.nom)}','${esc(s.desc||'')}')">
-      <div><div class="mnom">${s.emoji||'🌿'} ${s.nom}</div>${s.desc?`<div class="mdesc">${s.desc}</div>`:''}</div>
+function ouvrirModalMenuAdo(uid){
+  adoEnAttenteUid=uid;
+  const choix=[
+    {id:'ado_moules',nom:'Moules-frites à volonté',emoji:'🐚'},
+    {id:'ado_calamars',nom:'Calamars à volonté',emoji:'🦑'},
+  ];
+  document.getElementById('modalMenuAdoList').innerHTML=choix.map(c=>`
+    <div class="modal-item" onclick="choisirMenuAdo('${c.id}','${esc(c.nom)}')">
+      <div><div class="mnom">${c.emoji} ${c.nom}</div></div>
     </div>`).join('');
-  const pasDeSauceHtml=`
-    <div class="modal-item" onclick="choisirSauce('none','Pas de sauce','')">
-      <div><div class="mnom">🚫 Pas de sauce</div></div>
-    </div>`;
-  document.getElementById('modalSauceList').innerHTML=listHtml+pasDeSauceHtml;
-  document.getElementById('modalSauce').classList.add('visible');
+  document.getElementById('modalMenuAdo').classList.add('visible');
 }
 
-function choisirSauce(id,nom,desc){
-  // Retrouve la formule en attente dans le panier et lui attache la sauce choisie
-  const formule=panier.find(p=>p.uid===formuleEnAttenteSauce);
-  if(formule){
-    formule.sauceId=id;
-    formule.sauceNom=nom;
-    formule.desc=(formule.desc?formule.desc+' — ':'')+'Sauce : '+nom;
+function choisirMenuAdo(choixId,choixNom){
+  const item=panier.find(p=>p.uid===adoEnAttenteUid);
+  if(item){
+    item.desc=(item.desc?item.desc+' — ':'')+'Choix : '+choixNom;
   }
-  document.getElementById('modalSauce').classList.remove('visible');
-  formuleEnAttenteSauce=null;
+  document.getElementById('modalMenuAdo').classList.remove('visible');
+  adoEnAttenteUid=null;
   renderPanierItems();
-  showToast(id==='none'?'Sans sauce — noté !':`✅ Sauce ${nom} ajoutée !`);
+  showToast(`✅ ${choixNom} choisi !`);
+}
+
+function fermerModalMenuAdo(){
+  document.getElementById('modalMenuAdo').classList.remove('visible');
+  adoEnAttenteUid=null;
+  showToast('✅ Menu ajouté — choix à préciser avec le serveur');
 }
 </script>
 </body>

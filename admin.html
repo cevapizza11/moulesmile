@@ -79,12 +79,17 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 .item-info{cursor:pointer}
 .item-info:active{opacity:.7}
 
-/* GLISSER-DÉPOSER PRODUITS */
+/* GLISSER-DÉPOSER PRODUITS (desktop) */
 .item-row{cursor:default}
-.drag-handle{cursor:grab;color:#666;font-size:16px;padding:0 6px;user-select:none}
-.drag-handle:active{cursor:grabbing}
 .item-row.dragging{opacity:.4}
 .item-row.drag-over{border-top:2px solid #D4AF37}
+
+/* BOUTONS RÉORDONNER ▲▼ (fonctionne aussi sur mobile) */
+.reorder-btns{display:flex;flex-direction:column;gap:2px;margin-right:6px;flex-shrink:0}
+.reorder-btn{background:#2A2A2A;border:1px solid #444;color:#D4AF37;font-size:10px;width:22px;height:18px;border-radius:4px;cursor:pointer;padding:0;line-height:1;display:flex;align-items:center;justify-content:center}
+.reorder-btn:active{background:#D4AF37;color:#1A1A1A}
+.reorder-btn:disabled{opacity:.25;cursor:default}
+.reorder-btn:disabled:active{background:#2A2A2A;color:#D4AF37}
 </style>
 </head>
 <body>
@@ -199,6 +204,12 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
     <h2>👁️ Catégories visibles sur la carte</h2>
     <div style="color:#888;font-size:12px;margin-bottom:10px">Désactivez une catégorie entière pour la masquer côté client (ex: pas de cocktails cette saison)</div>
     <div id="categoriesReglagesList"></div>
+  </div>
+
+  <div class="section" style="margin-top:14px">
+    <h2>🚫 Catégories en consultation seule</h2>
+    <div style="color:#888;font-size:12px;margin-bottom:10px">Visible dans la carte mais sans bouton d'ajout (ex: Sauces — choisies uniquement via le popup formule)</div>
+    <div id="consultationReglagesList"></div>
   </div>
 </div>
 
@@ -383,11 +394,15 @@ function render(){
   const cat=carte.categories.find(c=>c.id===catActive);
   if(!cat)return;
   const nb=(cat.produits||[]).filter(p=>p.actif).length;
+  const nbTotal=(cat.produits||[]).length;
   document.getElementById('catContent').innerHTML=`<div class="section"><h2>${cat.nom} <span class="badge">${nb} actifs</span></h2>${(cat.produits||[]).map((p,idx)=>`
     <div class="item-row" draggable="true" data-idx="${idx}"
       ondragstart="dragStart(event,${idx})" ondragover="dragOver(event)"
       ondragleave="dragLeave(event)" ondrop="dragDrop(event,${idx})" ondragend="dragEnd(event)">
-      <span class="drag-handle" title="Glisser pour réordonner">⠿</span>
+      <div class="reorder-btns">
+        <button class="reorder-btn" onclick="deplacerProduit('${catActive}',${idx},-1)" ${idx===0?'disabled':''} title="Monter">▲</button>
+        <button class="reorder-btn" onclick="deplacerProduit('${catActive}',${idx},1)" ${idx===nbTotal-1?'disabled':''} title="Descendre">▼</button>
+      </div>
       <div class="item-info" onclick="ouvrirModalEdition('${catActive}',${idx})"><div class="item-nom">${p.emoji||''} ${p.nom}</div><div class="item-detail">${p.desc||''}${p.subcat?' · '+p.subcat:''}</div></div>
       <div style="display:flex;align-items:center;gap:4px">
         ${p.prix>0?`<input type="number" class="prix-input" value="${p.prix}" step="0.10" onchange="updatePrix('${catActive}',${idx},this.value)"> €`:'<span style="color:#1A7A50;font-size:10px;font-weight:bold">Inclus</span>'}
@@ -395,6 +410,16 @@ function render(){
         <button class="del-prod-btn" onclick="supprimerProduit('${catActive}',${idx})">🗑</button>
       </div>
     </div>`).join('')}</div>`;
+}
+
+// Réordonner via boutons ▲▼ — fonctionne sur mobile ET desktop (contrairement au glisser-déposer)
+function deplacerProduit(catId,idx,direction){
+  const cat=carte.categories.find(c=>c.id===catId);
+  if(!cat)return;
+  const nouvelIdx=idx+direction;
+  if(nouvelIdx<0||nouvelIdx>=cat.produits.length)return;
+  [cat.produits[idx],cat.produits[nouvelIdx]]=[cat.produits[nouvelIdx],cat.produits[idx]];
+  sauvegarder();render();
 }
 
 // ============================================================
@@ -434,42 +459,55 @@ function dragDrop(e,targetIdx){
 // ============================================================
 // ÉDITION D'UN PRODUIT (clic sur son nom)
 // ============================================================
-let editionCatId=null,editionIdx=null;
+let editionCatId=null,editionIdx=null,editionSource='carte'; // 'carte' = catégorie normale, 'enfantMenu' = liste spéciale
 
-function ouvrirModalEdition(catId,idx){
+// Renvoie le tableau de produits ciblé selon la source d'édition
+function getListeEdition(source,catId){
+  if(source==='enfantMenu') return carte.enfantMenu;
   const cat=carte.categories.find(c=>c.id===catId);
-  if(!cat)return;
-  const p=cat.produits[idx];
+  return cat?cat.produits:null;
+}
+
+function ouvrirModalEdition(catId,idx,source='carte'){
+  const liste=getListeEdition(source,catId);
+  if(!liste)return;
+  const p=liste[idx];
   if(!p)return;
-  editionCatId=catId;editionIdx=idx;
+  editionCatId=catId;editionIdx=idx;editionSource=source;
   document.getElementById('editEmoji').value=p.emoji||'';
   document.getElementById('editNom').value=p.nom||'';
   document.getElementById('editDesc').value=p.desc||'';
   document.getElementById('editPrix').value=p.prix||0;
   document.getElementById('editSubcat').value=p.subcat||'';
+  // Les listes spéciales (menu enfant) n'ont pas de sous-catégorie ni de gestion de prix pertinente pour ce contexte
+  document.getElementById('editSubcat').closest('.form-group').style.display=(source==='carte')?'flex':'none';
   document.getElementById('modalEdition').classList.add('visible');
 }
 
 function fermerModalEdition(){
   document.getElementById('modalEdition').classList.remove('visible');
-  editionCatId=null;editionIdx=null;
+  editionCatId=null;editionIdx=null;editionSource='carte';
 }
 
 function validerEdition(){
   if(editionCatId===null||editionIdx===null)return;
-  const cat=carte.categories.find(c=>c.id===editionCatId);
-  if(!cat)return;
-  const p=cat.produits[editionIdx];
+  const liste=getListeEdition(editionSource,editionCatId);
+  if(!liste)return;
+  const p=liste[editionIdx];
   if(!p)return;
   const nom=document.getElementById('editNom').value.trim();
   if(!nom){showToast('⚠️ Nom obligatoire');return;}
   p.nom=nom;
   p.emoji=document.getElementById('editEmoji').value.trim();
   p.desc=document.getElementById('editDesc').value.trim();
-  p.prix=parseFloat(document.getElementById('editPrix').value)||0;
-  const subcat=document.getElementById('editSubcat').value.trim();
-  if(subcat) p.subcat=subcat; else delete p.subcat;
-  sauvegarder();render();fermerModalEdition();
+  if(editionSource==='carte'){
+    p.prix=parseFloat(document.getElementById('editPrix').value)||0;
+    const subcat=document.getElementById('editSubcat').value.trim();
+    if(subcat) p.subcat=subcat; else delete p.subcat;
+  }
+  sauvegarder();
+  if(editionSource==='enfantMenu') renderEnfantMenu(); else render();
+  fermerModalEdition();
   showToast(`✅ "${nom}" modifié !`);
 }
 
@@ -512,9 +550,10 @@ function handleFile(file){
     r.onload=e=>{
       try{
         const wb=XLSX.read(e.target.result,{type:'array'});
-        // Parcourir tous les onglets produits — exclut les onglets non-produits (instructions, menus spéciaux à colonnes différentes)
+        const ONGLETS_SPECIAUX=['INSTRUCTIONS','Export Firebase','Boissons Menu','Desserts Menu','Menu Enfant','Familles Options','Options Produits'];
+        // Parcourir tous les onglets produits — exclut les onglets non-produits (instructions, menus spéciaux, familles d'options)
         let allRows=[];
-        wb.SheetNames.filter(n=>!['INSTRUCTIONS','Export Firebase','Boissons Menu','Desserts Menu','Menu Enfant'].includes(n)).forEach(n=>{
+        wb.SheetNames.filter(n=>!ONGLETS_SPECIAUX.includes(n)).forEach(n=>{
           const ws=wb.Sheets[n];
           const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
           // Chercher la ligne header
@@ -524,6 +563,11 @@ function handleFile(file){
           }
           allRows=allRows.concat(rows.slice(start));
         });
+
+        // Lecture séparée des Familles d'Options et de leur assignation aux produits
+        importedFamillesOptions=lireFamillesOptions(wb);
+        importedOptionsProduits=lireOptionsProduits(wb);
+
         parseRows(allRows);
       }catch(err){showToast('❌ Erreur lecture Excel');console.error(err);}
     };
@@ -532,6 +576,66 @@ function handleFile(file){
 }
 
 function csvToRows(text){return text.split('\n').filter(l=>l.trim()).map(l=>l.split(',').map(c=>c.replace(/^"|"$/g,'').trim()));}
+
+// ============================================================
+// LECTURE ONGLET "Familles Options"
+// ============================================================
+let importedFamillesOptions=null;
+function lireFamillesOptions(wb){
+  if(!wb.SheetNames.includes('Familles Options'))return null;
+  const ws=wb.Sheets['Familles Options'];
+  const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+  let start=0;
+  for(let i=0;i<Math.min(rows.length,10);i++){
+    if(rows[i].map(c=>String(c).toLowerCase()).some(c=>c.includes('id famille'))){start=i+1;break;}
+  }
+  // Regrouper par famille
+  const familles={};
+  rows.slice(start).forEach(row=>{
+    const idFamille=String(row[0]||'').trim();
+    if(!idFamille)return;
+    const nomFamille=String(row[1]||'').trim();
+    const idOption=String(row[2]||'').trim();
+    const nomOption=String(row[3]||'').trim();
+    if(!idOption||!nomOption)return;
+    const supplement=parseFloat(String(row[4]||'0').replace(',','.'))||0;
+    const actif=String(row[5]||'OUI').trim().toUpperCase()!=='NON';
+    const ordre=parseInt(row[6])||9999;
+    if(!familles[idFamille]) familles[idFamille]={id:idFamille,nom:nomFamille,options:[]};
+    familles[idFamille].options.push({id:idOption,nom:nomOption,supplement,actif,ordre});
+  });
+  Object.values(familles).forEach(f=>f.options.sort((a,b)=>a.ordre-b.ordre));
+  return familles;
+}
+
+// ============================================================
+// LECTURE ONGLET "Options Produits"
+// ============================================================
+let importedOptionsProduits=null;
+function lireOptionsProduits(wb){
+  if(!wb.SheetNames.includes('Options Produits'))return null;
+  const ws=wb.Sheets['Options Produits'];
+  const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+  let start=0;
+  for(let i=0;i<Math.min(rows.length,10);i++){
+    if(rows[i].map(c=>String(c).toLowerCase()).some(c=>c.includes('id produit'))){start=i+1;break;}
+  }
+  // Regrouper par produit → liste d'étapes ordonnées
+  const parProduit={};
+  rows.slice(start).forEach(row=>{
+    const idProduit=String(row[0]||'').trim();
+    if(!idProduit)return;
+    const idFamille=String(row[2]||'').trim();
+    if(!idFamille)return;
+    const etape=parseInt(row[3])||9999;
+    const actif=String(row[4]||'OUI').trim().toUpperCase()!=='NON';
+    if(!actif)return;
+    if(!parProduit[idProduit]) parProduit[idProduit]=[];
+    parProduit[idProduit].push({idFamille,etape});
+  });
+  Object.values(parProduit).forEach(list=>list.sort((a,b)=>a.etape-b.etape));
+  return parProduit;
+}
 
 function parseRows(rows){
   const produits=[];
@@ -552,7 +656,17 @@ function parseRows(rows){
   if(!produits.length){showToast('⚠️ Aucun produit trouvé');return;}
   importedData=produits;
   document.getElementById('previewCount').textContent=produits.length;
-  document.getElementById('previewList').innerHTML=produits.slice(0,25).map(p=>`
+  let extraInfo='';
+  if(importedFamillesOptions){
+    const nbFamilles=Object.keys(importedFamillesOptions).length;
+    const nbOptions=Object.values(importedFamillesOptions).reduce((s,f)=>s+f.options.length,0);
+    extraInfo+=`<div style="color:#4ABA80;font-size:11px;padding:4px 0">🎛️ ${nbFamilles} famille(s) d'options détectée(s) (${nbOptions} choix)</div>`;
+  }
+  if(importedOptionsProduits){
+    const nbAssign=Object.keys(importedOptionsProduits).length;
+    extraInfo+=`<div style="color:#4ABA80;font-size:11px;padding:4px 0">🔗 ${nbAssign} produit(s) avec options assignées</div>`;
+  }
+  document.getElementById('previewList').innerHTML=extraInfo+produits.slice(0,25).map(p=>`
     <div class="preview-item">
       <span style="color:#888;font-size:10px">[${p.cat}${p.subcat?' / '+p.subcat:''}]</span>
       <span style="color:#ddd;margin-left:6px">${p.emoji||''} ${p.nom}</span>
@@ -586,14 +700,23 @@ function confirmerImport(){
   if(carte){
     newCarte.compteurActif=carte.compteurActif;
     newCarte.categoriesActives=carte.categoriesActives;
+    newCarte.categoriesConsultationSeule=carte.categoriesConsultationSeule;
     newCarte.boissonsMenu=carte.boissonsMenu;
     newCarte.enfantMenu=carte.enfantMenu;
     newCarte.dessertsMenu=carte.dessertsMenu;
+  } else {
+    newCarte.categoriesConsultationSeule={sauces:true};
   }
+  // Familles d'options + assignation produits — importées si présentes dans le fichier, sinon on garde l'existant
+  newCarte.famillesOptions=importedFamillesOptions||(carte?carte.famillesOptions:null)||{};
+  newCarte.optionsProduits=importedOptionsProduits||(carte?carte.optionsProduits:null)||{};
+
   carte=newCarte;catActive=newCarte.categories[0]?.id;
   sauvegarder();render();annulerImport();
   showToast(`✅ ${importedData?importedData.length:0} produits importés !`);
   importedData=null;
+  importedFamillesOptions=null;
+  importedOptionsProduits=null;
 }
 
 async function sauvegarder(){try{await db.collection('config').doc('carte_v2').set(carte);showToast('✅ Publié !');}catch(e){showToast('❌ Erreur');}}
@@ -685,8 +808,14 @@ function renderEnfantMenu() {
     return;
   }
   container.innerHTML = em.map((p, idx) => `
-    <div class="item-row">
-      <div class="item-info">
+    <div class="item-row" draggable="true" data-idx="${idx}"
+      ondragstart="dragStartEnfant(event,${idx})" ondragover="dragOver(event)"
+      ondragleave="dragLeave(event)" ondrop="dragDropEnfant(event,${idx})" ondragend="dragEnd(event)">
+      <div class="reorder-btns">
+        <button class="reorder-btn" onclick="deplacerEnfantMenu(${idx},-1)" ${idx===0?'disabled':''} title="Monter">▲</button>
+        <button class="reorder-btn" onclick="deplacerEnfantMenu(${idx},1)" ${idx===em.length-1?'disabled':''} title="Descendre">▼</button>
+      </div>
+      <div class="item-info" onclick="ouvrirModalEdition(null,${idx},'enfantMenu')">
         <div class="item-nom">${p.emoji||'🧒'} ${p.nom}</div>
         <div class="item-detail">${p.desc||''}</div>
       </div>
@@ -699,6 +828,32 @@ function renderEnfantMenu() {
       </div>
     </div>
   `).join('');
+}
+
+function deplacerEnfantMenu(idx,direction){
+  if(!carte.enfantMenu)return;
+  const nouvelIdx=idx+direction;
+  if(nouvelIdx<0||nouvelIdx>=carte.enfantMenu.length)return;
+  [carte.enfantMenu[idx],carte.enfantMenu[nouvelIdx]]=[carte.enfantMenu[nouvelIdx],carte.enfantMenu[idx]];
+  sauvegarder();renderEnfantMenu();
+}
+
+// Glisser-déposer dédié au menu enfant (liste plate, pas de catégorie)
+let dragSrcIdxEnfant=null;
+function dragStartEnfant(e,idx){
+  dragSrcIdxEnfant=idx;
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed='move';
+}
+function dragDropEnfant(e,targetIdx){
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if(dragSrcIdxEnfant===null||dragSrcIdxEnfant===targetIdx)return;
+  const [moved]=carte.enfantMenu.splice(dragSrcIdxEnfant,1);
+  carte.enfantMenu.splice(targetIdx,0,moved);
+  dragSrcIdxEnfant=null;
+  sauvegarder();renderEnfantMenu();
+  showToast('✅ Ordre mis à jour');
 }
 
 function toggleEnfantMenu(idx, val) {
@@ -752,6 +907,15 @@ function renderReglages(){
       <label class="toggle"><input type="checkbox" ${active?'checked':''} onchange="toggleCategorieActive('${c.id}',this.checked)"><span class="toggle-slider"></span></label>
     </div>`;
   }).join('');
+
+  if(!carte.categoriesConsultationSeule) carte.categoriesConsultationSeule={};
+  document.getElementById('consultationReglagesList').innerHTML=carte.categories.map(c=>{
+    const consultationSeule=carte.categoriesConsultationSeule[c.id]===true;
+    return `<div class="item-row">
+      <div class="item-info" style="cursor:default"><div class="item-nom">${c.nom}</div></div>
+      <label class="toggle"><input type="checkbox" ${consultationSeule?'checked':''} onchange="toggleConsultationSeule('${c.id}',this.checked)"><span class="toggle-slider"></span></label>
+    </div>`;
+  }).join('');
 }
 
 function toggleCompteurGlobal(val){
@@ -768,6 +932,15 @@ function toggleCategorieActive(catId,val){
   sauvegarder();
   const cat=carte.categories.find(c=>c.id===catId);
   showToast(`${cat?cat.nom:catId} ${val?'✅ visible':'❌ masquée'} côté client`);
+}
+
+function toggleConsultationSeule(catId,val){
+  if(!carte)return;
+  if(!carte.categoriesConsultationSeule) carte.categoriesConsultationSeule={};
+  carte.categoriesConsultationSeule[catId]=val;
+  sauvegarder();
+  const cat=carte.categories.find(c=>c.id===catId);
+  showToast(`${cat?cat.nom:catId} ${val?'🚫 consultation seule (pas d\'ajout)':'✅ ajout normal réactivé'}`);
 }
 
 // ============================================================
