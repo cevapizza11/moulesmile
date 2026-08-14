@@ -324,6 +324,15 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
+<!-- MODAL CHOIX SAUCE (à chaque formule moules) -->
+<div class="modal-overlay" id="modalSauce">
+  <div class="modal-box">
+    <h3>🌿 Choisissez votre sauce</h3>
+    <div class="modal-sub">Pour accompagner vos moules à volonté</div>
+    <div class="modal-list" id="modalSauceList"></div>
+  </div>
+</div>
+
 <div class="version">v.12/08/2026 14:00 — Moule & Smile</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -399,7 +408,7 @@ const carteDefaut={
       {id:"en1",nom:"Enfant 0-5 ans",desc:"1 enfant gratuit par adulte payant",emoji:"👧",prix:0.00,actif:true},
       {id:"en2",nom:"Enfant / Ado 6-17 ans",desc:"À volonté — tarif unique",emoji:"🧒",prix:15.90,actif:true},
     ]},
-    {id:"sauces", nom:"🌿 Sauces", produits:[
+    {id:"sauces", nom:"🌿 Sauces", consultationSeule:true, produits:[
       {id:"s1",nom:"Marinière",desc:"Vin blanc, échalotes, persil frais",emoji:"🌿",prix:0.00,actif:true},
       {id:"s2",nom:"Roquefort",desc:"Roquefort, noix, cognac",emoji:"🧀",prix:0.00,actif:true},
       {id:"s3",nom:"Curry",desc:"Curry, lait de coco, citron vert",emoji:"🌶️",prix:0.00,actif:true},
@@ -722,6 +731,7 @@ function renderProduits(catId,filtreSubcat){
   if(!produits.length){container.innerHTML='<div style="text-align:center;color:#888;padding:30px">Aucun produit disponible</div>';return;}
 
   const compteurActif=c.compteurActif!==false; // réglage global piloté par Excel/admin, actif par défaut
+  const consultationSeule=cat.consultationSeule===true; // ex: Sauces — visible mais non ajoutable (choisie via popup formule)
 
   let html='<div class="product-list">';
   let lastSubcat='';
@@ -736,7 +746,10 @@ function renderProduits(catId,filtreSubcat){
     const prixDisplay=p.prix===0?'<span class="gratuit">Inclus</span>':`<span class="prix">${p.prix.toFixed(2).replace('.',',')} €</span>`;
     const qte=qteDansPanier(p.id);
     let compteurHtml;
-    if(!compteurActif){
+    if(consultationSeule){
+      // Catégorie consultation seule → aucun bouton d'ajout, juste l'information
+      compteurHtml='';
+    } else if(!compteurActif){
       // Réglage global désactivé → simple bouton + sans jamais de compteur visible
       compteurHtml=`<button class="add-btn" onclick="ajouterPanier('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${p.prix})">+</button>`;
     } else {
@@ -801,6 +814,11 @@ function ajouterPanier(id,nom,desc,prix){
   const uid=Date.now()+Math.random();
   panier.push({id,nom,desc,prix,uid});
   updatePanierBar();
+
+  // Formule moules à volonté → popup sauce systématique (la sauce se choisit ici, pas via la carte)
+  if(id==='p1'){
+    ouvrirModalSauce(uid);
+  }
 }
 
 function updatePanierBar(){
@@ -1249,6 +1267,43 @@ function choisirMenuEnfant(id,nom,desc){
 function fermerModalMenuEnfant(){
   document.getElementById('modalMenuEnfant').classList.remove('visible');
   showToast('✅ Enfant gratuit ajouté — menu à choisir avec le serveur');
+}
+
+// ============================================================
+// MODAL CHOIX SAUCE (systématique à chaque formule moules)
+// La sauce se choisit UNIQUEMENT ici — elle n'est pas ajoutable depuis la carte Sauces (consultation seule)
+// ============================================================
+let formuleEnAttenteSauce=null; // uid de l'item formule qui attend sa sauce
+
+function ouvrirModalSauce(uidFormule){
+  formuleEnAttenteSauce=uidFormule;
+  const c=carte||carteDefaut;
+  const catSauces=c.categories.find(x=>x.id==='sauces');
+  const sauces=catSauces?(catSauces.produits||[]).filter(s=>s.actif):(c.sauces||[]).filter(s=>s.actif);
+  const listHtml=sauces.map(s=>`
+    <div class="modal-item" onclick="choisirSauce('${s.id}','${esc(s.nom)}','${esc(s.desc||'')}')">
+      <div><div class="mnom">${s.emoji||'🌿'} ${s.nom}</div>${s.desc?`<div class="mdesc">${s.desc}</div>`:''}</div>
+    </div>`).join('');
+  const pasDeSauceHtml=`
+    <div class="modal-item" onclick="choisirSauce('none','Pas de sauce','')">
+      <div><div class="mnom">🚫 Pas de sauce</div></div>
+    </div>`;
+  document.getElementById('modalSauceList').innerHTML=listHtml+pasDeSauceHtml;
+  document.getElementById('modalSauce').classList.add('visible');
+}
+
+function choisirSauce(id,nom,desc){
+  // Retrouve la formule en attente dans le panier et lui attache la sauce choisie
+  const formule=panier.find(p=>p.uid===formuleEnAttenteSauce);
+  if(formule){
+    formule.sauceId=id;
+    formule.sauceNom=nom;
+    formule.desc=(formule.desc?formule.desc+' — ':'')+'Sauce : '+nom;
+  }
+  document.getElementById('modalSauce').classList.remove('visible');
+  formuleEnAttenteSauce=null;
+  renderPanierItems();
+  showToast(id==='none'?'Sans sauce — noté !':`✅ Sauce ${nom} ajoutée !`);
 }
 </script>
 </body>
