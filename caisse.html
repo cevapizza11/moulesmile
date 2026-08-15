@@ -97,7 +97,7 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
 .histo-detail.open{display:block}
 
 /* CA */
-.ca-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.ca-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
 .ca-box{background:#1E1E1E;border:2px solid #333;border-radius:12px;padding:16px;text-align:center}
 .ca-box .ca-num{font-size:26px;font-weight:bold;color:#D4AF37}
 .ca-box .ca-lbl{font-size:11px;color:#888;margin-top:4px}
@@ -193,6 +193,7 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
   <div class="ca-grid">
     <div class="ca-box"><div class="ca-num" id="caTotal">0 €</div><div class="ca-lbl">CA Total</div></div>
     <div class="ca-box"><div class="ca-num" id="caNb">0</div><div class="ca-lbl">Commandes</div></div>
+    <div class="ca-box"><div class="ca-num" id="caCouverts">0</div><div class="ca-lbl">Couverts</div></div>
     <div class="ca-box"><div class="ca-num" id="caMoyen">0 €</div><div class="ca-lbl">Ticket moyen / couvert</div></div>
   </div>
   <table class="ca-table">
@@ -819,6 +820,7 @@ function renderCA(){
     }
   });
   const totalCouverts=Object.values(couvertsParTable).reduce((s,n)=>s+n,0);
+  document.getElementById('caCouverts').textContent=totalCouverts;
   document.getElementById('caMoyen').textContent=totalCouverts?(total/totalCouverts).toFixed(2).replace('.',',')+'€':'0 €';
 
   const statutColors={nouvelle:'#D4AF37',en_addition:'#4ABA80',vue:'#4ABA80',regle:'#555'};
