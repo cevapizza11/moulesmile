@@ -193,7 +193,7 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
   <div class="ca-grid">
     <div class="ca-box"><div class="ca-num" id="caTotal">0 €</div><div class="ca-lbl">CA Total</div></div>
     <div class="ca-box"><div class="ca-num" id="caNb">0</div><div class="ca-lbl">Commandes</div></div>
-    <div class="ca-box"><div class="ca-num" id="caMoyen">0 €</div><div class="ca-lbl">Ticket moyen</div></div>
+    <div class="ca-box"><div class="ca-num" id="caMoyen">0 €</div><div class="ca-lbl">Ticket moyen / couvert</div></div>
   </div>
   <table class="ca-table">
     <thead><tr><th>Heure</th><th>Table</th><th>Articles</th><th>Total</th><th>Statut</th></tr></thead>
@@ -808,7 +808,18 @@ function renderCA(){
   const nb=cmds.length;
   document.getElementById('caTotal').textContent=total.toFixed(2).replace('.',',')+' €';
   document.getElementById('caNb').textContent=nb;
-  document.getElementById('caMoyen').textContent=nb?(total/nb).toFixed(2).replace('.',',')+'€':'0 €';
+
+  // Ticket moyen par COUVERT (pas par commande) — on prend le nombre de couverts déclaré
+  // une seule fois par table (le premier trouvé), pour ne pas compter plusieurs fois
+  // les couverts d'une même table qui a passé plusieurs commandes successives
+  const couvertsParTable={};
+  cmds.forEach(c=>{
+    if(c.table!=null && c.couverts && !couvertsParTable[c.table]){
+      couvertsParTable[c.table]=c.couverts;
+    }
+  });
+  const totalCouverts=Object.values(couvertsParTable).reduce((s,n)=>s+n,0);
+  document.getElementById('caMoyen').textContent=totalCouverts?(total/totalCouverts).toFixed(2).replace('.',',')+'€':'0 €';
 
   const statutColors={nouvelle:'#D4AF37',en_addition:'#4ABA80',vue:'#4ABA80',regle:'#555'};
   document.getElementById('caTableBody').innerHTML=cmds

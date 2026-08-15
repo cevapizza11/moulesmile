@@ -23,12 +23,14 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 .table-screen h2{color:#D4AF37;font-size:22px;margin-bottom:6px}
 .table-screen p{color:#aaa;font-size:13px;margin-bottom:30px}
 .table-input{width:100%;padding:18px;font-size:36px;text-align:center;background:#2A2A2A;border:2px solid #D4AF37;border-radius:12px;color:#D4AF37;font-weight:bold;margin-bottom:16px}
-.couverts-grid{display:flex;gap:12px;justify-content:center}
-.couverts-btn{flex:1;background:#2A2A2A;border:2px solid #D4AF37;border-radius:14px;padding:24px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;transition:all .2s}
-.couverts-btn:active{background:#D4AF37}
-.couverts-btn:active .couverts-num,.couverts-btn:active .couverts-lbl{color:#1A1A1A}
-.couverts-num{font-size:32px;font-weight:bold;color:#D4AF37}
-.couverts-lbl{font-size:12px;color:#aaa}
+.couverts-compteurs{display:flex;flex-direction:column;gap:14px;margin-top:10px}
+.couverts-ligne{display:flex;align-items:center;justify-content:space-between;background:#2A2A2A;border:2px solid #333;border-radius:14px;padding:16px 18px}
+.couverts-info{display:flex;align-items:center;gap:10px}
+.couverts-emoji{font-size:26px}
+.couverts-label{font-size:16px;font-weight:bold;color:#fff}
+.couverts-controls{display:flex;align-items:center;gap:12px}
+.couverts-valeur{font-size:22px;font-weight:bold;color:#D4AF37;min-width:28px;text-align:center}
+.couverts-total{margin-top:18px;font-size:15px;color:#D4AF37;font-weight:bold;text-align:center}
 
 /* NOTIFICATION BANDEAU */
 .notif-banner{position:fixed;top:0;left:0;right:0;z-index:9999;background:#1A7A50;color:white;padding:20px 16px;text-align:center;font-size:16px;font-weight:bold;transform:translateY(-100%);transition:transform .5s cubic-bezier(.175,.885,.32,1.275);border-bottom:3px solid #D4AF37;box-shadow:0 4px 20px rgba(0,0,0,.5)}
@@ -194,21 +196,33 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
     <div class="logo">👥</div>
     <h2>Vous êtes combien ?</h2>
     <p>Pour mieux organiser le service</p>
-    <div class="couverts-grid">
-      <button class="couverts-btn" onclick="validerTable(2)">
-        <span class="couverts-num">2</span>
-        <span class="couverts-lbl">personnes</span>
-      </button>
-      <button class="couverts-btn" onclick="validerTable(3)">
-        <span class="couverts-num">3-4</span>
-        <span class="couverts-lbl">personnes</span>
-      </button>
-      <button class="couverts-btn" onclick="validerTable(5)">
-        <span class="couverts-num">5+</span>
-        <span class="couverts-lbl">personnes</span>
-      </button>
+    <div class="couverts-compteurs">
+      <div class="couverts-ligne">
+        <div class="couverts-info">
+          <span class="couverts-emoji">🧑</span>
+          <span class="couverts-label">Adultes</span>
+        </div>
+        <div class="couverts-controls">
+          <button class="qty-btn qty-minus" onclick="ajusterCouverts('adultes',-1)">−</button>
+          <span class="couverts-valeur" id="valAdultes">1</span>
+          <button class="qty-btn qty-plus" onclick="ajusterCouverts('adultes',1)">+</button>
+        </div>
+      </div>
+      <div class="couverts-ligne">
+        <div class="couverts-info">
+          <span class="couverts-emoji">🧒</span>
+          <span class="couverts-label">Enfants</span>
+        </div>
+        <div class="couverts-controls">
+          <button class="qty-btn qty-minus" onclick="ajusterCouverts('enfants',-1)">−</button>
+          <span class="couverts-valeur" id="valEnfants">0</span>
+          <button class="qty-btn qty-plus" onclick="ajusterCouverts('enfants',1)">+</button>
+        </div>
+      </div>
     </div>
-    <button class="btn btn-outline" onclick="showScreen('screenTable')" style="margin-top:16px">← Retour</button>
+    <div class="couverts-total" id="couvertsTotalAffiche">Total : 1 personne</div>
+    <button class="btn btn-or" onclick="validerCouverts()" style="margin-top:16px">Continuer →</button>
+    <button class="btn btn-outline" onclick="showScreen('screenTable')" style="margin-top:8px">← Retour</button>
   </div>
 </div>
 
@@ -643,12 +657,43 @@ function showToast(msg){
 
 // TABLE
 let nbCouverts=null;
+let nbAdultes=1;
+let nbEnfants=0;
 
 function allerVersCouverts(){
   const val=parseInt(document.getElementById('tableInput').value);
   if(!val||val<1||val>150){showToast('⚠️ Numéro invalide');return;}
   tableNum=val;
+  nbAdultes=1;
+  nbEnfants=0;
+  majAffichageCouverts();
   showScreen('screenCouverts');
+}
+
+function ajusterCouverts(type,delta){
+  if(type==='adultes'){
+    const nouvelle=nbAdultes+delta;
+    if(nouvelle<1){showToast('⚠️ Au moins 1 adulte requis');return;}
+    if(nouvelle>50){showToast('⚠️ Maximum 50 adultes');return;}
+    nbAdultes=nouvelle;
+  } else {
+    const nouvelle=nbEnfants+delta;
+    if(nouvelle<0) return;
+    if(nouvelle>50){showToast('⚠️ Maximum 50 enfants');return;}
+    nbEnfants=nouvelle;
+  }
+  majAffichageCouverts();
+}
+
+function majAffichageCouverts(){
+  document.getElementById('valAdultes').textContent=nbAdultes;
+  document.getElementById('valEnfants').textContent=nbEnfants;
+  const total=nbAdultes+nbEnfants;
+  document.getElementById('couvertsTotalAffiche').textContent='Total : '+total+(total>1?' personnes':' personne');
+}
+
+function validerCouverts(){
+  validerTable(nbAdultes+nbEnfants);
 }
 
 function validerTable(couverts){
@@ -1114,6 +1159,8 @@ async function validerAvantAddition(){
     await db.collection('commandes').add({
       table:tableNum,
       couverts:nbCouverts||null,
+      nbAdultes:nbAdultes!=null?nbAdultes:null,
+      nbEnfants:nbEnfants!=null?nbEnfants:0,
       items:panierAvantAddition.map(p=>({id:p.id,nom:p.nom,desc:p.desc||'',prix:p.prix})),
       total,
       timestamp:firebase.firestore.FieldValue.serverTimestamp(),
@@ -1147,6 +1194,8 @@ async function validerCommande(){
     await db.collection('commandes').add({
       table:tableNum,
       couverts:nbCouverts||null,
+      nbAdultes:nbAdultes!=null?nbAdultes:null,
+      nbEnfants:nbEnfants!=null?nbEnfants:0,
       items:panier.map(p=>({id:p.id,nom:p.nom,desc:p.desc||'',prix:p.prix})),
       total,
       timestamp:firebase.firestore.FieldValue.serverTimestamp(),
