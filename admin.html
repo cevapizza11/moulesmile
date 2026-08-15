@@ -587,7 +587,8 @@ function lireFamillesOptions(wb){
   const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
   let start=0;
   for(let i=0;i<Math.min(rows.length,10);i++){
-    if(rows[i].map(c=>String(c).toLowerCase()).some(c=>c.includes('id famille'))){start=i+1;break;}
+    // Cherche la ligne d'en-tête précisément (1ère cellule = "ID Famille"), pas le sous-titre explicatif
+    if(String(rows[i][0]||'').trim().toLowerCase()==='id famille'){start=i+1;break;}
   }
   // Regrouper par famille
   const familles={};
@@ -618,7 +619,8 @@ function lireOptionsProduits(wb){
   const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
   let start=0;
   for(let i=0;i<Math.min(rows.length,10);i++){
-    if(rows[i].map(c=>String(c).toLowerCase()).some(c=>c.includes('id produit'))){start=i+1;break;}
+    // Cherche la ligne d'en-tête précisément (1ère cellule = "ID Produit"), pas le sous-titre explicatif qui contient aussi ce texte
+    if(String(rows[i][0]||'').trim().toLowerCase()==='id produit'){start=i+1;break;}
   }
   // Regrouper par produit → liste d'étapes ordonnées
   const parProduit={};
