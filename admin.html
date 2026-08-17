@@ -720,9 +720,21 @@ function confirmerImport(){
     newCarte.compteurActif=carte.compteurActif;
     newCarte.categoriesActives=carte.categoriesActives;
     newCarte.categoriesConsultationSeule=carte.categoriesConsultationSeule;
+    newCarte.groupeApero=carte.groupeApero;
     newCarte.boissonsMenu=carte.boissonsMenu;
     newCarte.enfantMenu=carte.enfantMenu;
     newCarte.dessertsMenu=carte.dessertsMenu;
+
+    // Réappliquer l'ordre des catégories personnalisé par l'admin (sinon l'import
+    // reconstruit toujours dans l'ordre fixe de CATS et écrase le réordonnancement)
+    if(carte.categories&&carte.categories.length){
+      const ordrePrecedent=carte.categories.map(c=>c.id);
+      newCarte.categories.sort((a,b)=>{
+        let idxA=ordrePrecedent.indexOf(a.id); if(idxA===-1)idxA=9999;
+        let idxB=ordrePrecedent.indexOf(b.id); if(idxB===-1)idxB=9999;
+        return idxA-idxB;
+      });
+    }
   } else {
     newCarte.categoriesConsultationSeule={sauces:true};
   }
