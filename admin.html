@@ -201,6 +201,12 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 
   <div class="section" style="margin-top:14px">
+    <h2>↕️ Ordre des catégories sur l'accueil</h2>
+    <div style="color:#888;font-size:12px;margin-bottom:10px">Réorganisez l'ordre d'affichage des tuiles côté client</div>
+    <div id="ordreCategoriesList"></div>
+  </div>
+
+  <div class="section" style="margin-top:14px">
     <h2>👁️ Catégories visibles sur la carte</h2>
     <div style="color:#888;font-size:12px;margin-bottom:10px">Désactivez une catégorie entière pour la masquer côté client (ex: pas de cocktails cette saison)</div>
     <div id="categoriesReglagesList"></div>
@@ -901,6 +907,8 @@ function renderReglages(){
   if(!carte)return;
   document.getElementById('compteurToggle').checked=carte.compteurActif!==false;
 
+  renderOrdreCategories();
+
   if(!carte.categoriesActives) carte.categoriesActives={};
   document.getElementById('categoriesReglagesList').innerHTML=carte.categories.map(c=>{
     const active=carte.categoriesActives[c.id]!==false;
@@ -918,6 +926,29 @@ function renderReglages(){
       <label class="toggle"><input type="checkbox" ${consultationSeule?'checked':''} onchange="toggleConsultationSeule('${c.id}',this.checked)"><span class="toggle-slider"></span></label>
     </div>`;
   }).join('');
+}
+
+function renderOrdreCategories(){
+  if(!carte)return;
+  const nbCat=carte.categories.length;
+  document.getElementById('ordreCategoriesList').innerHTML=carte.categories.map((c,idx)=>`
+    <div class="item-row">
+      <div class="reorder-btns">
+        <button class="reorder-btn" onclick="deplacerCategorie(${idx},-1)" ${idx===0?'disabled':''} title="Monter">▲</button>
+        <button class="reorder-btn" onclick="deplacerCategorie(${idx},1)" ${idx===nbCat-1?'disabled':''} title="Descendre">▼</button>
+      </div>
+      <div class="item-info" style="cursor:default"><div class="item-nom">${c.nom}</div></div>
+    </div>`).join('');
+}
+
+function deplacerCategorie(idx,direction){
+  if(!carte)return;
+  const nouvelIdx=idx+direction;
+  if(nouvelIdx<0||nouvelIdx>=carte.categories.length)return;
+  [carte.categories[idx],carte.categories[nouvelIdx]]=[carte.categories[nouvelIdx],carte.categories[idx]];
+  sauvegarder();
+  renderOrdreCategories();
+  showToast('✅ Ordre des catégories mis à jour');
 }
 
 function toggleCompteurGlobal(val){

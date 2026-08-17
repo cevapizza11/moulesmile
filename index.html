@@ -46,6 +46,9 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 
 /* TUILES ACCUEIL (façon borne) */
 .tuiles-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.groupe-titre{grid-column:1/-1;color:#D4AF37;font-size:14px;font-weight:bold;margin-top:6px;padding-bottom:4px;border-bottom:1px solid #333}
+.groupe-titre:first-child{margin-top:0}
+.groupe-tuiles{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .tuile-cat{background:#2A2A2A;border:2px solid #333;border-radius:18px;padding:26px 10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;transition:all .15s;min-height:130px;text-align:center}
 .tuile-cat:active{background:#D4AF37;transform:scale(.96)}
 .tuile-cat:active .tuile-emoji,.tuile-cat:active .tuile-nom{color:#1A1A1A}
@@ -355,6 +358,21 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 </div>
 
 <!-- MODAL CHOIX MENU ADO 6-17 ANS -->
+<!-- POPUP SUGGESTION FORMULE (non-bloquant) -->
+<div class="modal-overlay" id="modalSuggestionFormule">
+  <div class="modal-box" style="text-align:center">
+    <div style="font-size:44px;margin-bottom:10px">🐚</div>
+    <h3>Pensez à commander vos formules !</h3>
+    <div class="modal-sub">Un équipier peut tout apporter en même temps — boissons et contenants pour vos moules</div>
+    <button class="btn btn-or" onclick="allerVersFormulesDepuisPopup()" style="margin-bottom:8px">🐚 Voir les formules</button>
+    <button class="modal-close" onclick="ignorerSuggestionFormule()">Non merci, valider quand même</button>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:12px;color:#888;cursor:pointer">
+      <input type="checkbox" id="checkboxJusteBoire" style="width:16px;height:16px;flex-shrink:0">
+      C'est juste pour boire, ne plus me demander
+    </label>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modalMenuAdo">
   <div class="modal-box">
     <h3>🧒 Menu Enfant / Ado</h3>
@@ -375,6 +393,7 @@ firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 
 let tableNum=null, panier=[], catActive=null, carte=null;
+let refuserSuggestionFormule=false; // "C'est juste pour boire" — mémorisé pour toute la session client
 let totalDejaCommande=0; // Somme des commandes déjà envoyées (hors panier en cours)
 
 // URL table
@@ -786,18 +805,40 @@ function renderTuilesAccueil(){
   const grid=document.getElementById('tuilesGrid');
   if(!grid) return;
   const categoriesActives=c.categoriesActives||{};
-  grid.innerHTML=c.categories
-    .filter(cat=>categoriesActives[cat.id]!==false)
-    .map(cat=>{
-      // Emoji de la catégorie déjà présent dans son nom (ex: "🐚 Formules") → on le sépare pour l'agrandir
-      const match=cat.nom.match(/^(\S+)\s*(.*)$/);
-      const emoji=match?match[1]:'🍽️';
-      const label=match?match[2]:cat.nom;
-      return `<div class="tuile-cat" onclick="selectCat('${cat.id}')">
+  const categoriesVisibles=c.categories.filter(cat=>categoriesActives[cat.id]!==false);
+
+  // Catégories regroupées visuellement sous le bandeau "Apéro / Boisson"
+  const GROUPE_BOISSONS=['softs','bieres','vins','cocktails','chauds'];
+
+  let html='';
+  let groupeAffiche=false;
+
+  categoriesVisibles.forEach(cat=>{
+    const match=cat.nom.match(/^(\S+)\s*(.*)$/);
+    const emoji=match?match[1]:'🍽️';
+    const label=match?match[2]:cat.nom;
+    const tuile=`<div class="tuile-cat" onclick="selectCat('${cat.id}')">
         <div class="tuile-emoji">${emoji}</div>
         <div class="tuile-nom">${label}</div>
       </div>`;
-    }).join('');
+
+    if(GROUPE_BOISSONS.includes(cat.id)){
+      if(!groupeAffiche){
+        html+='<div class="groupe-titre">🥂 Apéro / Boisson</div><div class="groupe-tuiles">';
+        groupeAffiche=true;
+      }
+      html+=tuile;
+    } else {
+      if(groupeAffiche){
+        html+='</div>'; // fermer le groupe boissons avant de reprendre les tuiles normales
+        groupeAffiche=false;
+      }
+      html+=tuile;
+    }
+  });
+  if(groupeAffiche) html+='</div>'; // fermer le groupe si dernier élément de la liste
+
+  grid.innerHTML=html;
 }
 
 // PRODUITS avec sous-catégories et compteur quantité
@@ -875,6 +916,22 @@ function nbAdultesPayants(){
 }
 function nbEnfantsGratuits(){
   return panier.filter(p=>p.id==='en1').length;
+}
+
+// Compte le nombre total de formules (adultes payantes + enfants gratuits) déjà
+// commandées pour cette table (panier en cours + commandes déjà envoyées à Firestore)
+const IDS_FORMULES=['p1','ca1','fc1','en1','en2'];
+function nbFormulesTotalTable(){
+  const nbPanier=panier.filter(p=>IDS_FORMULES.includes(p.id)).length;
+  let nbEnvoyees=0;
+  mesCommandesEnvoyees.forEach(cmd=>{
+    (cmd.items||[]).forEach(item=>{
+      // Les items envoyés stockent l'id d'origine, éventuellement suffixé "_inclus" pour les menus enfant
+      const idBase=(item.id||'').replace('_inclus','');
+      if(IDS_FORMULES.includes(idBase)) nbEnvoyees++;
+    });
+  });
+  return nbPanier+nbEnvoyees;
 }
 
 function ajouterPanier(id,nom,desc,prix){
@@ -1097,6 +1154,27 @@ function retirerUnite(id){
 // ============================================================
 function intercepterCommande(){
   if(!panier.length){showToast('⚠️ Panier vide');return;}
+
+  // Suggestion formule (non-bloquant) : uniquement si le client n'a JAMAIS commandé de formule
+  // pour cette table, et n'a pas déjà refusé la suggestion pour cette session
+  if(!refuserSuggestionFormule && nbFormulesTotalTable()===0){
+    document.getElementById('checkboxJusteBoire').checked=false;
+    document.getElementById('modalSuggestionFormule').classList.add('visible');
+    return;
+  }
+
+  validerCommande();
+}
+
+function allerVersFormulesDepuisPopup(){
+  if(document.getElementById('checkboxJusteBoire').checked) refuserSuggestionFormule=true;
+  document.getElementById('modalSuggestionFormule').classList.remove('visible');
+  selectCat('formules');
+}
+
+function ignorerSuggestionFormule(){
+  if(document.getElementById('checkboxJusteBoire').checked) refuserSuggestionFormule=true;
+  document.getElementById('modalSuggestionFormule').classList.remove('visible');
   validerCommande();
 }
 
