@@ -201,6 +201,17 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 
   <div class="section" style="margin-top:14px">
+    <h2>🥂 Regroupement Apéro / Boisson</h2>
+    <div class="item-row" style="border-bottom:none">
+      <div class="item-info" style="cursor:default">
+        <div class="item-nom">Regrouper Softs/Bières/Vins/Cocktails/Chauds en une seule tuile</div>
+        <div class="item-detail">Évite d'avoir plusieurs tuiles boissons éparpillées si vous réorganisez l'ordre des catégories</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="groupeAperoToggle" onchange="toggleGroupeApero(this.checked)"><span class="toggle-slider"></span></label>
+    </div>
+  </div>
+
+  <div class="section" style="margin-top:14px">
     <h2>↕️ Ordre des catégories sur l'accueil</h2>
     <div style="color:#888;font-size:12px;margin-bottom:10px">Réorganisez l'ordre d'affichage des tuiles côté client</div>
     <div id="ordreCategoriesList"></div>
@@ -906,6 +917,7 @@ function ajouterEnfantMenu() {
 function renderReglages(){
   if(!carte)return;
   document.getElementById('compteurToggle').checked=carte.compteurActif!==false;
+  document.getElementById('groupeAperoToggle').checked=carte.groupeApero!==false;
 
   renderOrdreCategories();
 
@@ -956,6 +968,13 @@ function toggleCompteurGlobal(val){
   carte.compteurActif=val;
   sauvegarder();
   showToast(val?'✅ Compteur +/- activé partout':'✅ Compteur +/- désactivé — simple bouton +');
+}
+
+function toggleGroupeApero(val){
+  if(!carte)return;
+  carte.groupeApero=val;
+  sauvegarder();
+  showToast(val?'✅ Boissons regroupées en une seule tuile':'✅ Boissons affichées séparément');
 }
 
 function toggleCategorieActive(catId,val){

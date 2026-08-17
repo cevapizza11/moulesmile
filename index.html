@@ -46,9 +46,6 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 
 /* TUILES ACCUEIL (façon borne) */
 .tuiles-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.groupe-titre{grid-column:1/-1;color:#D4AF37;font-size:14px;font-weight:bold;margin-top:6px;padding-bottom:4px;border-bottom:1px solid #333}
-.groupe-titre:first-child{margin-top:0}
-.groupe-tuiles{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .tuile-cat{background:#2A2A2A;border:2px solid #333;border-radius:18px;padding:26px 10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;transition:all .15s;min-height:130px;text-align:center}
 .tuile-cat:active{background:#D4AF37;transform:scale(.96)}
 .tuile-cat:active .tuile-emoji,.tuile-cat:active .tuile-nom{color:#1A1A1A}
@@ -800,6 +797,8 @@ function selectSubcat(catId,subcat){
 // ÉCRAN D'ACCUEIL — GROSSES TUILES CATÉGORIES (façon borne)
 // Généré dynamiquement depuis carte.categories (piloté par l'admin/Excel)
 // ============================================================
+const GROUPE_BOISSONS_IDS=['softs','bieres','vins','cocktails','chauds'];
+
 function renderTuilesAccueil(){
   const c=carte||carteDefaut;
   const grid=document.getElementById('tuilesGrid');
@@ -807,38 +806,56 @@ function renderTuilesAccueil(){
   const categoriesActives=c.categoriesActives||{};
   const categoriesVisibles=c.categories.filter(cat=>categoriesActives[cat.id]!==false);
 
-  // Catégories regroupées visuellement sous le bandeau "Apéro / Boisson"
-  const GROUPE_BOISSONS=['softs','bieres','vins','cocktails','chauds'];
+  const regroupementActif=c.groupeApero!==false; // réglage admin, activé par défaut
 
   let html='';
-  let groupeAffiche=false;
+  let tuileGroupeInseree=false;
 
   categoriesVisibles.forEach(cat=>{
+    const estCategorieBoisson=GROUPE_BOISSONS_IDS.includes(cat.id);
+
+    if(regroupementActif&&estCategorieBoisson){
+      // Toutes les catégories boissons individuelles sont masquées de l'accueil —
+      // une seule tuile "Apéro / Boisson" apparaît à la position de la première rencontrée
+      if(!tuileGroupeInseree){
+        html+=`<div class="tuile-cat" onclick="ouvrirGroupeApero()">
+          <div class="tuile-emoji">🥂</div>
+          <div class="tuile-nom">Apéro / Boisson</div>
+        </div>`;
+        tuileGroupeInseree=true;
+      }
+      return;
+    }
+
     const match=cat.nom.match(/^(\S+)\s*(.*)$/);
     const emoji=match?match[1]:'🍽️';
     const label=match?match[2]:cat.nom;
-    const tuile=`<div class="tuile-cat" onclick="selectCat('${cat.id}')">
+    html+=`<div class="tuile-cat" onclick="selectCat('${cat.id}')">
         <div class="tuile-emoji">${emoji}</div>
         <div class="tuile-nom">${label}</div>
       </div>`;
-
-    if(GROUPE_BOISSONS.includes(cat.id)){
-      if(!groupeAffiche){
-        html+='<div class="groupe-titre">🥂 Apéro / Boisson</div><div class="groupe-tuiles">';
-        groupeAffiche=true;
-      }
-      html+=tuile;
-    } else {
-      if(groupeAffiche){
-        html+='</div>'; // fermer le groupe boissons avant de reprendre les tuiles normales
-        groupeAffiche=false;
-      }
-      html+=tuile;
-    }
   });
-  if(groupeAffiche) html+='</div>'; // fermer le groupe si dernier élément de la liste
 
   grid.innerHTML=html;
+}
+
+// Ouvre l'écran de sous-tuiles listant les vraies catégories boissons (Softs, Bières, Vins...)
+function ouvrirGroupeApero(){
+  const c=carte||carteDefaut;
+  const categoriesActives=c.categoriesActives||{};
+  const catsGroupe=c.categories.filter(cat=>GROUPE_BOISSONS_IDS.includes(cat.id)&&categoriesActives[cat.id]!==false);
+
+  document.getElementById('sousTuilesTitre').textContent='🥂 Apéro / Boisson';
+  document.getElementById('sousTuilesGrid').innerHTML=catsGroupe.map(cat=>{
+    const match=cat.nom.match(/^(\S+)\s*(.*)$/);
+    const emoji=match?match[1]:'🍽️';
+    const label=match?match[2]:cat.nom;
+    return `<div class="tuile-cat" onclick="selectCat('${cat.id}')">
+      <div class="tuile-emoji">${emoji}</div>
+      <div class="tuile-nom">${label}</div>
+    </div>`;
+  }).join('');
+  showScreen('screenSousTuiles');
 }
 
 // PRODUITS avec sous-catégories et compteur quantité
