@@ -649,6 +649,7 @@ function afficherNotification(msg){
 // Navigation
 function showScreen(id){
   if(id==='screenPanier') renderPanierItems();
+  if(id==='screenConfirm') renderRecapCommandesEnvoyees();
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('loader').style.display='none';
   document.getElementById(id).classList.add('active');
