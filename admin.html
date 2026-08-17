@@ -90,6 +90,8 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 .reorder-btn:active{background:#D4AF37;color:#1A1A1A}
 .reorder-btn:disabled{opacity:.25;cursor:default}
 .reorder-btn:disabled:active{background:#2A2A2A;color:#D4AF37}
+.mini-cat-titre{color:#D4AF37;font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:.5px;margin:14px 0 6px;padding-bottom:4px;border-bottom:1px solid #333}
+.mini-cat-titre:first-child{margin-top:0}
 </style>
 </head>
 <body>
@@ -229,6 +231,18 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
     <h2>🚫 Catégories en consultation seule</h2>
     <div style="color:#888;font-size:12px;margin-bottom:10px">Visible dans la carte mais sans bouton d'ajout (ex: Sauces — choisies uniquement via le popup formule)</div>
     <div id="consultationReglagesList"></div>
+  </div>
+
+  <div class="section" style="margin-top:14px">
+    <h2>🍮 Popup avant addition (dessert/café)</h2>
+    <div style="color:#888;font-size:12px;margin-bottom:10px">Choisissez les produits proposés au client juste avant qu'il demande l'addition</div>
+    <div id="suggestionAdditionList"></div>
+  </div>
+
+  <div class="section" style="margin-top:14px">
+    <h2>🧒 Menu Ado (6-17 ans)</h2>
+    <div style="color:#888;font-size:12px;margin-bottom:10px">Choisissez les formules proposées quand un client ajoute le menu Enfant/Ado</div>
+    <div id="menuAdoOptionsList"></div>
   </div>
 </div>
 
@@ -724,6 +738,8 @@ function confirmerImport(){
     newCarte.categoriesConsultationSeule=carte.categoriesConsultationSeule;
     newCarte.groupeApero=carte.groupeApero;
     newCarte.categoriesGroupeApero=carte.categoriesGroupeApero;
+    newCarte.produitsSuggestionAddition=carte.produitsSuggestionAddition;
+    newCarte.menuAdoOptions=carte.menuAdoOptions;
     newCarte.boissonsMenu=carte.boissonsMenu;
     newCarte.enfantMenu=carte.enfantMenu;
     newCarte.dessertsMenu=carte.dessertsMenu;
@@ -954,6 +970,9 @@ function renderReglages(){
       <label class="toggle"><input type="checkbox" ${consultationSeule?'checked':''} onchange="toggleConsultationSeule('${c.id}',this.checked)"><span class="toggle-slider"></span></label>
     </div>`;
   }).join('');
+
+  renderSuggestionAddition();
+  renderMenuAdoOptions();
 }
 
 function renderOrdreCategories(){
@@ -1039,6 +1058,101 @@ function toggleConsultationSeule(catId,val){
   sauvegarder();
   const cat=carte.categories.find(c=>c.id===catId);
   showToast(`${cat?cat.nom:catId} ${val?'🚫 consultation seule (pas d\'ajout)':'✅ ajout normal réactivé'}`);
+}
+
+// ============================================================
+// POPUP AVANT ADDITION (dessert/café) — sélection libre de produits
+// ============================================================
+// Liste par défaut si l'admin n'a jamais personnalisé : desserts + chauds (comportement historique)
+function getDefautSuggestionAddition(){
+  const ids=[];
+  carte.categories.forEach(cat=>{
+    if(cat.id==='desserts'||cat.id==='chauds'){
+      (cat.produits||[]).forEach(p=>ids.push(p.id));
+    }
+  });
+  return ids;
+}
+
+function renderSuggestionAddition(){
+  if(!carte)return;
+  if(!carte.produitsSuggestionAddition){
+    carte.produitsSuggestionAddition=getDefautSuggestionAddition();
+  }
+  const selectionnes=carte.produitsSuggestionAddition;
+  let html='';
+  carte.categories.forEach(cat=>{
+    if(!(cat.produits||[]).length)return;
+    html+=`<div class="mini-cat-titre">${cat.nom}</div>`;
+    cat.produits.forEach(p=>{
+      const coche=selectionnes.includes(p.id);
+      html+=`<div class="item-row">
+        <div class="item-info" style="cursor:default"><div class="item-nom">${p.emoji||''} ${p.nom}</div></div>
+        <label class="toggle"><input type="checkbox" ${coche?'checked':''} onchange="toggleSuggestionAddition('${p.id}',this.checked)"><span class="toggle-slider"></span></label>
+      </div>`;
+    });
+  });
+  document.getElementById('suggestionAdditionList').innerHTML=html;
+}
+
+function toggleSuggestionAddition(prodId,val){
+  if(!carte)return;
+  if(!carte.produitsSuggestionAddition) carte.produitsSuggestionAddition=getDefautSuggestionAddition();
+  if(val){
+    if(!carte.produitsSuggestionAddition.includes(prodId)) carte.produitsSuggestionAddition.push(prodId);
+  } else {
+    carte.produitsSuggestionAddition=carte.produitsSuggestionAddition.filter(id=>id!==prodId);
+  }
+  sauvegarder();
+  showToast(val?'✅ Ajouté au popup avant addition':'❌ Retiré du popup avant addition');
+}
+
+// ============================================================
+// MENU ADO (6-17 ans) — sélection libre de produits (typiquement des formules)
+// ============================================================
+function getDefautMenuAdo(){
+  const ids=[];
+  carte.categories.forEach(cat=>{
+    if(cat.id==='formules'){
+      (cat.produits||[]).forEach(p=>{
+        if(p.id==='p1'||p.id==='ca1') ids.push(p.id); // moules + calamars, comportement historique
+      });
+    }
+  });
+  return ids;
+}
+
+function renderMenuAdoOptions(){
+  if(!carte)return;
+  if(!carte.menuAdoOptions){
+    carte.menuAdoOptions=getDefautMenuAdo();
+  }
+  const selectionnes=carte.menuAdoOptions;
+  let html='';
+  carte.categories.forEach(cat=>{
+    if(!(cat.produits||[]).length)return;
+    html+=`<div class="mini-cat-titre">${cat.nom}</div>`;
+    cat.produits.forEach(p=>{
+      const coche=selectionnes.includes(p.id);
+      html+=`<div class="item-row">
+        <div class="item-info" style="cursor:default"><div class="item-nom">${p.emoji||''} ${p.nom}</div></div>
+        <label class="toggle"><input type="checkbox" ${coche?'checked':''} onchange="toggleMenuAdoOption('${p.id}',this.checked)"><span class="toggle-slider"></span></label>
+      </div>`;
+    });
+  });
+  document.getElementById('menuAdoOptionsList').innerHTML=html;
+}
+
+function toggleMenuAdoOption(prodId,val){
+  if(!carte)return;
+  if(!carte.menuAdoOptions) carte.menuAdoOptions=getDefautMenuAdo();
+  if(val){
+    if(!carte.menuAdoOptions.includes(prodId)) carte.menuAdoOptions.push(prodId);
+  } else {
+    carte.menuAdoOptions=carte.menuAdoOptions.filter(id=>id!==prodId);
+  }
+  sauvegarder();
+  showToast(val?'✅ Ajouté au menu Ado':'❌ Retiré du menu Ado');
 }
 
 // ============================================================

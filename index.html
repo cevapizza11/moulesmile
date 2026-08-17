@@ -1242,20 +1242,37 @@ function qteAvantAddition(id){
 
 function ouvrirUpsellAvantAddition(){
   const c=carte||carteDefaut;
-  const desserts=(c.dessertsMenu||[]).filter(d=>d.actif);
-  // Cafés/boissons chaudes — catégorie "chauds" dédiée, ou fallback sur subcat "Chauds" (compat ancienne structure)
-  let chauds=[];
-  const catChauds=c.categories.find(x=>x.id==='chauds');
-  if(catChauds){
-    chauds=(catChauds.produits||[]).filter(p=>p.actif);
-  } else {
-    c.categories.forEach(cat=>{
-      (cat.produits||[]).forEach(p=>{
-        if(p.actif && p.subcat==='Chauds') chauds.push(p);
+
+  // Sélection libre configurée depuis l'admin (id de produits réels de la carte)
+  const idsSelectionnes=c.produitsSuggestionAddition;
+  let propositions=[];
+
+  if(idsSelectionnes){
+    // Rechercher chaque produit sélectionné dans toutes les catégories
+    idsSelectionnes.forEach(id=>{
+      c.categories.forEach(cat=>{
+        const p=(cat.produits||[]).find(prod=>prod.id===id);
+        if(p&&p.actif) propositions.push(p);
       });
     });
+  } else {
+    // Aucun réglage encore fait par l'admin → comportement historique (desserts + chauds)
+    const desserts=(c.dessertsMenu||[]).filter(d=>d.actif).map(d=>({...d,type:'dessert'}));
+    let chauds=[];
+    const catChauds=c.categories.find(x=>x.id==='chauds');
+    if(catChauds){
+      chauds=(catChauds.produits||[]).filter(p=>p.actif);
+    } else {
+      c.categories.forEach(cat=>{
+        (cat.produits||[]).forEach(p=>{
+          if(p.actif && p.subcat==='Chauds') chauds.push(p);
+        });
+      });
+    }
+    propositions=[...desserts,...chauds.map(p=>({...p,type:'chaud'}))];
   }
-  propositionsAvantAddition=[...desserts.map(d=>({...d,type:'dessert'})),...chauds.map(p=>({...p,type:'chaud'}))];
+
+  propositionsAvantAddition=propositions;
 
   if(!propositionsAvantAddition.length){
     // Rien à proposer → on passe directement à l'addition
@@ -1270,7 +1287,7 @@ function ouvrirUpsellAvantAddition(){
 
 function renderUpsellList(){
   document.getElementById('upsellDessertList').innerHTML=propositionsAvantAddition.map(p=>{
-    const prix=p.type==='dessert'?3.50:(p.prix||2.50);
+    const prix=p.prix!=null?p.prix:(p.type==='dessert'?3.50:2.50);
     const qte=qteAvantAddition(p.id);
     const compteurHtml=qte>0
       ? `<button class="qty-btn qty-minus" onclick="retirerUpsell('${p.id}')">−</button><span class="qty-num">${qte}</span><button class="qty-btn qty-plus" onclick="ajouterUpsell('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${prix})">+</button>`
@@ -1583,10 +1600,25 @@ let adoEnAttenteUid=null;
 
 function ouvrirModalMenuAdo(uid){
   adoEnAttenteUid=uid;
-  const choix=[
-    {id:'ado_moules',nom:'Moules-frites à volonté',emoji:'🐚'},
-    {id:'ado_calamars',nom:'Calamars à volonté',emoji:'🦑'},
-  ];
+  const c=carte||carteDefaut;
+  let choix=[];
+
+  if(c.menuAdoOptions){
+    // Sélection libre configurée depuis l'admin (id de produits réels de la carte)
+    c.menuAdoOptions.forEach(id=>{
+      c.categories.forEach(cat=>{
+        const p=(cat.produits||[]).find(prod=>prod.id===id);
+        if(p&&p.actif) choix.push({id:'ado_'+p.id,nom:p.nom,emoji:p.emoji||'🐚'});
+      });
+    });
+  } else {
+    // Aucun réglage encore fait par l'admin → comportement historique (moules + calamars)
+    choix=[
+      {id:'ado_moules',nom:'Moules-frites à volonté',emoji:'🐚'},
+      {id:'ado_calamars',nom:'Calamars à volonté',emoji:'🦑'},
+    ];
+  }
+
   document.getElementById('modalMenuAdoList').innerHTML=choix.map(c=>`
     <div class="modal-item" onclick="choisirMenuAdo('${c.id}','${esc(c.nom)}')">
       <div><div class="mnom">${c.emoji} ${c.nom}</div></div>
