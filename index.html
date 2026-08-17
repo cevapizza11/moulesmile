@@ -93,6 +93,11 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 .step-item:last-child{border-bottom:none}
 .step-num{background:#D4AF37;color:#1A1A1A;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:12px;flex-shrink:0}
 .step-text{color:#ddd;font-size:13px}
+.recap-titre{color:#D4AF37;font-size:14px;font-weight:bold;margin-bottom:8px;text-align:left}
+.recap-groupe{background:#2A2A2A;border-radius:10px;padding:10px 12px;margin-bottom:8px;text-align:left}
+.recap-heure{color:#D4AF37;font-size:11px;font-weight:bold;margin-bottom:6px}
+.recap-item{display:flex;justify-content:space-between;font-size:13px;color:#ddd;padding:3px 0}
+.recap-total-row{display:flex;justify-content:space-between;background:#2A2A2A;border:2px solid #D4AF37;border-radius:10px;padding:10px 12px;font-weight:bold;color:#D4AF37;margin-top:4px;margin-bottom:16px}
 
 /* ADDITION */
 .total-box{background:#D4AF37;border-radius:14px;padding:24px;margin:16px 0;text-align:center}
@@ -278,6 +283,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
       <div class="step-item"><div class="step-num">3</div><div class="step-text">C'est <strong>à volonté</strong> — revenez autant que vous voulez 😄</div></div>
       <div class="step-item"><div class="step-num">4</div><div class="step-text">Recommandez depuis la carte à tout moment</div></div>
     </div>
+    <div id="recapCommandesEnvoyees"></div>
     <button class="btn btn-or" onclick="commanderEncore()">🍺 Commander autre chose</button>
     <button class="btn btn-rouge" onclick="intercepterAddition()">🧾 Demander l'addition</button>
   </div>
@@ -982,23 +988,37 @@ function updatePanierBar(){
 }
 
 // ============================================================
-// TOTAL TABLE VISIBLE EN PERMANENCE (header)
+// TOTAL TABLE VISIBLE EN PERMANENCE (header) + SYNCHRONISATION TEMPS RÉEL
 // ============================================================
-async function rafraichirTotalDejaCommande(){
+let mesCommandesEnvoyees=[]; // détail live des commandes de cette table (hors panier local)
+let unsubscribeMesCommandes=null;
+
+function ecouterMesCommandes(){
   if(!tableNum) return;
-  try{
-    const snap=await db.collection('commandes').where('table','==',tableNum).get();
+  if(unsubscribeMesCommandes) unsubscribeMesCommandes(); // éviter les doublons d'écoute
+  unsubscribeMesCommandes=db.collection('commandes').where('table','==',tableNum).onSnapshot(snap=>{
     let total=0;
+    const commandes=[];
     snap.forEach(doc=>{
       const d=doc.data();
       if(d.statut==='regle') return;
       total+=d.total||0;
+      if((d.items||[]).length) commandes.push({id:doc.id,heure:d.heure||'--:--',items:d.items||[],total:d.total||0});
     });
+    commandes.sort((a,b)=>a.heure.localeCompare(b.heure));
     totalDejaCommande=total;
-  }catch(e){
-    console.error('Erreur calcul total table',e);
-  }
-  updateTotalBadgeHeader();
+    mesCommandesEnvoyees=commandes;
+    updateTotalBadgeHeader();
+    // Si le client est en train de regarder l'écran de confirmation, on le met à jour en direct
+    if(document.getElementById('screenConfirm').classList.contains('active')){
+      renderRecapCommandesEnvoyees();
+    }
+  }, err=>{console.error('Erreur écoute commandes table',err);});
+}
+
+// Conservé pour compatibilité — appelle désormais l'écoute continue
+function rafraichirTotalDejaCommande(){
+  ecouterMesCommandes();
 }
 
 function updateTotalBadgeHeader(){
@@ -1009,6 +1029,29 @@ function updateTotalBadgeHeader(){
   const totalGlobal=totalDejaCommande+totalPanier;
   amountEl.textContent=totalGlobal.toFixed(2).replace('.',',')+' €';
   badge.style.display='inline-block';
+}
+
+// Affiche le détail des commandes déjà envoyées sur l'écran de confirmation, mis à jour en direct
+function renderRecapCommandesEnvoyees(){
+  const container=document.getElementById('recapCommandesEnvoyees');
+  if(!container) return;
+  if(!mesCommandesEnvoyees.length){
+    container.innerHTML='';
+    return;
+  }
+  container.innerHTML='<div class="recap-titre">📋 Votre commande</div>'+mesCommandesEnvoyees.map(cmd=>`
+    <div class="recap-groupe">
+      <div class="recap-heure">🕐 ${cmd.heure}</div>
+      ${cmd.items.map(item=>`
+        <div class="recap-item">
+          <span>${item.nom}</span>
+          <span>${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span>
+        </div>`).join('')}
+    </div>`).join('')+`
+    <div class="recap-total-row">
+      <span>TOTAL</span>
+      <span>${totalDejaCommande.toFixed(2).replace('.',',')} €</span>
+    </div>`;
 }
 
 function renderPanierItems(){
@@ -1204,8 +1247,9 @@ async function validerCommande(){
     });
     panier=[];updatePanierBar();
     document.getElementById('confirmTable').textContent=tableNum;
-    await rafraichirTotalDejaCommande();
+    ecouterMesCommandes();
     showScreen('screenConfirm');
+    renderRecapCommandesEnvoyees();
   }catch(e){
     showScreen('screenPanier');
     showToast('❌ Erreur réseau — réessayez');

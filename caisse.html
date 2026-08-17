@@ -111,6 +111,33 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#D4AF37;color:#1A1A1A;padding:10px 22px;border-radius:30px;font-weight:bold;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
 .version{text-align:center;padding:10px;color:#333;font-size:10px}
+
+/* BOUTON EDITER SUR LES CARTES */
+.btn-editer{background:#2A2A2A;border:1px solid #D4AF37;color:#D4AF37;padding:8px;border-radius:8px;font-size:12px;font-weight:bold;cursor:pointer}
+
+/* MODAL EDITION ARTICLES */
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.75);z-index:1000;display:none;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.visible{display:flex}
+.modal-box{background:#1E1E1E;border:2px solid #D4AF37;border-radius:16px;padding:20px;width:100%;max-width:480px;max-height:88vh;overflow-y:auto}
+.modal-box h3{color:#D4AF37;font-size:17px;margin-bottom:4px}
+.modal-box .modal-sub{color:#888;font-size:12px;margin-bottom:14px}
+.edit-item-row{display:flex;align-items:center;gap:8px;background:#2A2A2A;border-radius:8px;padding:8px 10px;margin-bottom:6px}
+.edit-item-nom{flex:1;font-size:13px;color:#fff}
+.edit-item-prix{width:70px;background:#111;border:1px solid #444;border-radius:6px;color:#D4AF37;font-weight:bold;text-align:center;padding:5px 4px;font-size:13px}
+.edit-item-del{background:#C0392B;border:none;color:white;border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:13px;flex-shrink:0}
+.edit-total-row{display:flex;justify-content:space-between;align-items:center;background:#2A2A2A;border:1px solid #D4AF37;border-radius:8px;padding:10px 12px;margin:12px 0;font-weight:bold}
+.edit-total-row .val{color:#D4AF37;font-size:18px}
+.add-item-form{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.add-item-form input{background:#2A2A2A;border:1px solid #444;border-radius:8px;color:#fff;padding:8px 10px;font-size:13px}
+.add-item-form input.nom{flex:2;min-width:120px}
+.add-item-form input.prix{flex:1;min-width:70px}
+.btn-add-item{background:#1A7A50;border:none;color:white;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:bold;cursor:pointer;white-space:nowrap}
+.modal-actions{display:flex;gap:8px;margin-top:14px}
+.btn-annuler-modal{flex:1;background:#333;border:none;color:#aaa;padding:12px;border-radius:8px;font-weight:bold;cursor:pointer}
+.btn-valider-modal{flex:2;background:#D4AF37;border:none;color:#1A1A1A;padding:12px;border-radius:8px;font-weight:bold;cursor:pointer}
+
+/* MODAL MOT DE PASSE */
+.pwd-input{width:100%;background:#111;border:2px solid #D4AF37;border-radius:10px;color:#D4AF37;font-size:22px;font-weight:bold;text-align:center;padding:14px;letter-spacing:6px;margin-bottom:14px}
 </style>
 </head>
 <body>
@@ -141,6 +168,41 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- MODAL MOT DE PASSE -->
+<div class="modal-overlay" id="modalPwd">
+  <div class="modal-box" style="text-align:center">
+    <h3>🔒 Code requis</h3>
+    <div class="modal-sub">Pour modifier une commande</div>
+    <input type="password" class="pwd-input" id="pwdInput" inputmode="numeric" maxlength="6" placeholder="••••">
+    <div class="modal-actions">
+      <button class="btn-annuler-modal" onclick="fermerModalPwd()">Annuler</button>
+      <button class="btn-valider-modal" onclick="validerPwd()">Valider</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITION ARTICLES -->
+<div class="modal-overlay" id="modalEditCmd">
+  <div class="modal-box">
+    <h3 id="editCmdTitre">✏️ Modifier la commande</h3>
+    <div class="modal-sub" id="editCmdSub"></div>
+    <div id="editItemsList"></div>
+    <div class="edit-total-row">
+      <span>TOTAL</span>
+      <span class="val" id="editTotalAffiche">0,00 €</span>
+    </div>
+    <div class="add-item-form">
+      <input type="text" class="nom" id="newItemNom" placeholder="Nom article">
+      <input type="number" class="prix" id="newItemPrix" placeholder="Prix" step="0.10">
+      <button class="btn-add-item" onclick="ajouterArticleEdition()">+ Ajouter</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-annuler-modal" onclick="fermerModalEdit()">Annuler</button>
+      <button class="btn-valider-modal" onclick="validerEditionCommande()">✅ Enregistrer</button>
+    </div>
+  </div>
+</div>
 
 <!-- ===== ONGLET COMMANDES ===== -->
 <div class="tab-content actif" id="tab-commandes">
@@ -490,6 +552,7 @@ function renderCommandes(){
           ?`<button class="btn-vu" onclick="marquerVuEtAddition('${cmd.id}',${cmd.table})">✓ Vu → Addition</button>`
           :`<div style="color:#4ABA80;font-size:12px;font-weight:bold;padding:6px 0">✅ Réglée</div>`
         }
+        ${!estRegle?`<button class="btn-editer" onclick="demanderPwdPuis(()=>ouvrirModalEditCommande('${cmd.id}'))">✏️</button>`:''}
         <button class="btn-archive" onclick="archiverCommande('${cmd.id}',${cmd.table})">🗑 Archiver</button>
       </div>
     </div>`;
@@ -532,6 +595,7 @@ function renderCommandesDeux(){
         <div class="cmd-total">Total : ${(cmd.total||0).toFixed(2).replace('.',',')} €</div>
         <div class="cmd-actions">
           <button class="btn-vu" onclick="marquerVuEtAddition('${cmd.id}',${cmd.table})">✓ Vu → Addition</button>
+          <button class="btn-editer" onclick="demanderPwdPuis(()=>ouvrirModalEditCommande('${cmd.id}'))">✏️</button>
           <button class="btn-archive" onclick="archiverCommande('${cmd.id}',${cmd.table})">🗑 Archiver</button>
         </div>
       </div>`;
@@ -571,7 +635,7 @@ async function recalcAddition(tableNum){
     if(d.statut==='regle') return;
     if(!(d.items||[]).length) return;
     total+=d.total||0;
-    commandes.push({heure:d.heure||'--:--',items:d.items||[],total:d.total||0});
+    commandes.push({id:doc.id,heure:d.heure||'--:--',items:d.items||[],total:d.total||0});
   });
   commandes.sort((a,b)=>a.heure.localeCompare(b.heure));
   if(!commandes.length) return;
@@ -602,6 +666,115 @@ async function archiverCommande(id,tableNum){
     showToast('✅ Archivée');
     chargerHistorique();
   }catch(e){showToast('❌ Erreur');console.error(e);}
+}
+
+// ============================================================
+// MOT DE PASSE — protection avant modification d'une commande
+// ============================================================
+const CODE_MODIF='1234'; // Code à modifier selon vos besoins
+let actionApresPwd=null;
+
+function demanderPwdPuis(callback){
+  actionApresPwd=callback;
+  document.getElementById('pwdInput').value='';
+  document.getElementById('modalPwd').classList.add('visible');
+  setTimeout(()=>document.getElementById('pwdInput').focus(),100);
+}
+
+function fermerModalPwd(){
+  document.getElementById('modalPwd').classList.remove('visible');
+  actionApresPwd=null;
+}
+
+function validerPwd(){
+  const saisi=document.getElementById('pwdInput').value.trim();
+  if(saisi!==CODE_MODIF){
+    showToast('❌ Code incorrect');
+    document.getElementById('pwdInput').value='';
+    return;
+  }
+  document.getElementById('modalPwd').classList.remove('visible');
+  if(actionApresPwd) actionApresPwd();
+  actionApresPwd=null;
+}
+
+// ============================================================
+// EDITION D'UNE COMMANDE (articles + prix + ajout)
+// ============================================================
+let editionCommandeId=null;
+let editionItems=[]; // copie de travail, modifiable avant validation
+
+function ouvrirModalEditCommande(id){
+  const cmd=allCommandes[id];
+  if(!cmd){showToast('❌ Commande introuvable');return;}
+  editionCommandeId=id;
+  editionItems=(cmd.items||[]).map(it=>({...it})); // copie profonde légère
+  document.getElementById('editCmdTitre').textContent=`✏️ Table ${cmd.table} — ${cmd.heure||''}`;
+  document.getElementById('editCmdSub').textContent='Modifiez le prix, supprimez ou ajoutez un article';
+  renderEditItemsList();
+  document.getElementById('newItemNom').value='';
+  document.getElementById('newItemPrix').value='';
+  document.getElementById('modalEditCmd').classList.add('visible');
+}
+
+function renderEditItemsList(){
+  const container=document.getElementById('editItemsList');
+  if(!editionItems.length){
+    container.innerHTML='<div style="color:#888;text-align:center;padding:14px;font-size:13px">Aucun article — ajoutez-en un ci-dessous</div>';
+  } else {
+    container.innerHTML=editionItems.map((it,idx)=>`
+      <div class="edit-item-row">
+        <span class="edit-item-nom">${it.nom}</span>
+        <input type="number" class="edit-item-prix" value="${it.prix}" step="0.10" onchange="modifierPrixEdition(${idx},this.value)">
+        <button class="edit-item-del" onclick="supprimerArticleEdition(${idx})">✕</button>
+      </div>`).join('');
+  }
+  const total=editionItems.reduce((s,it)=>s+(parseFloat(it.prix)||0),0);
+  document.getElementById('editTotalAffiche').textContent=total.toFixed(2).replace('.',',')+' €';
+}
+
+function modifierPrixEdition(idx,val){
+  editionItems[idx].prix=parseFloat(val)||0;
+  renderEditItemsList();
+}
+
+function supprimerArticleEdition(idx){
+  editionItems.splice(idx,1);
+  renderEditItemsList();
+}
+
+function ajouterArticleEdition(){
+  const nom=document.getElementById('newItemNom').value.trim();
+  const prix=parseFloat(document.getElementById('newItemPrix').value)||0;
+  if(!nom){showToast('⚠️ Nom obligatoire');return;}
+  editionItems.push({id:'manuel_'+Date.now(),nom,desc:'',prix});
+  document.getElementById('newItemNom').value='';
+  document.getElementById('newItemPrix').value='';
+  renderEditItemsList();
+}
+
+function fermerModalEdit(){
+  document.getElementById('modalEditCmd').classList.remove('visible');
+  editionCommandeId=null;
+  editionItems=[];
+}
+
+async function validerEditionCommande(){
+  if(!editionCommandeId){fermerModalEdit();return;}
+  const total=editionItems.reduce((s,it)=>s+(parseFloat(it.prix)||0),0);
+  try{
+    await db.collection('commandes').doc(editionCommandeId).update({
+      items:editionItems,
+      total
+    });
+    // Si cette commande est déjà en addition, on recalcule l'addition pour refléter le changement
+    const cmd=allCommandes[editionCommandeId];
+    if(cmd && cmd.table!=null && (cmd.statut==='en_addition'||cmd.statut==='vue')){
+      await recalcAddition(cmd.table);
+    }
+    showToast('✅ Commande modifiée');
+    fermerModalEdit();
+  }catch(e){showToast('❌ Erreur enregistrement');console.error(e);}
 }
 
 async function resetJour(){
@@ -674,7 +847,10 @@ function renderAdditions(){
       <div>
         ${(add.commandes||[]).map(cmd=>`
           <div class="cmd-groupe">
-            <div class="cmd-groupe-heure">🕐 ${cmd.heure||'--:--'}</div>
+            <div class="cmd-groupe-heure" style="display:flex;justify-content:space-between;align-items:center">
+              <span>🕐 ${cmd.heure||'--:--'}</span>
+              <button class="btn-editer" style="padding:4px 8px;font-size:11px" onclick="demanderPwdPuis(()=>ouvrirModalEditCommande('${cmd.id}'))">✏️</button>
+            </div>
             ${(cmd.items||[]).map(item=>`
               <div class="cmd-groupe-item">
                 <span>${item.nom}</span>
