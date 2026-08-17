@@ -204,11 +204,13 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
     <h2>🥂 Regroupement Apéro / Boisson</h2>
     <div class="item-row" style="border-bottom:none">
       <div class="item-info" style="cursor:default">
-        <div class="item-nom">Regrouper Softs/Bières/Vins/Cocktails/Chauds en une seule tuile</div>
+        <div class="item-nom">Activer le regroupement en une seule tuile</div>
         <div class="item-detail">Évite d'avoir plusieurs tuiles boissons éparpillées si vous réorganisez l'ordre des catégories</div>
       </div>
       <label class="toggle"><input type="checkbox" id="groupeAperoToggle" onchange="toggleGroupeApero(this.checked)"><span class="toggle-slider"></span></label>
     </div>
+    <div style="color:#888;font-size:12px;margin:12px 0 8px">Choisissez quelles catégories font partie du groupe :</div>
+    <div id="composantsGroupeAperoList"></div>
   </div>
 
   <div class="section" style="margin-top:14px">
@@ -721,6 +723,7 @@ function confirmerImport(){
     newCarte.categoriesActives=carte.categoriesActives;
     newCarte.categoriesConsultationSeule=carte.categoriesConsultationSeule;
     newCarte.groupeApero=carte.groupeApero;
+    newCarte.categoriesGroupeApero=carte.categoriesGroupeApero;
     newCarte.boissonsMenu=carte.boissonsMenu;
     newCarte.enfantMenu=carte.enfantMenu;
     newCarte.dessertsMenu=carte.dessertsMenu;
@@ -932,6 +935,7 @@ function renderReglages(){
   document.getElementById('groupeAperoToggle').checked=carte.groupeApero!==false;
 
   renderOrdreCategories();
+  renderComposantsGroupeApero();
 
   if(!carte.categoriesActives) carte.categoriesActives={};
   document.getElementById('categoriesReglagesList').innerHTML=carte.categories.map(c=>{
@@ -987,6 +991,36 @@ function toggleGroupeApero(val){
   carte.groupeApero=val;
   sauvegarder();
   showToast(val?'✅ Boissons regroupées en une seule tuile':'✅ Boissons affichées séparément');
+}
+
+// Liste par défaut si l'admin n'a jamais personnalisé la composition du groupe
+const GROUPE_APERO_IDS_DEFAUT=['softs','bieres','vins','vins_blancs','vins_roses','vins_rouges','cocktails','sangria','chauds'];
+
+function renderComposantsGroupeApero(){
+  if(!carte)return;
+  if(!carte.categoriesGroupeApero){
+    // Initialise depuis la liste par défaut, pour que les cases reflètent l'état réellement appliqué
+    carte.categoriesGroupeApero={};
+    carte.categories.forEach(c=>{
+      carte.categoriesGroupeApero[c.id]=GROUPE_APERO_IDS_DEFAUT.includes(c.id);
+    });
+  }
+  document.getElementById('composantsGroupeAperoList').innerHTML=carte.categories.map(c=>{
+    const dansGroupe=carte.categoriesGroupeApero[c.id]===true;
+    return `<div class="item-row">
+      <div class="item-info" style="cursor:default"><div class="item-nom">${c.nom}</div></div>
+      <label class="toggle"><input type="checkbox" ${dansGroupe?'checked':''} onchange="toggleComposantGroupeApero('${c.id}',this.checked)"><span class="toggle-slider"></span></label>
+    </div>`;
+  }).join('');
+}
+
+function toggleComposantGroupeApero(catId,val){
+  if(!carte)return;
+  if(!carte.categoriesGroupeApero) carte.categoriesGroupeApero={};
+  carte.categoriesGroupeApero[catId]=val;
+  sauvegarder();
+  const cat=carte.categories.find(c=>c.id===catId);
+  showToast(`${cat?cat.nom:catId} ${val?'✅ ajoutée au groupe Apéro/Boisson':'❌ retirée du groupe'}`);
 }
 
 function toggleCategorieActive(catId,val){

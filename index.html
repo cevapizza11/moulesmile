@@ -797,7 +797,17 @@ function selectSubcat(catId,subcat){
 // ÉCRAN D'ACCUEIL — GROSSES TUILES CATÉGORIES (façon borne)
 // Généré dynamiquement depuis carte.categories (piloté par l'admin/Excel)
 // ============================================================
-const GROUPE_BOISSONS_IDS=['softs','bieres','vins','cocktails','chauds'];
+// Liste par défaut si l'admin n'a jamais personnalisé la composition du groupe
+const GROUPE_BOISSONS_IDS_DEFAUT=['softs','bieres','vins','vins_blancs','vins_roses','vins_rouges','cocktails','sangria','chauds'];
+
+// Renvoie la liste des ids de catégories qui composent le groupe "Apéro / Boisson",
+// piloté depuis l'admin (carte.categoriesGroupeApero), avec repli sur la liste par défaut
+function getGroupeAperoIds(c){
+  if(c.categoriesGroupeApero){
+    return c.categories.filter(cat=>c.categoriesGroupeApero[cat.id]===true).map(cat=>cat.id);
+  }
+  return GROUPE_BOISSONS_IDS_DEFAUT;
+}
 
 function renderTuilesAccueil(){
   const c=carte||carteDefaut;
@@ -807,15 +817,16 @@ function renderTuilesAccueil(){
   const categoriesVisibles=c.categories.filter(cat=>categoriesActives[cat.id]!==false);
 
   const regroupementActif=c.groupeApero!==false; // réglage admin, activé par défaut
+  const groupeIds=getGroupeAperoIds(c);
 
   let html='';
   let tuileGroupeInseree=false;
 
   categoriesVisibles.forEach(cat=>{
-    const estCategorieBoisson=GROUPE_BOISSONS_IDS.includes(cat.id);
+    const estCategorieBoisson=groupeIds.includes(cat.id);
 
     if(regroupementActif&&estCategorieBoisson){
-      // Toutes les catégories boissons individuelles sont masquées de l'accueil —
+      // Toutes les catégories du groupe sont masquées de l'accueil —
       // une seule tuile "Apéro / Boisson" apparaît à la position de la première rencontrée
       if(!tuileGroupeInseree){
         html+=`<div class="tuile-cat" onclick="ouvrirGroupeApero()">
@@ -839,11 +850,12 @@ function renderTuilesAccueil(){
   grid.innerHTML=html;
 }
 
-// Ouvre l'écran de sous-tuiles listant les vraies catégories boissons (Softs, Bières, Vins...)
+// Ouvre l'écran de sous-tuiles listant les vraies catégories du groupe (piloté par l'admin)
 function ouvrirGroupeApero(){
   const c=carte||carteDefaut;
   const categoriesActives=c.categoriesActives||{};
-  const catsGroupe=c.categories.filter(cat=>GROUPE_BOISSONS_IDS.includes(cat.id)&&categoriesActives[cat.id]!==false);
+  const groupeIds=getGroupeAperoIds(c);
+  const catsGroupe=c.categories.filter(cat=>groupeIds.includes(cat.id)&&categoriesActives[cat.id]!==false);
 
   document.getElementById('sousTuilesTitre').textContent='🥂 Apéro / Boisson';
   document.getElementById('sousTuilesGrid').innerHTML=catsGroupe.map(cat=>{
