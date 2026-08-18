@@ -762,8 +762,9 @@ function confirmerImport(){
   newCarte.optionsProduits=importedOptionsProduits||(carte?carte.optionsProduits:null)||{};
 
   carte=newCarte;catActive=newCarte.categories[0]?.id;
+  const nbImportes=importedData?importedData.length:0;
   sauvegarder();render();annulerImport();
-  showToast(`✅ ${importedData?importedData.length:0} produits importés !`);
+  showToast(`✅ ${nbImportes} produits importés !`);
   importedData=null;
   importedFamillesOptions=null;
   importedOptionsProduits=null;
