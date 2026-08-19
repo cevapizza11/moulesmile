@@ -1234,7 +1234,9 @@ function intercepterAddition(){
 }
 
 let panierAvantAddition=[]; // mini-panier local pour le popup dessert/café final
-let propositionsAvantAddition=[]; // liste des produits proposés (pour re-render)
+let propositionsAvantAddition=[]; // liste des produits individuels proposés (pour re-render)
+let famillesUpsell=[]; // tuiles de familles entières (ex: "Desserts") proposées
+let familleUpsellActive=null; // famille actuellement ouverte (vue détail), ou null = vue tuiles
 
 function qteAvantAddition(id){
   return panierAvantAddition.filter(p=>p.id===id).length;
@@ -1242,6 +1244,12 @@ function qteAvantAddition(id){
 
 function ouvrirUpsellAvantAddition(){
   const c=carte||carteDefaut;
+
+  // Familles entières affichées en tuile (réglées depuis l'admin)
+  const idsFamilles=c.categoriesSuggestionAddition||[];
+  famillesUpsell=idsFamilles
+    .map(catId=>c.categories.find(cat=>cat.id===catId))
+    .filter(cat=>cat&&(cat.produits||[]).some(p=>p.actif));
 
   // Sélection libre configurée depuis l'admin (id de produits réels de la carte)
   const idsSelectionnes=c.produitsSuggestionAddition;
@@ -1255,8 +1263,8 @@ function ouvrirUpsellAvantAddition(){
         if(p&&p.actif) propositions.push(p);
       });
     });
-  } else {
-    // Aucun réglage encore fait par l'admin → comportement historique (desserts + chauds)
+  } else if(!idsFamilles.length){
+    // Aucun réglage encore fait par l'admin (ni familles, ni produits) → comportement historique (desserts + chauds)
     const desserts=(c.dessertsMenu||[]).filter(d=>d.actif).map(d=>({...d,type:'dessert'}));
     let chauds=[];
     const catChauds=c.categories.find(x=>x.id==='chauds');
@@ -1273,8 +1281,9 @@ function ouvrirUpsellAvantAddition(){
   }
 
   propositionsAvantAddition=propositions;
+  familleUpsellActive=null;
 
-  if(!propositionsAvantAddition.length){
+  if(!propositionsAvantAddition.length && !famillesUpsell.length){
     // Rien à proposer → on passe directement à l'addition
     demanderAddition();
     return;
@@ -1285,8 +1294,51 @@ function ouvrirUpsellAvantAddition(){
   document.getElementById('upsellDessert').classList.add('visible');
 }
 
+function ouvrirFamilleUpsell(catId){
+  familleUpsellActive=famillesUpsell.find(c=>c.id===catId);
+  renderUpsellList();
+}
+
+function retourTuilesUpsell(){
+  familleUpsellActive=null;
+  renderUpsellList();
+}
+
 function renderUpsellList(){
-  document.getElementById('upsellDessertList').innerHTML=propositionsAvantAddition.map(p=>{
+  const container=document.getElementById('upsellDessertList');
+
+  // Vue "détail famille" : on affiche uniquement les produits de la catégorie ouverte
+  if(familleUpsellActive){
+    const produits=(familleUpsellActive.produits||[]).filter(p=>p.actif);
+    container.innerHTML=`
+      <div class="upsell-retour" onclick="retourTuilesUpsell()" style="cursor:pointer;color:#D4AF37;font-size:13px;margin-bottom:8px">← Retour</div>
+      ${produits.map(p=>{
+        const prix=p.prix!=null?p.prix:0;
+        const qte=qteAvantAddition(p.id);
+        const compteurHtml=qte>0
+          ? `<button class="qty-btn qty-minus" onclick="retirerUpsell('${p.id}')">−</button><span class="qty-num">${qte}</span><button class="qty-btn qty-plus" onclick="ajouterUpsell('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${prix})">+</button>`
+          : `<button class="add-btn" onclick="ajouterUpsell('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${prix})">+</button>`;
+        return `<div class="upsell-item">
+          <div><div class="unom">${p.emoji||''} ${p.nom}</div>${p.desc?`<div class="udesc">${p.desc}</div>`:''}</div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <span class="uprix">${prix.toFixed(2).replace('.',',')} €</span>
+            ${compteurHtml}
+          </div>
+        </div>`;
+      }).join('')}`;
+    return;
+  }
+
+  // Vue "tuiles" : familles entières (cliquables) + produits individuels sélectionnés par l'admin
+  const famillesHtml=famillesUpsell.map(cat=>{
+    const emoji=(cat.produits||[]).find(p=>p.emoji)?.emoji||'🍽️';
+    return `<div class="upsell-item" style="cursor:pointer" onclick="ouvrirFamilleUpsell('${cat.id}')">
+      <div><div class="unom">${emoji} ${cat.nom}</div></div>
+      <div style="color:#D4AF37;font-size:20px">›</div>
+    </div>`;
+  }).join('');
+
+  const produitsHtml=propositionsAvantAddition.map(p=>{
     const prix=p.prix!=null?p.prix:(p.type==='dessert'?3.50:2.50);
     const qte=qteAvantAddition(p.id);
     const compteurHtml=qte>0
@@ -1300,6 +1352,8 @@ function renderUpsellList(){
       </div>
     </div>`;
   }).join('');
+
+  container.innerHTML=famillesHtml+produitsHtml;
 }
 
 function ajouterUpsell(id,nom,desc,prix){

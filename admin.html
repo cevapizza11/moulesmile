@@ -235,7 +235,9 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 
   <div class="section" style="margin-top:14px">
     <h2>🍮 Popup avant addition (dessert/café)</h2>
-    <div style="color:#888;font-size:12px;margin-bottom:10px">Choisissez les produits proposés au client juste avant qu'il demande l'addition</div>
+    <div style="color:#888;font-size:12px;margin-bottom:10px">Familles entières affichées en tuile (ex: "Desserts") — le client clique sur la tuile puis choisit dedans</div>
+    <div id="famillesSuggestionAdditionList"></div>
+    <div style="color:#888;font-size:12px;margin:14px 0 10px">Ou produits individuels précis à proposer</div>
     <div id="suggestionAdditionList"></div>
   </div>
 
@@ -739,6 +741,7 @@ function confirmerImport(){
     newCarte.groupeApero=carte.groupeApero;
     newCarte.categoriesGroupeApero=carte.categoriesGroupeApero;
     newCarte.produitsSuggestionAddition=carte.produitsSuggestionAddition;
+    newCarte.categoriesSuggestionAddition=carte.categoriesSuggestionAddition;
     newCarte.menuAdoOptions=carte.menuAdoOptions;
     newCarte.boissonsMenu=carte.boissonsMenu;
     newCarte.enfantMenu=carte.enfantMenu;
@@ -1020,6 +1023,7 @@ function renderReglages(){
     </div>`;
   }).join('');
 
+  renderFamillesSuggestionAddition();
   renderSuggestionAddition();
   renderMenuAdoOptions();
 }
@@ -1121,6 +1125,34 @@ function getDefautSuggestionAddition(){
     }
   });
   return ids;
+}
+
+// Familles entières affichées en tuile (ex: "Desserts") dans le popup avant addition.
+// Le client clique la tuile → voit les produits de la catégorie → choisit dedans.
+function renderFamillesSuggestionAddition(){
+  if(!carte)return;
+  if(!carte.categoriesSuggestionAddition) carte.categoriesSuggestionAddition=[];
+  const selectionnees=carte.categoriesSuggestionAddition;
+  document.getElementById('famillesSuggestionAdditionList').innerHTML=carte.categories.map(cat=>{
+    if(!(cat.produits||[]).length)return '';
+    const coche=selectionnees.includes(cat.id);
+    return `<div class="item-row">
+      <div class="item-info" style="cursor:default"><div class="item-nom">${cat.nom}</div></div>
+      <label class="toggle"><input type="checkbox" ${coche?'checked':''} onchange="toggleFamilleSuggestionAddition('${cat.id}',this.checked)"><span class="toggle-slider"></span></label>
+    </div>`;
+  }).join('');
+}
+
+function toggleFamilleSuggestionAddition(catId,val){
+  if(!carte)return;
+  if(!carte.categoriesSuggestionAddition) carte.categoriesSuggestionAddition=[];
+  if(val){
+    if(!carte.categoriesSuggestionAddition.includes(catId)) carte.categoriesSuggestionAddition.push(catId);
+  } else {
+    carte.categoriesSuggestionAddition=carte.categoriesSuggestionAddition.filter(id=>id!==catId);
+  }
+  sauvegarder();
+  showToast(val?'✅ Famille ajoutée en tuile':'❌ Famille retirée');
 }
 
 function renderSuggestionAddition(){
