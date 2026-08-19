@@ -546,7 +546,7 @@ function renderCommandes(){
               <span>${item.nom}</span>
               <span style="color:#D4AF37;font-weight:bold">${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span>
             </div>
-            ${item.desc?`<div style="font-size:11px;color:#4ABA80;padding-left:4px">${item.desc}</div>`:''}
+            ${item.choix?`<div style="font-size:11px;color:#4ABA80;padding-left:4px">${item.choix}</div>`:''}
           </div>`).join('')}
       </div>
       <div class="cmd-total">Total : ${(cmd.total||0).toFixed(2).replace('.',',')} €</div>
@@ -595,7 +595,7 @@ function renderCommandesDeux(){
                 <span>${item.nom}</span>
                 <span style="color:#D4AF37;font-weight:bold">${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span>
               </div>
-              ${item.desc?`<div style="font-size:11px;color:#4ABA80;padding-left:4px">${item.desc}</div>`:''}
+              ${item.choix?`<div style="font-size:11px;color:#4ABA80;padding-left:4px">${item.choix}</div>`:''}
             </div>`).join('')}
         </div>
         <div class="cmd-total">Total : ${(cmd.total||0).toFixed(2).replace('.',',')} €</div>
@@ -863,7 +863,7 @@ function renderAdditions(){
                   <span>${item.nom}</span>
                   <span style="color:#D4AF37">${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span>
                 </div>
-                ${item.desc?`<div style="font-size:10px;color:#4ABA80;padding-left:4px">${item.desc}</div>`:''}
+                ${item.choix?`<div style="font-size:10px;color:#4ABA80;padding-left:4px">${item.choix}</div>`:''}
               </div>`).join('')}
             <div class="cmd-groupe-subtotal">ss-total : ${(cmd.total||0).toFixed(2).replace('.',',')} €</div>
           </div>`).join('')}
@@ -961,7 +961,7 @@ function renderHistorique(){
                   <span>${item.nom}</span>
                   <span>${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span>
                 </div>
-                ${item.desc?`<div style="font-size:10px;color:#4ABA80;padding-left:4px">${item.desc}</div>`:''}
+                ${item.choix?`<div style="font-size:10px;color:#4ABA80;padding-left:4px">${item.choix}</div>`:''}
               </div>`).join('')}
           </div>`).join('')}
         <button onclick="event.stopPropagation();imprimerTicket('hist_${i}')"
@@ -1039,8 +1039,8 @@ function imprimerTicket(key){
         <td style="padding:2px 0 0 0;font-size:12px">${item.nom}</td>
         <td style="padding:2px 0 0 0;font-size:12px;text-align:right;white-space:nowrap">${item.prix===0?'Incl.':item.prix.toFixed(2).replace('.',',')+' €'}</td>
       </tr>`;
-      if(item.desc){
-        lignes+=`<tr><td colspan="2" style="padding:0 0 2px 8px;font-size:10px;color:#555">${item.desc}</td></tr>`;
+      if(item.choix){
+        lignes+=`<tr><td colspan="2" style="padding:0 0 2px 8px;font-size:10px;color:#555">${item.choix}</td></tr>`;
       }
     });
     lignes+=`<tr><td colspan="2" style="text-align:right;font-size:10px;color:#555;padding-bottom:4px">ss-total : ${(cmd.total||0).toFixed(2).replace('.',',')} €</td></tr>`;

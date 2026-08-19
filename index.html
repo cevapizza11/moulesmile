@@ -1045,9 +1045,11 @@ function choisirOption(optionId,optionNom,supplement){
   const item=tableau.find(p=>p.uid===uidItem);
   if(item){
     item.desc=(item.desc?item.desc+' — ':'')+`${famille.nom} : ${optionNom}`;
+    item.choix=(item.choix?item.choix+' — ':'')+`${famille.nom} : ${optionNom}`;
     if(supplement>0){
       item.prix+=supplement;
       item.desc+=` (+${supplement.toFixed(2).replace('.',',')} €)`;
+      item.choix+=` (+${supplement.toFixed(2).replace('.',',')} €)`;
     }
   }
   document.getElementById('modalOption').classList.remove('visible');
@@ -1396,7 +1398,7 @@ async function validerAvantAddition(){
       couverts:nbCouverts||null,
       nbAdultes:nbAdultes!=null?nbAdultes:null,
       nbEnfants:nbEnfants!=null?nbEnfants:0,
-      items:panierAvantAddition.map(p=>({id:p.id,nom:p.nom,desc:p.desc||'',prix:p.prix})),
+      items:panierAvantAddition.map(p=>({id:p.id,nom:p.nom,desc:p.desc||'',choix:p.choix||'',prix:p.prix})),
       total,
       timestamp:firebase.firestore.FieldValue.serverTimestamp(),
       statut:'nouvelle',
@@ -1431,7 +1433,7 @@ async function validerCommande(){
       couverts:nbCouverts||null,
       nbAdultes:nbAdultes!=null?nbAdultes:null,
       nbEnfants:nbEnfants!=null?nbEnfants:0,
-      items:panier.map(p=>({id:p.id,nom:p.nom,desc:p.desc||'',prix:p.prix})),
+      items:panier.map(p=>({id:p.id,nom:p.nom,desc:p.desc||'',choix:p.choix||'',prix:p.prix})),
       total,
       timestamp:firebase.firestore.FieldValue.serverTimestamp(),
       statut:'nouvelle',
@@ -1697,6 +1699,7 @@ function choisirMenuAdo(choixId,choixNom){
   const item=panier.find(p=>p.uid===adoEnAttenteUid);
   if(item){
     item.desc=(item.desc?item.desc+' — ':'')+'Choix : '+choixNom;
+    item.choix=(item.choix?item.choix+' — ':'')+'Choix : '+choixNom;
   }
   document.getElementById('modalMenuAdo').classList.remove('visible');
   adoEnAttenteUid=null;
