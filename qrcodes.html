@@ -53,6 +53,7 @@
 <div class="controls">
   <input type="number" id="nbJetons" value="150" min="1" max="150" style="background:#2A2A2A;border:1px solid #D4AF37;border-radius:8px;color:#D4AF37;padding:10px;width:80px;text-align:center;font-weight:bold;">
   <button class="btn btn-or" id="btnGenerer" onclick="genererEtEnregistrer()">🔄 Générer et créer dans Firestore</button>
+  <button class="btn btn-outline" onclick="chargerJetonsExistants()">📥 Recharger les jetons existants</button>
   <button class="btn btn-outline" onclick="window.print()">🖨️ Imprimer tout</button>
 </div>
 
@@ -68,7 +69,34 @@ const firebaseConfig={apiKey:"AIzaSyDUb3LtVsMAq986DgtHwkMBeQFr8A8A2nU",authDomai
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 
-// Génère un token aléatoire cryptographiquement fort (impossible à deviner)
+// Mémorise l'URL de base d'une visite à l'autre (évite de la retaper)
+const baseUrlInput=document.getElementById('baseUrl');
+const baseUrlSauvegardee=localStorage.getItem('ms_qr_baseUrl');
+if(baseUrlSauvegardee) baseUrlInput.value=baseUrlSauvegardee;
+baseUrlInput.addEventListener('change',()=>localStorage.setItem('ms_qr_baseUrl',baseUrlInput.value.trim()));
+
+// Recharge tous les jetons déjà créés dans Firestore (pour les retrouver après avoir quitté la page)
+async function chargerJetonsExistants(){
+  const statutBar=document.getElementById('statutBar');
+  statutBar.textContent='⏳ Chargement des jetons existants...';
+  try{
+    const snap=await db.collection('jetons').orderBy('numero').get();
+    if(snap.empty){
+      statutBar.textContent='Aucun jeton existant — générez-en avec le bouton ci-dessus.';
+      document.getElementById('qrGrid').innerHTML='';
+      return;
+    }
+    const jetons=snap.docs.map(d=>d.data());
+    statutBar.textContent=`✅ ${jetons.length} jeton(s) existant(s) rechargé(s) (n°${jetons[0].numero} à n°${jetons[jetons.length-1].numero})`;
+    afficherGrille(jetons, baseUrlInput.value.trim());
+  }catch(e){
+    console.error(e);
+    statutBar.textContent='❌ Erreur de chargement — voir console';
+  }
+}
+
+// Chargement automatique à l'ouverture de la page
+chargerJetonsExistants();
 function genererToken(){
   const bytes=new Uint8Array(9);
   crypto.getRandomValues(bytes);
@@ -88,6 +116,7 @@ async function genererEtEnregistrer(){
   const baseUrl=document.getElementById('baseUrl').value.trim();
   const nb=parseInt(document.getElementById('nbJetons').value)||150;
   if(!baseUrl){alert('Merci de renseigner l\'URL de votre app');return;}
+  localStorage.setItem('ms_qr_baseUrl',baseUrl);
 
   btn.disabled=true;
   const statutBar=document.getElementById('statutBar');
