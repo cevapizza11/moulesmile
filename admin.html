@@ -763,14 +763,46 @@ function confirmerImport(){
 
   carte=newCarte;catActive=newCarte.categories[0]?.id;
   const nbImportes=importedData?importedData.length:0;
-  sauvegarder();render();annulerImport();
-  showToast(`✅ ${nbImportes} produits importés !`);
+  confirmerImportSauvegarde(nbImportes);
+}
+
+async function confirmerImportSauvegarde(nbImportes){
+  try{
+    await sauvegarder();
+    render();annulerImport();
+    showToast(`✅ ${nbImportes} produits importés !`);
+  }catch(e){
+    console.error('Import: échec sauvegarde', e);
+    render();annulerImport();
+    showToast('❌ Erreur import : voir console');
+  }
   importedData=null;
   importedFamillesOptions=null;
   importedOptionsProduits=null;
 }
 
-async function sauvegarder(){try{await db.collection('config').doc('carte_v2').set(carte);showToast('✅ Publié !');}catch(e){showToast('❌ Erreur');}}
+async function sauvegarder(){
+  try{
+    await db.collection('config').doc('carte_v2').set(carte);
+    // Vérification anti-cache : force la lecture depuis le serveur (pas le cache local)
+    // pour confirmer que famillesOptions / optionsProduits sont bien persistés côté Firestore.
+    try{
+      const check=await db.collection('config').doc('carte_v2').get({source:'server'});
+      const d=check.data()||{};
+      console.log('[sauvegarder] Vérif serveur → famillesOptions:', d.famillesOptions, '| optionsProduits:', d.optionsProduits);
+      if((!d.famillesOptions||!Object.keys(d.famillesOptions).length) && carte.famillesOptions && Object.keys(carte.famillesOptions).length){
+        console.warn('[sauvegarder] ⚠️ famillesOptions envoyé mais absent côté serveur — vérifier les règles Firestore sur config/carte_v2');
+      }
+    }catch(verifErr){
+      console.warn('[sauvegarder] Vérification serveur impossible:', verifErr);
+    }
+    showToast('✅ Publié !');
+  }catch(e){
+    console.error('[sauvegarder] Erreur écriture carte_v2:', e.code, e.message);
+    showToast('❌ Erreur');
+    throw e;
+  }
+}
 
 function toutActiver(){if(!carte)return;carte.categories.forEach(c=>(c.produits||[]).forEach(p=>p.actif=true));sauvegarder();render();showToast('✅ Tout activé !');}
 function toutDesactiver(catId){if(!carte)return;const cat=carte.categories.find(c=>c.id===catId);if(!cat)return;(cat.produits||[]).forEach(p=>p.actif=false);sauvegarder();render();showToast('❌ Désactivé');}
