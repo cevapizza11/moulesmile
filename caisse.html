@@ -28,6 +28,12 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
 
 /* STATUT */
 .status-bar{background:#1A3A2A;border:1px solid #1A7A50;border-radius:10px;padding:8px 14px;margin-bottom:12px;font-size:12px;color:#4ABA80;display:flex;align-items:center;gap:8px}
+.bandeau-retard{display:none;background:#3A1A1A;border-bottom:2px solid #C0392B;color:#ff8a8a;text-align:center;font-weight:bold;font-size:14px;padding:10px;animation:pulseRetard 1.5s infinite}
+.bandeau-retard.visible{display:block}
+@keyframes pulseRetard{0%,100%{background:#3A1A1A}50%{background:#5A2020}}
+.addition-card.en-retard{border:2px solid #C0392B;animation:pulseCard 1.5s infinite}
+@keyframes pulseCard{0%,100%{box-shadow:0 0 0 rgba(192,57,43,0)}50%{box-shadow:0 0 14px rgba(192,57,43,.7)}}
+.badge-retard{background:#C0392B;color:#fff;font-size:10px;font-weight:bold;padding:3px 8px;border-radius:10px;margin-left:8px}
 .dot{width:8px;height:8px;background:#4ABA80;border-radius:50%;animation:blink 1.5s infinite;flex-shrink:0}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 
@@ -176,6 +182,8 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
   <div class="nav-tab" id="tab-btn-ca" onclick="switchTab('ca')">💰 CA</div>
   <div class="nav-tab" id="tab-btn-jetons" onclick="switchTab('jetons')">🎫 Jetons</div>
 </div>
+
+<div class="bandeau-retard" id="bandeauRetard"></div>
 
 <div class="toast" id="toast"></div>
 
@@ -583,6 +591,42 @@ async function libererJeton(jetonId){
 }
 
 // ============================================================
+// ALERTE — TABLE EN ATTENTE D'ENCAISSEMENT DEPUIS TROP LONGTEMPS
+// ============================================================
+const SEUIL_ALERTE_MINUTES=5; // Modifiez ce chiffre si besoin
+let dernierBeepRetard=0;
+
+function minutesDepuis(timestamp){
+  if(!timestamp) return 0;
+  const d=timestamp.toDate?timestamp.toDate():new Date(timestamp);
+  return Math.floor((Date.now()-d.getTime())/60000);
+}
+
+function verifierAdditionsEnRetard(){
+  const enRetard=Object.values(allAdditions)
+    .filter(a=>a.statut!=='regle' && minutesDepuis(a.timestamp)>=SEUIL_ALERTE_MINUTES);
+
+  const bandeau=document.getElementById('bandeauRetard');
+  if(enRetard.length>0){
+    const tables=enRetard.map(a=>a.table).join(', ');
+    bandeau.textContent=`⏰ ${enRetard.length} table(s) en attente d'encaissement depuis plus de ${SEUIL_ALERTE_MINUTES} min — Table(s) ${tables}`;
+    bandeau.classList.add('visible');
+    // Bip toutes les 60s tant qu'il reste au moins une table en retard (évite le spam sonore)
+    if(Date.now()-dernierBeepRetard>60000){
+      playBeep(2);
+      dernierBeepRetard=Date.now();
+    }
+  } else {
+    bandeau.classList.remove('visible');
+  }
+}
+
+setInterval(()=>{
+  verifierAdditionsEnRetard();
+  if(document.getElementById('tab-additions').classList.contains('actif')) renderAdditions();
+},15000);
+
+// ============================================================
 // STATS
 // ============================================================
 function updateStats(){
@@ -970,7 +1014,12 @@ function renderAdditions(){
   const recherche=(document.getElementById('rechercheTable')?.value||'').trim();
   let adds=Object.values(allAdditions)
     .filter(a=>a.statut!=='regle')
-    .sort((a,b)=>(a.table||0)-(b.table||0));
+    .sort((a,b)=>{
+      const retardA=minutesDepuis(a.timestamp)>=SEUIL_ALERTE_MINUTES;
+      const retardB=minutesDepuis(b.timestamp)>=SEUIL_ALERTE_MINUTES;
+      if(retardA!==retardB) return retardA?-1:1; // en retard en premier
+      return (a.table||0)-(b.table||0);
+    });
 
   // Filtre recherche par numéro de table
   if(recherche){
@@ -990,11 +1039,14 @@ function renderAdditions(){
     ticketsData['add_'+add.table]={table:add.table,commandes:add.commandes||[],total:add.total||0};
   });
 
-  container.innerHTML=adds.map(add=>`
-    <div class="addition-card">
+  container.innerHTML=adds.map(add=>{
+    const mins=minutesDepuis(add.timestamp);
+    const enRetard=mins>=SEUIL_ALERTE_MINUTES;
+    return `
+    <div class="addition-card ${enRetard?'en-retard':''}">
       <div class="addition-header">
         <div>
-          <div class="addition-table-num">🪑 Table ${add.table}</div>
+          <div class="addition-table-num">🪑 Table ${add.table}${enRetard?`<span class="badge-retard">⏰ ${mins} min</span>`:''}</div>
           <div class="addition-nb">${(add.commandes||[]).length} commande(s)</div>
         </div>
         <div class="addition-total">${(add.total||0).toFixed(2).replace('.',',')} €</div>
@@ -1021,7 +1073,8 @@ function renderAdditions(){
         <button class="btn-imprimer" onclick="imprimerTicket('add_${add.table}')">🖨️ Imprimer</button>
         <button class="btn-encaisser" onclick="encaisser(${add.table})">💰 Encaissé ✓</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 // ============================================================
