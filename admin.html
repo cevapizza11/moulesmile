@@ -781,9 +781,25 @@ async function confirmerImportSauvegarde(nbImportes){
   importedOptionsProduits=null;
 }
 
+// Retire récursivement les champs undefined (Firestore refuse set() si un seul
+// champ vaut undefined — contrairement à null qui est accepté).
+function nettoyerUndefined(obj){
+  if(Array.isArray(obj)) return obj.map(nettoyerUndefined);
+  if(obj&&typeof obj==='object'){
+    const out={};
+    Object.keys(obj).forEach(k=>{
+      if(obj[k]===undefined)return;
+      out[k]=nettoyerUndefined(obj[k]);
+    });
+    return out;
+  }
+  return obj;
+}
+
 async function sauvegarder(){
   try{
-    await db.collection('config').doc('carte_v2').set(carte);
+    const carteAEnvoyer=nettoyerUndefined(carte);
+    await db.collection('config').doc('carte_v2').set(carteAEnvoyer);
     // Vérification anti-cache : force la lecture depuis le serveur (pas le cache local)
     // pour confirmer que famillesOptions / optionsProduits sont bien persistés côté Firestore.
     try{
