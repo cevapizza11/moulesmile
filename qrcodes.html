@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Moule & Smile — Générateur QR Codes Tables</title>
+<title>Moule & Smile — Générateur de jetons QR</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: Arial, sans-serif; background: #1A1A1A; color: #fff; padding: 20px; }
@@ -11,23 +11,29 @@
   h1 { color: #D4AF37; text-align: center; margin-bottom: 8px; font-size: 20px; }
   p { color: #888; text-align: center; font-size: 13px; margin-bottom: 20px; }
 
-  .controls { display: flex; gap: 12px; justify-content: center; margin-bottom: 24px; flex-wrap: wrap; }
+  .controls { display: flex; gap: 12px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
   .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 13px; }
   .btn-or { background: #D4AF37; color: #1A1A1A; }
   .btn-outline { background: transparent; border: 2px solid #D4AF37; color: #D4AF37; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  .input-url { background: #2A2A2A; border: 1px solid #D4AF37; border-radius: 8px; color: #fff; padding: 10px 14px; font-size: 13px; width: 100%; max-width: 500px; margin: 0 auto 20px; display: block; }
+  .input-url { background: #2A2A2A; border: 1px solid #D4AF37; border-radius: 8px; color: #fff; padding: 10px 14px; font-size: 13px; width: 100%; max-width: 500px; margin: 0 auto 16px; display: block; }
+
+  .warn { max-width: 600px; margin: 0 auto 20px; background: #2A1A1A; border: 1px solid #C0392B; border-radius: 10px; padding: 12px 16px; font-size: 12px; color: #E8B4B4; line-height: 1.6; text-align: left; }
+  .warn strong { color: #ff9d9d; }
+
+  .statut-bar { max-width: 600px; margin: 0 auto 20px; text-align: center; font-size: 13px; color: #4ABA80; }
 
   .qr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
 
   .qr-card { background: #fff; border-radius: 12px; padding: 12px; text-align: center; }
-  .qr-card .table-num { color: #1A1A1A; font-size: 14px; font-weight: bold; margin-bottom: 8px; }
+  .qr-card .jeton-num { color: #1A1A1A; font-size: 15px; font-weight: bold; margin-bottom: 8px; }
   .qr-card canvas { display: block; margin: 0 auto; }
-  .qr-card .url { color: #888; font-size: 9px; margin-top: 6px; word-break: break-all; }
+  .qr-card .sub { color: #999; font-size: 9px; margin-top: 6px; }
 
   @media print {
     body { background: white; }
-    .controls, h1, p, .input-url { display: none; }
+    .controls, h1, p, .input-url, .warn, .statut-bar { display: none; }
     .qr-grid { grid-template-columns: repeat(5, 1fr); gap: 8px; }
     .qr-card { border: 1px solid #ccc; break-inside: avoid; }
   }
@@ -35,39 +41,101 @@
 </head>
 <body>
 
-<h1>🐚 Générateur QR Codes — Moule & Smile</h1>
-<p>Un QR code par table — à imprimer et plastifier</p>
+<h1>🎫 Générateur de jetons QR — Moule & Smile</h1>
+<p>Des jetons réutilisables, indépendants de la date. Chacun se rattache à une table par l'équipe, puis se libère automatiquement à l'encaissement.</p>
 
-<input type="text" class="input-url" id="baseUrl" value="https://VOTRE-USERNAME.github.io/moulessmile/index.html" placeholder="URL de votre app">
+<div class="warn">
+  <strong>⚠️ À lire avant de générer :</strong> chaque clic sur "Générer" crée de <strong>nouveaux</strong> jetons en plus des existants (ça n'efface jamais ceux déjà créés). Si vous avez déjà généré vos 150 jetons, n'en générez pas d'autres par erreur — utilisez plutôt l'onglet "Jetons" dans la caisse pour gérer ceux qui existent déjà.
+</div>
+
+<input type="text" class="input-url" id="baseUrl" value="https://cevapizza.github.io/moulesmile/index.html" placeholder="URL de votre app (index.html)">
 
 <div class="controls">
-  <input type="number" id="nbTables" value="70" min="1" max="150" style="background:#2A2A2A;border:1px solid #D4AF37;border-radius:8px;color:#D4AF37;padding:10px;width:80px;text-align:center;font-weight:bold;">
-  <button class="btn btn-or" onclick="generer()">🔄 Générer</button>
+  <input type="number" id="nbJetons" value="150" min="1" max="150" style="background:#2A2A2A;border:1px solid #D4AF37;border-radius:8px;color:#D4AF37;padding:10px;width:80px;text-align:center;font-weight:bold;">
+  <button class="btn btn-or" id="btnGenerer" onclick="genererEtEnregistrer()">🔄 Générer et créer dans Firestore</button>
   <button class="btn btn-outline" onclick="window.print()">🖨️ Imprimer tout</button>
 </div>
 
+<div class="statut-bar" id="statutBar"></div>
+
 <div class="qr-grid" id="qrGrid"></div>
 
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
-function generer() {
-  const baseUrl = document.getElementById('baseUrl').value.trim();
-  const nb = parseInt(document.getElementById('nbTables').value) || 70;
-  const grid = document.getElementById('qrGrid');
-  grid.innerHTML = '';
+const firebaseConfig={apiKey:"AIzaSyDUb3LtVsMAq986DgtHwkMBeQFr8A8A2nU",authDomain:"commandemoulesmile.firebaseapp.com",projectId:"commandemoulesmile",storageBucket:"commandemoulesmile.firebasestorage.app",messagingSenderId:"303564394584",appId:"1:303564394584:web:cbde6960f99cac83517a2d"};
+firebase.initializeApp(firebaseConfig);
+const db=firebase.firestore();
 
-  for (let i = 1; i <= nb; i++) {
-    const url = `${baseUrl}?table=${i}`;
-    const card = document.createElement('div');
-    card.className = 'qr-card';
-    card.innerHTML = `
-      <div class="table-num">🐚 Table ${i}</div>
-      <div id="qr_${i}"></div>
-      <div class="url">${url}</div>
+// Génère un token aléatoire cryptographiquement fort (impossible à deviner)
+function genererToken(){
+  const bytes=new Uint8Array(9);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes,b=>b.toString(36).padStart(2,'0')).join('').slice(0,12);
+}
+
+async function prochainNumeroDepart(){
+  // Regarde le plus grand "numero" déjà en base pour ne jamais recréer de doublon
+  // même si on relance une génération plus tard pour agrandir le stock.
+  const snap=await db.collection('jetons').orderBy('numero','desc').limit(1).get();
+  if(snap.empty) return 1;
+  return (snap.docs[0].data().numero||0)+1;
+}
+
+async function genererEtEnregistrer(){
+  const btn=document.getElementById('btnGenerer');
+  const baseUrl=document.getElementById('baseUrl').value.trim();
+  const nb=parseInt(document.getElementById('nbJetons').value)||150;
+  if(!baseUrl){alert('Merci de renseigner l\'URL de votre app');return;}
+
+  btn.disabled=true;
+  const statutBar=document.getElementById('statutBar');
+  statutBar.textContent='⏳ Génération en cours...';
+
+  const depart=await prochainNumeroDepart();
+  const jetons=[];
+  for(let i=0;i<nb;i++){
+    jetons.push({numero:depart+i, token:genererToken()});
+  }
+
+  // Écriture par lots de 400 (limite Firestore = 500 par batch)
+  try{
+    for(let i=0;i<jetons.length;i+=400){
+      const batch=db.batch();
+      jetons.slice(i,i+400).forEach(j=>{
+        const ref=db.collection('jetons').doc(j.token);
+        batch.set(ref,{numero:j.numero, token:j.token, statut:'libre', table:null});
+      });
+      await batch.commit();
+    }
+  }catch(e){
+    console.error(e);
+    statutBar.textContent='❌ Erreur d\'écriture Firestore — voir console';
+    btn.disabled=false;
+    return;
+  }
+
+  statutBar.textContent=`✅ ${jetons.length} jetons créés dans Firestore (n°${depart} à n°${depart+jetons.length-1})`;
+  afficherGrille(jetons, baseUrl);
+  btn.disabled=false;
+}
+
+function afficherGrille(jetons, baseUrl){
+  const grid=document.getElementById('qrGrid');
+  grid.innerHTML='';
+  jetons.forEach(j=>{
+    const url=`${baseUrl}?j=${j.token}`;
+    const card=document.createElement('div');
+    card.className='qr-card';
+    card.innerHTML=`
+      <div class="jeton-num">🎫 Jeton n°${j.numero}</div>
+      <div id="qr_${j.numero}"></div>
+      <div class="sub">Ne pas afficher le lien complet</div>
     `;
     grid.appendChild(card);
 
-    new QRCode(document.getElementById(`qr_${i}`), {
+    new QRCode(document.getElementById(`qr_${j.numero}`), {
       text: url,
       width: 120,
       height: 120,
@@ -75,11 +143,8 @@ function generer() {
       colorLight: "#ffffff",
       correctLevel: QRCode.CorrectLevel.H
     });
-  }
+  });
 }
-
-// Générer au chargement
-window.onload = generer;
 </script>
 </body>
 </html>

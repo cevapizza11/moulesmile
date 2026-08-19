@@ -181,7 +181,16 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 </div>
 
 <!-- TABLE -->
-<div class="screen active" id="screenTable">
+<!-- BLOCAGE JETON (accès protégé) -->
+<div class="modal-overlay visible" id="screenJetonBloque" style="z-index:900">
+  <div class="modal-box" style="text-align:center">
+    <div style="font-size:48px;margin-bottom:12px">🔒</div>
+    <h3 id="jetonBloqueTitre" style="margin-bottom:8px">Accès protégé</h3>
+    <div class="modal-sub" id="jetonBloqueTexte" style="margin-bottom:8px">Merci de scanner le QR code présent sur votre table.</div>
+  </div>
+</div>
+
+<div class="screen" id="screenTable">
   <div class="table-screen">
     <div class="logo">🐚</div>
     <h2>Bienvenue !</h2>
@@ -393,9 +402,45 @@ let tableNum=null, panier=[], catActive=null, carte=null;
 let refuserSuggestionFormule=false; // "C'est juste pour boire" — mémorisé pour toute la session client
 let totalDejaCommande=0; // Somme des commandes déjà envoyées (hors panier en cours)
 
-// URL table
+// JETON DE TABLE (sécurité — remplace l'ancienne saisie libre du numéro de table)
 const urlParams=new URLSearchParams(window.location.search);
-if(urlParams.get('table')) document.getElementById('tableInput').value=urlParams.get('table');
+const jetonToken=urlParams.get('j');
+let jetonEnCours=false; // évite de relancer showScreen('screenCouverts') à chaque tick du listener
+
+function afficherBlocageJeton(titre,texte){
+  document.getElementById('jetonBloqueTitre').textContent=titre;
+  document.getElementById('jetonBloqueTexte').textContent=texte;
+  document.getElementById('screenJetonBloque').classList.add('visible');
+}
+function masquerBlocageJeton(){
+  document.getElementById('screenJetonBloque').classList.remove('visible');
+}
+
+if(!jetonToken){
+  afficherBlocageJeton('Accès protégé','Merci de scanner le QR code présent sur votre table pour commander.');
+} else {
+  db.collection('jetons').doc(jetonToken).onSnapshot(doc=>{
+    if(!doc.exists || doc.data().statut!=='actif'){
+      jetonEnCours=false;
+      afficherBlocageJeton('QR pas encore activé','Merci de patienter, un membre de l\'équipe va activer votre table dans un instant.');
+      return;
+    }
+    // Jeton valide et actif → table assignée automatiquement, pas de saisie manuelle
+    masquerBlocageJeton();
+    tableNum=doc.data().table;
+    if(!jetonEnCours){
+      jetonEnCours=true;
+      nbAdultes=1;nbEnfants=0;
+      majAffichageCouverts();
+      showScreen('screenCouverts');
+    } else {
+      document.getElementById('tableNumHeader').textContent=tableNum;
+    }
+  }, err=>{
+    console.error('Erreur vérification jeton',err);
+    afficherBlocageJeton('Erreur de connexion','Impossible de vérifier votre accès. Rechargez la page ou appelez un membre de l\'équipe.');
+  });
+}
 
 // ============================================================
 // CARTE PAR DÉFAUT — ordre logique de prise de commande
