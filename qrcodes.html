@@ -15,6 +15,7 @@
   .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 13px; }
   .btn-or { background: #D4AF37; color: #1A1A1A; }
   .btn-outline { background: transparent; border: 2px solid #D4AF37; color: #D4AF37; }
+  .btn-rouge { background: transparent; border: 2px solid #C0392B; color: #ff8a8a; }
   .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .input-url { background: #2A2A2A; border: 1px solid #D4AF37; border-radius: 8px; color: #fff; padding: 10px 14px; font-size: 13px; width: 100%; max-width: 500px; margin: 0 auto 16px; display: block; }
@@ -55,6 +56,7 @@
   <button class="btn btn-or" id="btnGenerer" onclick="genererEtEnregistrer()">🔄 Générer et créer dans Firestore</button>
   <button class="btn btn-outline" onclick="chargerJetonsExistants()">📥 Recharger les jetons existants</button>
   <button class="btn btn-outline" onclick="window.print()">🖨️ Imprimer tout</button>
+  <button class="btn btn-rouge" onclick="supprimerTousLesJetons()">🗑️ Supprimer TOUS les jetons</button>
 </div>
 
 <div class="statut-bar" id="statutBar"></div>
@@ -97,6 +99,38 @@ async function chargerJetonsExistants(){
 
 // Chargement automatique à l'ouverture de la page
 chargerJetonsExistants();
+
+async function supprimerTousLesJetons(){
+  const snap=await db.collection('jetons').get();
+  if(snap.empty){alert('Aucun jeton à supprimer.');return;}
+
+  const confirmation=prompt(
+    `⚠️ Vous allez supprimer DÉFINITIVEMENT les ${snap.size} jeton(s) existant(s).\n\n`+
+    `Tous les QR codes déjà imprimés deviendront invalides IMMÉDIATEMENT — y compris ceux en cours d'utilisation sur une table.\n`+
+    `Ne faites ceci qu'entre deux services (restaurant fermé), jamais pendant un coup de feu.\n\n`+
+    `Tapez SUPPRIMER en majuscules pour confirmer :`
+  );
+  if(confirmation!=='SUPPRIMER'){
+    if(confirmation!==null) alert('Annulé — le texte ne correspondait pas exactement à SUPPRIMER.');
+    return;
+  }
+
+  const statutBar=document.getElementById('statutBar');
+  statutBar.textContent='⏳ Suppression en cours...';
+  try{
+    const docs=snap.docs;
+    for(let i=0;i<docs.length;i+=400){
+      const batch=db.batch();
+      docs.slice(i,i+400).forEach(d=>batch.delete(d.ref));
+      await batch.commit();
+    }
+    statutBar.textContent=`✅ ${docs.length} jeton(s) supprimé(s). Générez-en de nouveaux quand vous êtes prêt.`;
+    document.getElementById('qrGrid').innerHTML='';
+  }catch(e){
+    console.error(e);
+    statutBar.textContent='❌ Erreur de suppression — voir console';
+  }
+}
 function genererToken(){
   const bytes=new Uint8Array(9);
   crypto.getRandomValues(bytes);
