@@ -346,7 +346,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 
 <!-- MODAL CHOIX SAUCE (à chaque formule moules) -->
 <!-- MODAL OPTIONS GÉNÉRIQUE (coulis, croquant, nappage, sauce... piloté depuis l'Excel) -->
-<div class="modal-overlay" id="modalOption">
+<div class="modal-overlay" id="modalOption" style="z-index:700">
   <div class="modal-box">
     <h3 id="modalOptionTitre">Choisissez une option</h3>
     <div class="modal-list" id="modalOptionList"></div>
@@ -1013,7 +1013,8 @@ function getEtapesOptions(produitId){
   return optionsProduits[produitId]||[];
 }
 
-function ouvrirProchainePopupOption(uidItem,etapes,index){
+function ouvrirProchainePopupOption(uidItem,etapes,index,source){
+  source=source||'panier';
   if(index>=etapes.length) return; // toutes les étapes traitées
   const c=carte||carteDefaut;
   const famillesOptions=c.famillesOptions||{};
@@ -1021,10 +1022,10 @@ function ouvrirProchainePopupOption(uidItem,etapes,index){
   const famille=famillesOptions[etape.idFamille];
   if(!famille||!famille.options||!famille.options.length){
     // Famille introuvable ou vide → on passe à l'étape suivante sans bloquer
-    ouvrirProchainePopupOption(uidItem,etapes,index+1);
+    ouvrirProchainePopupOption(uidItem,etapes,index+1,source);
     return;
   }
-  optionEnCours={uidItem,etapes,index,famille};
+  optionEnCours={uidItem,etapes,index,famille,source};
   document.getElementById('modalOptionTitre').textContent=famille.nom||'Choisissez une option';
   const options=famille.options.filter(o=>o.actif);
   document.getElementById('modalOptionList').innerHTML=options.map(o=>`
@@ -1039,8 +1040,9 @@ let optionEnCours=null;
 
 function choisirOption(optionId,optionNom,supplement){
   if(!optionEnCours) return;
-  const {uidItem,etapes,index,famille}=optionEnCours;
-  const item=panier.find(p=>p.uid===uidItem);
+  const {uidItem,etapes,index,famille,source}=optionEnCours;
+  const tableau=source==='upsell'?panierAvantAddition:panier;
+  const item=tableau.find(p=>p.uid===uidItem);
   if(item){
     item.desc=(item.desc?item.desc+' — ':'')+`${famille.nom} : ${optionNom}`;
     if(supplement>0){
@@ -1049,17 +1051,21 @@ function choisirOption(optionId,optionNom,supplement){
     }
   }
   document.getElementById('modalOption').classList.remove('visible');
-  updatePanierBar();
-  renderPanierItems();
+  if(source==='upsell'){
+    renderUpsellList();
+  } else {
+    updatePanierBar();
+    renderPanierItems();
+  }
   // Enchaîner sur l'étape suivante (ex: coulis → croquant)
-  setTimeout(()=>ouvrirProchainePopupOption(uidItem,etapes,index+1),250);
+  setTimeout(()=>ouvrirProchainePopupOption(uidItem,etapes,index+1,source),250);
 }
 
 function fermerModalOption(){
   document.getElementById('modalOption').classList.remove('visible');
   if(optionEnCours){
-    const {uidItem,etapes,index}=optionEnCours;
-    setTimeout(()=>ouvrirProchainePopupOption(uidItem,etapes,index+1),250);
+    const {uidItem,etapes,index,source}=optionEnCours;
+    setTimeout(()=>ouvrirProchainePopupOption(uidItem,etapes,index+1,source),250);
   }
   optionEnCours=null;
 }
@@ -1357,8 +1363,15 @@ function renderUpsellList(){
 }
 
 function ajouterUpsell(id,nom,desc,prix){
-  panierAvantAddition.push({id,nom,desc,prix});
+  const uid=Date.now()+Math.random();
+  panierAvantAddition.push({id,nom,desc,prix,uid});
   renderUpsellList();
+
+  // Système générique d'options par étapes (coulis, croquant, nappage, sauce...)
+  const etapes=getEtapesOptions(id);
+  if(etapes.length){
+    ouvrirProchainePopupOption(uid,etapes,0,'upsell');
+  }
 }
 
 function retirerUpsell(id){
