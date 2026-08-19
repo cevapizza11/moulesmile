@@ -284,7 +284,8 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
 
 <!-- ===== ONGLET JETONS ===== -->
 <div class="tab-content" id="tab-jetons">
-  <div class="status-bar"><div class="dot"></div>Activez un jeton en le rattachant à une table quand vous placez un client. Il se libère automatiquement à l'encaissement.</div>
+  <div class="status-bar"><div class="dot"></div>Imprimez un jeton jetable au moment de placer une table — il s'active tout seul, se libère automatiquement à l'encaissement.</div>
+  <button class="btn-encaisser" style="width:100%;font-size:15px;padding:14px;margin-bottom:14px" onclick="nouvelleTableAvecJeton()">🖨️ Nouvelle table — imprimer un jeton</button>
   <div class="recherche-bar">
     <input type="number" id="rechercheJeton" class="recherche-input" placeholder="🔍 Aller directement au n° de jeton..." inputmode="numeric" oninput="filtrerJetons()">
     <button class="btn-sm" onclick="document.getElementById('rechercheJeton').value='';filtrerJetons()" id="btnViderRechercheJeton" style="display:none">✕ Effacer</button>
@@ -588,6 +589,76 @@ async function libererJeton(jetonId){
     await db.collection('jetons').doc(jetonId).update({statut:'libre',table:null});
     showToast('✅ Jeton libéré');
   }catch(e){console.error(e);showToast('❌ Erreur libération');}
+}
+
+// ============================================================
+// NOUVEAU JETON JETABLE — généré et imprimé à la volée pour une table
+// ============================================================
+function genererTokenJeton(){
+  const bytes=new Uint8Array(9);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes,b=>b.toString(36).padStart(2,'0')).join('').slice(0,12);
+}
+
+async function prochainNumeroJeton(){
+  const snap=await db.collection('jetons').orderBy('numero','desc').limit(1).get();
+  if(snap.empty) return 1;
+  return (snap.docs[0].data().numero||0)+1;
+}
+
+async function nouvelleTableAvecJeton(){
+  const val=parseInt(prompt('N° de table pour ce jeton :'));
+  if(!val||val<1||val>150){if(!isNaN(val))showToast('⚠️ Numéro de table invalide');return;}
+
+  try{
+    const numero=await prochainNumeroJeton();
+    const token=genererTokenJeton();
+    await db.collection('jetons').doc(token).set({
+      numero, token, statut:'actif', table:val, jetable:true,
+      timestamp:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    showToast(`✅ Jeton n°${numero} activé — Table ${val}`);
+    imprimerTicketJeton(numero, token, val);
+  }catch(e){console.error(e);showToast('❌ Erreur création jeton');}
+}
+
+function imprimerTicketJeton(numero, token, tableNum){
+  // ⚠️ Adaptez cette URL à celle de votre app (même que dans qrcodes.html)
+  const baseUrl='https://cevapizza11.github.io/moulesmile/index.html';
+  const url=`${baseUrl}?j=${token}`;
+
+  const win=window.open('','_blank','width=420,height=500');
+  win.document.write(`<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Jeton Table ${tableNum}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Courier New',monospace;font-size:12px;color:black;background:white;width:80mm;margin:0 auto;padding:8mm;text-align:center}
+.title{font-size:16px;font-weight:bold;margin-bottom:4px}
+.sub{font-size:11px;margin-bottom:10px;border-bottom:1px dashed black;padding-bottom:6px}
+.table-num{font-size:20px;font-weight:bold;margin:10px 0}
+#qr{display:flex;justify-content:center;margin:10px 0}
+.footer{font-size:10px;margin-top:10px;border-top:1px dashed black;padding-top:6px}
+@media print{body{width:80mm;margin:0;padding:6mm}@page{margin:0;size:80mm auto}}
+</style></head><body>
+<div class="title">🐚 MOULE & SMILE</div>
+<div class="sub">Scannez pour commander depuis votre table</div>
+<div class="table-num">Table ${tableNum}</div>
+<div id="qr"></div>
+<div class="footer">Jeton n°${numero}<br>À usage unique — ne pas transférer</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+<script>
+new QRCode(document.getElementById('qr'), {
+  text: "${url}",
+  width: 160,
+  height: 160,
+  colorDark: "#000000",
+  colorLight: "#ffffff",
+  correctLevel: QRCode.CorrectLevel.H
+});
+window.onload=function(){setTimeout(()=>{window.print();setTimeout(()=>window.close(),1500);},300);}
+<\/script>
+</body></html>`);
+  win.document.close();
 }
 
 // ============================================================
@@ -1123,7 +1194,14 @@ async function liberJetonDeTable(tableNum){
     const snap=await db.collection('jetons').where('table','==',tableNum).where('statut','==','actif').get();
     if(snap.empty) return;
     const b=db.batch();
-    snap.forEach(d=>b.update(d.ref,{statut:'libre',table:null}));
+    snap.forEach(d=>{
+      const data=d.data();
+      if(data.jetable){
+        b.delete(d.ref); // jeton à usage unique imprimé à la volée → supprimé définitivement
+      } else {
+        b.update(d.ref,{statut:'libre',table:null}); // jeton réutilisable (lot pré-imprimé) → remis dans le pool
+      }
+    });
     await b.commit();
   }catch(e){console.error('Erreur libération jeton',e);}
 }
