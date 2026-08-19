@@ -58,6 +58,7 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
 .jeton-pastille.actif .jp-num{color:#4ABA80}
 .jeton-pastille .jp-sub{font-size:10px;color:#888;margin-top:3px}
 .jeton-pastille.actif .jp-sub{color:#4ABA80}
+.jp-print{position:absolute;top:2px;right:2px;background:#1A2A3A;border:1px solid #2a6ab5;border-radius:6px;font-size:12px;padding:2px 5px;cursor:pointer;line-height:1}
 
 /* CARTE COMMANDE */
 .cmd-card{background:#1E1E1E;border:2px solid #333;border-radius:14px;padding:14px;transition:border-color .3s}
@@ -287,7 +288,7 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
   <div class="status-bar"><div class="dot"></div>Imprimez un jeton jetable au moment de placer une table — il s'active tout seul, se libère automatiquement à l'encaissement.</div>
   <button class="btn-encaisser" style="width:100%;font-size:15px;padding:14px;margin-bottom:14px" onclick="nouvelleTableAvecJeton()">🖨️ Nouvelle table — imprimer un jeton</button>
   <div class="recherche-bar">
-    <input type="number" id="rechercheJeton" class="recherche-input" placeholder="🔍 Aller directement au n° de jeton..." inputmode="numeric" oninput="filtrerJetons()">
+    <input type="number" id="rechercheJeton" class="recherche-input" placeholder="🔍 Rechercher par n° de jeton OU n° de table..." inputmode="numeric" oninput="filtrerJetons()">
     <button class="btn-sm" onclick="document.getElementById('rechercheJeton').value='';filtrerJetons()" id="btnViderRechercheJeton" style="display:none">✕ Effacer</button>
   </div>
   <div class="filtre-bar">
@@ -310,6 +311,7 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
       <button class="btn-annuler-modal" onclick="fermerModalJeton()">Annuler</button>
       <button class="btn-valider-modal" onclick="validerActivationJeton()">✅ Activer</button>
     </div>
+    <button class="btn-sm" id="btnReimprimerJeton" onclick="reimprimerJetonDepuisModal()" style="display:none;margin-top:10px;width:100%;background:#1A2A3A;color:#8ac4ff;border:1px solid #2a6ab5">🖨️ Réimprimer ce jeton</button>
     <button class="btn-sm" id="btnLibererJeton" onclick="libererJetonDepuisModal()" style="display:none;margin-top:10px;width:100%;background:#3A1E1E;color:#E88;border:1px solid #C0392B">🔓 Libérer ce jeton</button>
     <button class="btn-sm" id="btnSupprimerJeton" onclick="supprimerJetonDepuisModal()" style="margin-top:8px;width:100%;background:#1A1A1A;color:#888;border:1px solid #555">🗑️ Supprimer définitivement</button>
   </div>
@@ -521,7 +523,7 @@ function renderJetons(){
 
   if(filtreJetonsCourant==='libre') jetons=jetons.filter(j=>j.statut==='libre');
   if(filtreJetonsCourant==='actif') jetons=jetons.filter(j=>j.statut==='actif');
-  if(recherche) jetons=jetons.filter(j=>String(j.numero)===recherche);
+  if(recherche) jetons=jetons.filter(j=>String(j.numero)===recherche || (j.statut==='actif' && String(j.table)===recherche));
 
   jetons.sort((a,b)=>(a.numero||0)-(b.numero||0));
 
@@ -532,9 +534,12 @@ function renderJetons(){
 
   grid.innerHTML=jetons.map(j=>{
     const actif=j.statut==='actif';
-    return `<div class="jeton-pastille ${actif?'actif':'libre'}" onclick="ouvrirModalJeton('${j.id}',${j.numero})">
-      <div class="jp-num">🎫 ${j.numero}</div>
-      <div class="jp-sub">${actif?'Table '+j.table:'Libre'}</div>
+    return `<div class="jeton-pastille ${actif?'actif':'libre'}" style="position:relative">
+      <div onclick="ouvrirModalJeton('${j.id}',${j.numero})">
+        <div class="jp-num">🎫 ${j.numero}</div>
+        <div class="jp-sub">${actif?'Table '+j.table:'Libre'}</div>
+      </div>
+      ${actif?`<button class="jp-print" onclick="event.stopPropagation();imprimerTicketJeton(${j.numero},'${j.token}',${j.table});showToast('🖨️ Réimpression jeton n°${j.numero} — Table ${j.table}')" title="Réimprimer">🖨️</button>`:''}
     </div>`;
   }).join('');
 }
@@ -545,6 +550,7 @@ function ouvrirModalJeton(jetonId,numero){
   jetonEnCoursActivation=jetonId;
   document.getElementById('jetonModalTitre').textContent=`🎫 Jeton n°${numero}`;
   document.getElementById('jetonTableInput').value=estActif?j.table:'';
+  document.getElementById('btnReimprimerJeton').style.display=estActif?'block':'none';
   document.getElementById('btnLibererJeton').style.display=estActif?'block':'none';
   document.getElementById('modalActiverJeton').classList.add('visible');
   setTimeout(()=>document.getElementById('jetonTableInput').focus(),100);
@@ -553,6 +559,15 @@ function ouvrirModalJeton(jetonId,numero){
 function fermerModalJeton(){
   jetonEnCoursActivation=null;
   document.getElementById('modalActiverJeton').classList.remove('visible');
+}
+
+function reimprimerJetonDepuisModal(){
+  if(!jetonEnCoursActivation) return;
+  const j=allJetons[jetonEnCoursActivation];
+  if(!j||j.statut!=='actif'){showToast('⚠️ Ce jeton n\'est plus actif');return;}
+  imprimerTicketJeton(j.numero, j.token, j.table);
+  showToast(`🖨️ Réimpression jeton n°${j.numero} — Table ${j.table}`);
+  fermerModalJeton();
 }
 
 async function libererJetonDepuisModal(){
