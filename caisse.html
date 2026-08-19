@@ -43,6 +43,15 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
 
 /* GRILLE COMMANDES */
 .commandes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.jetons-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px;margin-top:14px}
+.jeton-pastille{background:#242424;border:2px solid #444;border-radius:12px;padding:10px 6px;text-align:center;cursor:pointer;transition:transform .1s}
+.jeton-pastille:active{transform:scale(.95)}
+.jeton-pastille.libre{border-color:#555}
+.jeton-pastille.actif{background:#1E3A2E;border-color:#4ABA80}
+.jeton-pastille .jp-num{font-weight:bold;font-size:15px;color:#ddd}
+.jeton-pastille.actif .jp-num{color:#4ABA80}
+.jeton-pastille .jp-sub{font-size:10px;color:#888;margin-top:3px}
+.jeton-pastille.actif .jp-sub{color:#4ABA80}
 
 /* CARTE COMMANDE */
 .cmd-card{background:#1E1E1E;border:2px solid #333;border-radius:14px;padding:14px;transition:border-color .3s}
@@ -165,6 +174,7 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
   </div>
   <div class="nav-tab" id="tab-btn-historique" onclick="switchTab('historique')">📚 Historique</div>
   <div class="nav-tab" id="tab-btn-ca" onclick="switchTab('ca')">💰 CA</div>
+  <div class="nav-tab" id="tab-btn-jetons" onclick="switchTab('jetons')">🎫 Jetons</div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -262,6 +272,38 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
     <thead><tr><th>Heure</th><th>Table</th><th>Articles</th><th>Total</th><th>Statut</th></tr></thead>
     <tbody id="caTableBody"></tbody>
   </table>
+</div>
+
+<!-- ===== ONGLET JETONS ===== -->
+<div class="tab-content" id="tab-jetons">
+  <div class="status-bar"><div class="dot"></div>Activez un jeton en le rattachant à une table quand vous placez un client. Il se libère automatiquement à l'encaissement.</div>
+  <div class="recherche-bar">
+    <input type="number" id="rechercheJeton" class="recherche-input" placeholder="🔍 Aller directement au n° de jeton..." inputmode="numeric" oninput="filtrerJetons()">
+    <button class="btn-sm" onclick="document.getElementById('rechercheJeton').value='';filtrerJetons()" id="btnViderRechercheJeton" style="display:none">✕ Effacer</button>
+  </div>
+  <div class="filtre-bar">
+    <button class="btn-filtre actif" id="filtreJetonsTous" onclick="setFiltreJetons('tous',this)">Tous</button>
+    <button class="btn-filtre" id="filtreJetonsLibres" onclick="setFiltreJetons('libre',this)">Libres</button>
+    <button class="btn-filtre" id="filtreJetonsActifs" onclick="setFiltreJetons('actif',this)">Actifs</button>
+  </div>
+  <div class="jetons-grid" id="jetonsGrid">
+    <div class="empty"><div class="em">🎫</div><p>Aucun jeton — générez-les depuis qrcodes.html</p></div>
+  </div>
+</div>
+
+<!-- MODAL ACTIVATION JETON -->
+<div class="modal-overlay" id="modalActiverJeton">
+  <div class="modal-box" style="text-align:center">
+    <h3 id="jetonModalTitre">🎫 Jeton n°?</h3>
+    <div class="modal-sub">Quelle table pour ce jeton ?</div>
+    <input type="number" class="pwd-input" id="jetonTableInput" inputmode="numeric" placeholder="N° de table" min="1" max="150">
+    <div class="modal-actions">
+      <button class="btn-annuler-modal" onclick="fermerModalJeton()">Annuler</button>
+      <button class="btn-valider-modal" onclick="validerActivationJeton()">✅ Activer</button>
+    </div>
+    <button class="btn-sm" id="btnLibererJeton" onclick="libererJetonDepuisModal()" style="display:none;margin-top:10px;width:100%;background:#3A1E1E;color:#E88;border:1px solid #C0392B">🔓 Libérer ce jeton</button>
+    <button class="btn-sm" id="btnSupprimerJeton" onclick="supprimerJetonDepuisModal()" style="margin-top:8px;width:100%;background:#1A1A1A;color:#888;border:1px solid #555">🗑️ Supprimer définitivement</button>
+  </div>
 </div>
 
 <div class="version">v.12/08/2026 14:00 — Moule & Smile Caisse</div>
@@ -432,6 +474,113 @@ db.collection('alertes').onSnapshot(snap=>{
   renderAlertes();
   updateStats();
 }, err=>{console.error('Alertes listener error:',err);});
+
+// ============================================================
+// ÉCOUTE FIRESTORE — JETONS
+// ============================================================
+let allJetons={};
+let filtreJetonsCourant='tous';
+let jetonEnCoursActivation=null;
+
+db.collection('jetons').orderBy('numero').onSnapshot(snap=>{
+  snap.docChanges().forEach(change=>{
+    if(change.type==='removed'){
+      delete allJetons[change.doc.id];
+    } else {
+      allJetons[change.doc.id]={id:change.doc.id,...change.doc.data()};
+    }
+  });
+  renderJetons();
+}, err=>{console.error('Jetons listener error:',err);});
+
+function setFiltreJetons(mode,el){
+  filtreJetonsCourant=mode;
+  document.querySelectorAll('#tab-jetons .btn-filtre').forEach(b=>b.classList.remove('actif'));
+  el.classList.add('actif');
+  renderJetons();
+}
+
+function filtrerJetons(){
+  document.getElementById('btnViderRechercheJeton').style.display=document.getElementById('rechercheJeton').value?'inline-block':'none';
+  renderJetons();
+}
+
+function renderJetons(){
+  const grid=document.getElementById('jetonsGrid');
+  const recherche=document.getElementById('rechercheJeton').value.trim();
+  let jetons=Object.values(allJetons);
+
+  if(filtreJetonsCourant==='libre') jetons=jetons.filter(j=>j.statut==='libre');
+  if(filtreJetonsCourant==='actif') jetons=jetons.filter(j=>j.statut==='actif');
+  if(recherche) jetons=jetons.filter(j=>String(j.numero)===recherche);
+
+  jetons.sort((a,b)=>(a.numero||0)-(b.numero||0));
+
+  if(!jetons.length){
+    grid.innerHTML='<div class="empty"><div class="em">🎫</div><p>Aucun jeton ne correspond</p></div>';
+    return;
+  }
+
+  grid.innerHTML=jetons.map(j=>{
+    const actif=j.statut==='actif';
+    return `<div class="jeton-pastille ${actif?'actif':'libre'}" onclick="ouvrirModalJeton('${j.id}',${j.numero})">
+      <div class="jp-num">🎫 ${j.numero}</div>
+      <div class="jp-sub">${actif?'Table '+j.table:'Libre'}</div>
+    </div>`;
+  }).join('');
+}
+
+function ouvrirModalJeton(jetonId,numero){
+  const j=allJetons[jetonId];
+  const estActif=j&&j.statut==='actif';
+  jetonEnCoursActivation=jetonId;
+  document.getElementById('jetonModalTitre').textContent=`🎫 Jeton n°${numero}`;
+  document.getElementById('jetonTableInput').value=estActif?j.table:'';
+  document.getElementById('btnLibererJeton').style.display=estActif?'block':'none';
+  document.getElementById('modalActiverJeton').classList.add('visible');
+  setTimeout(()=>document.getElementById('jetonTableInput').focus(),100);
+}
+
+function fermerModalJeton(){
+  jetonEnCoursActivation=null;
+  document.getElementById('modalActiverJeton').classList.remove('visible');
+}
+
+async function libererJetonDepuisModal(){
+  if(!jetonEnCoursActivation) return;
+  await libererJeton(jetonEnCoursActivation);
+  fermerModalJeton();
+}
+
+async function supprimerJetonDepuisModal(){
+  if(!jetonEnCoursActivation) return;
+  const j=allJetons[jetonEnCoursActivation];
+  const numero=j?j.numero:'?';
+  if(!confirm(`Supprimer définitivement le jeton n°${numero} ?\n\nLe QR papier correspondant ne fonctionnera plus jamais — à réserver aux jetons de test.`)) return;
+  try{
+    await db.collection('jetons').doc(jetonEnCoursActivation).delete();
+    showToast(`✅ Jeton n°${numero} supprimé`);
+    fermerModalJeton();
+  }catch(e){console.error(e);showToast('❌ Erreur suppression');}
+}
+
+async function validerActivationJeton(){
+  if(!jetonEnCoursActivation) return;
+  const val=parseInt(document.getElementById('jetonTableInput').value);
+  if(!val||val<1||val>150){showToast('⚠️ Numéro de table invalide');return;}
+  try{
+    await db.collection('jetons').doc(jetonEnCoursActivation).update({statut:'actif',table:val});
+    showToast(`✅ Jeton activé — Table ${val}`);
+    fermerModalJeton();
+  }catch(e){console.error(e);showToast('❌ Erreur activation');}
+}
+
+async function libererJeton(jetonId){
+  try{
+    await db.collection('jetons').doc(jetonId).update({statut:'libre',table:null});
+    showToast('✅ Jeton libéré');
+  }catch(e){console.error(e);showToast('❌ Erreur libération');}
+}
 
 // ============================================================
 // STATS
@@ -911,7 +1060,19 @@ async function encaisser(tableNum){
 
     showToast(`✅ Table ${tableNum} encaissée !`);
     chargerHistorique();
+    liberJetonDeTable(tableNum);
   }catch(e){showToast('❌ Erreur encaissement');console.error(e);}
+}
+
+// Libère automatiquement le(s) jeton(s) rattaché(s) à cette table (encaissement = fin de service)
+async function liberJetonDeTable(tableNum){
+  try{
+    const snap=await db.collection('jetons').where('table','==',tableNum).where('statut','==','actif').get();
+    if(snap.empty) return;
+    const b=db.batch();
+    snap.forEach(d=>b.update(d.ref,{statut:'libre',table:null}));
+    await b.commit();
+  }catch(e){console.error('Erreur libération jeton',e);}
 }
 
 // ============================================================
