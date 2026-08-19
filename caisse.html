@@ -541,9 +541,12 @@ function renderCommandes(){
       </div>
       <div class="cmd-items">
         ${items.map(item=>`
-          <div class="cmd-item-row">
-            <span>${item.nom}</span>
-            <span style="color:#D4AF37;font-weight:bold">${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span>
+          <div class="cmd-item-row" style="flex-direction:column;align-items:stretch">
+            <div style="display:flex;justify-content:space-between">
+              <span>${item.nom}</span>
+              <span style="color:#D4AF37;font-weight:bold">${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span>
+            </div>
+            ${item.desc?`<div style="font-size:11px;color:#4ABA80;padding-left:4px">${item.desc}</div>`:''}
           </div>`).join('')}
       </div>
       <div class="cmd-total">Total : ${(cmd.total||0).toFixed(2).replace('.',',')} €</div>
@@ -587,9 +590,12 @@ function renderCommandesDeux(){
         </div>
         <div class="cmd-items">
           ${items.map(item=>`
-            <div class="cmd-item-row">
-              <span>${item.nom}</span>
-              <span style="color:#D4AF37;font-weight:bold">${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span>
+            <div class="cmd-item-row" style="flex-direction:column;align-items:stretch">
+              <div style="display:flex;justify-content:space-between">
+                <span>${item.nom}</span>
+                <span style="color:#D4AF37;font-weight:bold">${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span>
+              </div>
+              ${item.desc?`<div style="font-size:11px;color:#4ABA80;padding-left:4px">${item.desc}</div>`:''}
             </div>`).join('')}
         </div>
         <div class="cmd-total">Total : ${(cmd.total||0).toFixed(2).replace('.',',')} €</div>
@@ -852,9 +858,12 @@ function renderAdditions(){
               <button class="btn-editer" style="padding:4px 8px;font-size:11px" onclick="demanderPwdPuis(()=>ouvrirModalEditCommande('${cmd.id}'))">✏️</button>
             </div>
             ${(cmd.items||[]).map(item=>`
-              <div class="cmd-groupe-item">
-                <span>${item.nom}</span>
-                <span style="color:#D4AF37">${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span>
+              <div class="cmd-groupe-item" style="flex-direction:column;align-items:stretch">
+                <div style="display:flex;justify-content:space-between">
+                  <span>${item.nom}</span>
+                  <span style="color:#D4AF37">${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span>
+                </div>
+                ${item.desc?`<div style="font-size:10px;color:#4ABA80;padding-left:4px">${item.desc}</div>`:''}
               </div>`).join('')}
             <div class="cmd-groupe-subtotal">ss-total : ${(cmd.total||0).toFixed(2).replace('.',',')} €</div>
           </div>`).join('')}
@@ -947,9 +956,12 @@ function renderHistorique(){
           <div style="margin-bottom:8px;padding:8px;background:#2A2A2A;border-radius:6px">
             <div style="color:#D4AF37;font-size:11px;margin-bottom:4px">🕐 ${cmd.heure||'--:--'}</div>
             ${(cmd.items||[]).map(item=>`
-              <div style="display:flex;justify-content:space-between;font-size:12px;color:#ddd;padding:2px 0">
-                <span>${item.nom}</span>
-                <span>${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span>
+              <div style="padding:2px 0">
+                <div style="display:flex;justify-content:space-between;font-size:12px;color:#ddd">
+                  <span>${item.nom}</span>
+                  <span>${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span>
+                </div>
+                ${item.desc?`<div style="font-size:10px;color:#4ABA80;padding-left:4px">${item.desc}</div>`:''}
               </div>`).join('')}
           </div>`).join('')}
         <button onclick="event.stopPropagation();imprimerTicket('hist_${i}')"
@@ -1024,9 +1036,12 @@ function imprimerTicket(key){
     lignes+=`<tr><td colspan="2" style="padding:4px 0;border-top:1px dashed #000;font-size:10px;color:#555">🕐 ${cmd.heure||'--:--'}</td></tr>`;
     (cmd.items||[]).forEach(item=>{
       lignes+=`<tr>
-        <td style="padding:2px 0;font-size:12px">${item.nom}</td>
-        <td style="padding:2px 0;font-size:12px;text-align:right;white-space:nowrap">${item.prix===0?'Incl.':item.prix.toFixed(2).replace('.',',')+' €'}</td>
+        <td style="padding:2px 0 0 0;font-size:12px">${item.nom}</td>
+        <td style="padding:2px 0 0 0;font-size:12px;text-align:right;white-space:nowrap">${item.prix===0?'Incl.':item.prix.toFixed(2).replace('.',',')+' €'}</td>
       </tr>`;
+      if(item.desc){
+        lignes+=`<tr><td colspan="2" style="padding:0 0 2px 8px;font-size:10px;color:#555">${item.desc}</td></tr>`;
+      }
     });
     lignes+=`<tr><td colspan="2" style="text-align:right;font-size:10px;color:#555;padding-bottom:4px">ss-total : ${(cmd.total||0).toFixed(2).replace('.',',')} €</td></tr>`;
   });
