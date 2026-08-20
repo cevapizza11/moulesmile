@@ -182,6 +182,8 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
   <div class="nav-tab" id="tab-btn-historique" onclick="switchTab('historique')">📚 Historique</div>
   <div class="nav-tab" id="tab-btn-ca" onclick="switchTab('ca')">💰 CA</div>
   <div class="nav-tab" id="tab-btn-jetons" onclick="switchTab('jetons')">🎫 Jetons</div>
+  <div class="nav-tab" id="tab-btn-recharges" onclick="switchTab('recharges')">🔄 Recharges</div>
+  <div class="nav-tab" id="tab-btn-stats" onclick="switchTab('stats')">📊 Stats</div>
 </div>
 
 <div class="bandeau-retard" id="bandeauRetard"></div>
@@ -286,6 +288,7 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
 <!-- ===== ONGLET JETONS ===== -->
 <div class="tab-content" id="tab-jetons">
   <div class="status-bar"><div class="dot"></div>Imprimez un jeton jetable au moment de placer une table — il s'active tout seul, se libère automatiquement à l'encaissement.</div>
+  <div id="occupationCounter" style="background:#1A2A1A;border:1px solid #2ab54a;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#8aff9d;font-weight:bold;text-align:center"></div>
   <button class="btn-encaisser" style="width:100%;font-size:15px;padding:14px;margin-bottom:14px" onclick="nouvelleTableAvecJeton()">🖨️ Nouvelle table — imprimer un jeton</button>
   <div class="recherche-bar">
     <input type="number" id="rechercheJeton" class="recherche-input" placeholder="🔍 Rechercher par n° de jeton OU n° de table..." inputmode="numeric" oninput="filtrerJetons()">
@@ -301,12 +304,49 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
   </div>
 </div>
 
+<!-- ===== ONGLET RECHARGES (moules à volonté) ===== -->
+<div class="tab-content" id="tab-recharges">
+  <div class="status-bar"><div class="dot"></div>Enregistrez une recharge de marmite — imprime un mini-ticket cuisine et alimente les statistiques.</div>
+  <div class="recherche-bar">
+    <input type="number" id="rechercheTableRecharge" class="recherche-input" placeholder="🔍 N° de table..." inputmode="numeric" oninput="filtrerTablesRecharge()">
+  </div>
+  <div id="tablesRechargeGrid" class="jetons-grid"></div>
+  <div style="margin-top:20px">
+    <h3 style="color:#D4AF37;font-size:14px;margin-bottom:10px">📋 Recharges du service en cours</h3>
+    <div id="rechargesRecentes"></div>
+  </div>
+</div>
+
+<!-- MODAL RECHARGE -->
+<div class="modal-overlay" id="modalRecharge">
+  <div class="modal-box" style="text-align:center">
+    <h3 id="rechargeModalTitre">🔄 Recharge — Table ?</h3>
+    <div class="modal-sub">Quelle sauce ?</div>
+    <div id="rechargeSaucesList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px"></div>
+    <div class="modal-actions">
+      <button class="btn-annuler-modal" onclick="fermerModalRecharge()">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ONGLET STATS ===== -->
+<div class="tab-content" id="tab-stats">
+  <div class="status-bar"><div class="dot"></div>Durée moyenne par table et recharges — basé sur les visites enregistrées.</div>
+  <div class="filtre-bar">
+    <button class="btn-filtre actif" id="filtreStats7" onclick="setFiltreStats(7,this)">7 derniers jours</button>
+    <button class="btn-filtre" id="filtreStats30" onclick="setFiltreStats(30,this)">30 derniers jours</button>
+    <button class="btn-filtre" id="filtreStatsTout" onclick="setFiltreStats(9999,this)">Tout</button>
+  </div>
+  <div id="statsContent" style="margin-top:14px"></div>
+</div>
+
 <!-- MODAL ACTIVATION JETON -->
 <div class="modal-overlay" id="modalActiverJeton">
   <div class="modal-box" style="text-align:center">
     <h3 id="jetonModalTitre">🎫 Jeton n°?</h3>
     <div class="modal-sub">Quelle table pour ce jeton ?</div>
     <input type="number" class="pwd-input" id="jetonTableInput" inputmode="numeric" placeholder="N° de table" min="1" max="150">
+    <input type="number" class="pwd-input" id="jetonCouvertsInput" inputmode="numeric" placeholder="Nb de couverts (personnes)" min="1" max="30" style="font-size:16px;letter-spacing:normal">
     <div class="modal-actions">
       <button class="btn-annuler-modal" onclick="fermerModalJeton()">Annuler</button>
       <button class="btn-valider-modal" onclick="validerActivationJeton()">✅ Activer</button>
@@ -342,8 +382,11 @@ const BASE_URL_APP='https://cevapizza11.github.io/moulesmile/index.html';
 // Lecture seule de la carte — uniquement pour connaître les consignes de service par produit
 // (ex: "Apporter une marmite"). Ne JAMAIS écrire dans ce document depuis caisse.html.
 let carteConsignes={};
+let carteSauces=[]; // options de la famille "sauce" (pour la recharge rapide de marmite)
 db.collection('config').doc('carte_v2').onSnapshot(doc=>{
   carteConsignes=(doc.exists && doc.data().consignesCuisine)||{};
+  const famillesOptions=(doc.exists && doc.data().famillesOptions)||{};
+  carteSauces=(famillesOptions.sauce&&famillesOptions.sauce.options||[]).filter(o=>o.actif);
 });
 
 // ============================================================
@@ -396,6 +439,7 @@ function switchTab(nom){
   if(nom==='historique') chargerHistorique();
   if(nom==='deux') renderCommandesDeux();
   if(nom==='additions') filtrerAdditions();
+  if(nom==='stats') chargerStats(filtreStatsJours);
 }
 
 // ============================================================
@@ -527,6 +571,8 @@ function filtrerJetons(){
 }
 
 function renderJetons(){
+  updateOccupationCounter();
+  renderTablesRecharge();
   const grid=document.getElementById('jetonsGrid');
   const recherche=document.getElementById('rechercheJeton').value.trim();
   let jetons=Object.values(allJetons);
@@ -547,11 +593,215 @@ function renderJetons(){
     return `<div class="jeton-pastille ${actif?'actif':'libre'}" style="position:relative">
       <div onclick="ouvrirModalJeton('${j.id}',${j.numero})">
         <div class="jp-num">🎫 ${j.numero}</div>
-        <div class="jp-sub">${actif?'Table '+j.table:'Libre'}</div>
+        <div class="jp-sub">${actif?'Table '+j.table+(j.couverts?' ('+j.couverts+'p)':''):'Libre'}</div>
       </div>
       ${actif?`<button class="jp-print" onclick="event.stopPropagation();imprimerTicketJeton(${j.numero},'${j.token}',${j.table});showToast('🖨️ Réimpression jeton n°${j.numero} — Table ${j.table}')" title="Réimprimer">🖨️</button>`:''}
     </div>`;
   }).join('');
+}
+
+function updateOccupationCounter(){
+  const el=document.getElementById('occupationCounter');
+  if(!el)return;
+  const actifs=Object.values(allJetons).filter(j=>j.statut==='actif');
+  const totalCouverts=actifs.reduce((s,j)=>s+(j.couverts||0),0);
+  const nb2=actifs.filter(j=>j.couverts===2).length;
+  el.textContent=`🪑 ${actifs.length} table(s) occupée(s)${totalCouverts?` — ${totalCouverts} couvert(s)`:''}${nb2?` — dont ${nb2} table(s) de 2`:''}`;
+}
+
+// ============================================================
+// RECHARGES DE MARMITE (moules à volonté)
+// ============================================================
+let tableRechargeEnCours=null;
+let allRecharges={};
+
+db.collection('recharges').orderBy('timestamp','desc').limit(100).onSnapshot(snap=>{
+  snap.docChanges().forEach(change=>{
+    if(change.type==='removed') delete allRecharges[change.doc.id];
+    else allRecharges[change.doc.id]={id:change.doc.id,...change.doc.data()};
+  });
+  renderRechargesRecentes();
+}, err=>console.error('Recharges listener error:',err));
+
+function filtrerTablesRecharge(){
+  renderTablesRecharge();
+}
+
+function renderTablesRecharge(){
+  const grid=document.getElementById('tablesRechargeGrid');
+  if(!grid)return;
+  const recherche=(document.getElementById('rechercheTableRecharge')?.value||'').trim();
+  let actifs=Object.values(allJetons).filter(j=>j.statut==='actif');
+  if(recherche) actifs=actifs.filter(j=>String(j.table).includes(recherche));
+  actifs.sort((a,b)=>(a.table||0)-(b.table||0));
+
+  if(!actifs.length){
+    grid.innerHTML='<div class="empty"><div class="em">🪑</div><p>Aucune table active</p></div>';
+    return;
+  }
+
+  grid.innerHTML=actifs.map(j=>`
+    <div class="jeton-pastille actif" onclick="ouvrirModalRecharge(${j.table})">
+      <div class="jp-num">🪑 ${j.table}</div>
+      <div class="jp-sub">🔄 Recharger</div>
+    </div>`).join('');
+}
+
+function ouvrirModalRecharge(tableNum){
+  tableRechargeEnCours=tableNum;
+  document.getElementById('rechargeModalTitre').textContent=`🔄 Recharge — Table ${tableNum}`;
+  const list=document.getElementById('rechargeSaucesList');
+  if(carteSauces.length){
+    list.innerHTML=carteSauces.map(s=>`
+      <button class="btn-valider-modal" style="width:100%" onclick="validerRecharge('${s.nom.replace(/'/g,"\\'")}')">${s.nom}</button>
+    `).join('');
+  } else {
+    list.innerHTML=`<button class="btn-valider-modal" style="width:100%" onclick="validerRecharge('')">✅ Confirmer (sans sauce)</button>`;
+  }
+  document.getElementById('modalRecharge').classList.add('visible');
+}
+
+function fermerModalRecharge(){
+  tableRechargeEnCours=null;
+  document.getElementById('modalRecharge').classList.remove('visible');
+}
+
+async function validerRecharge(sauceNom){
+  if(!tableRechargeEnCours)return;
+  const tableNum=tableRechargeEnCours;
+  const printWin=window.open('','_blank','width=420,height=400');
+  try{
+    await db.collection('recharges').add({
+      table:tableNum,
+      sauce:sauceNom||null,
+      timestamp:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    showToast(`✅ Recharge enregistrée — Table ${tableNum}`);
+    imprimerTicketRecharge(tableNum, sauceNom, printWin);
+  }catch(e){console.error(e);showToast('❌ Erreur recharge');if(printWin)printWin.close();}
+  fermerModalRecharge();
+}
+
+function imprimerTicketRecharge(tableNum, sauceNom, printWin){
+  const win=printWin||window.open('','_blank','width=420,height=400');
+  if(!win){showToast('⚠️ Fenêtre d\'impression bloquée');return;}
+  win.document.write(`<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Recharge Table ${tableNum}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:900;color:#000;background:white;width:80mm;margin:0 auto;padding:8mm;text-align:center;-webkit-print-color-adjust:exact}
+.title{font-size:22px;font-weight:900;margin-bottom:8px;border-bottom:2px solid black;padding-bottom:8px}
+.sauce{font-size:16px;font-weight:900;margin-top:8px}
+@media print{body{width:80mm;margin:0;padding:6mm}@page{margin:0;size:80mm auto}}
+</style></head><body>
+<div class="title">🔄 RECHARGE — TABLE ${tableNum}</div>
+${sauceNom?`<div class="sauce">Sauce : ${sauceNom}</div>`:''}
+<script>window.onload=function(){window.print();setTimeout(()=>window.close(),1500);}<\/script>
+</body></html>`);
+  win.document.close();
+}
+
+function renderRechargesRecentes(){
+  const el=document.getElementById('rechargesRecentes');
+  if(!el)return;
+  const recharges=Object.values(allRecharges).sort((a,b)=>{
+    const ta=a.timestamp?.toMillis?a.timestamp.toMillis():0;
+    const tb=b.timestamp?.toMillis?b.timestamp.toMillis():0;
+    return tb-ta;
+  });
+  if(!recharges.length){
+    el.innerHTML='<div class="empty"><div class="em">🔄</div><p>Aucune recharge enregistrée</p></div>';
+    return;
+  }
+  el.innerHTML=recharges.slice(0,30).map(r=>{
+    const heure=r.timestamp?.toDate?r.timestamp.toDate().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'--:--';
+    return `<div class="cmd-item-row"><span>🪑 Table ${r.table}${r.sauce?' — '+r.sauce:''}</span><span style="color:#888;font-size:11px">${heure}</span></div>`;
+  }).join('');
+}
+
+// ============================================================
+// STATS — durée par table, recharges
+// ============================================================
+let filtreStatsJours=7;
+
+function setFiltreStats(jours,el){
+  filtreStatsJours=jours;
+  document.querySelectorAll('#tab-stats .btn-filtre').forEach(b=>b.classList.remove('actif'));
+  el.classList.add('actif');
+  chargerStats(jours);
+}
+
+async function chargerStats(jours){
+  const container=document.getElementById('statsContent');
+  container.innerHTML='<div class="empty"><div class="em">⏳</div><p>Chargement...</p></div>';
+
+  try{
+    let query=db.collection('visites').orderBy('heureDepart','desc').limit(1000);
+    const snap=await query.get();
+    const maintenant=Date.now();
+    const limiteMs=jours>=9999?Infinity:jours*24*60*60*1000;
+
+    let visites=snap.docs.map(d=>d.data()).filter(v=>{
+      if(limiteMs===Infinity)return true;
+      const t=v.heureDepart?.toMillis?v.heureDepart.toMillis():0;
+      return (maintenant-t)<=limiteMs;
+    });
+
+    if(!visites.length){
+      container.innerHTML='<div class="empty"><div class="em">📊</div><p>Aucune visite enregistrée sur cette période</p></div>';
+      return;
+    }
+
+    // Regroupement par taille de table
+    const buckets={'2 pers.':[],'3-4 pers.':[],'5-8 pers.':[],'9+ pers.':[],'Inconnu':[]};
+    visites.forEach(v=>{
+      const c=v.couverts;
+      if(!c) buckets['Inconnu'].push(v);
+      else if(c===2) buckets['2 pers.'].push(v);
+      else if(c<=4) buckets['3-4 pers.'].push(v);
+      else if(c<=8) buckets['5-8 pers.'].push(v);
+      else buckets['9+ pers.'].push(v);
+    });
+
+    const moyenne=arr=>arr.length?Math.round(arr.reduce((s,v)=>s+(v.dureeMinutes||0),0)/arr.length):null;
+    const totalCA=visites.reduce((s,v)=>s+(v.total||0),0);
+    const dureeGlobale=moyenne(visites);
+
+    // Recharges sur la même période
+    let rechargesSnap;
+    try{
+      rechargesSnap=await db.collection('recharges').orderBy('timestamp','desc').limit(1000).get();
+    }catch(e){rechargesSnap={docs:[]};}
+    const recharges=rechargesSnap.docs.map(d=>d.data()).filter(r=>{
+      if(limiteMs===Infinity)return true;
+      const t=r.timestamp?.toMillis?r.timestamp.toMillis():0;
+      return (maintenant-t)<=limiteMs;
+    });
+    const rechargesParTable=visites.length?(recharges.length/visites.length).toFixed(1):'0';
+
+    let html=`
+      <div class="ca-box" style="margin-bottom:14px">
+        <div class="ca-num">${visites.length}</div>
+        <div class="ca-lbl">table(s) sur la période</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+        <div class="ca-box"><div class="ca-num">${dureeGlobale!==null?dureeGlobale+' min':'—'}</div><div class="ca-lbl">Durée moyenne globale</div></div>
+        <div class="ca-box"><div class="ca-num">${rechargesParTable}</div><div class="ca-lbl">Recharges / table</div></div>
+      </div>
+      <h3 style="color:#D4AF37;font-size:14px;margin-bottom:10px">⏱️ Durée moyenne par taille de table</h3>
+    `;
+
+    Object.entries(buckets).forEach(([label,arr])=>{
+      if(!arr.length)return;
+      const m=moyenne(arr);
+      html+=`<div class="cmd-item-row"><span>${label}</span><span style="color:#D4AF37;font-weight:bold">${m} min <span style="color:#888;font-weight:normal;font-size:11px">(${arr.length} table${arr.length>1?'s':''})</span></span></div>`;
+    });
+
+    container.innerHTML=html;
+  }catch(e){
+    console.error('Erreur chargement stats',e);
+    container.innerHTML='<div class="empty"><div class="em">❌</div><p>Erreur de chargement — voir console</p></div>';
+  }
 }
 
 function ouvrirModalJeton(jetonId,numero){
@@ -560,6 +810,7 @@ function ouvrirModalJeton(jetonId,numero){
   jetonEnCoursActivation=jetonId;
   document.getElementById('jetonModalTitre').textContent=`🎫 Jeton n°${numero}`;
   document.getElementById('jetonTableInput').value=estActif?j.table:'';
+  document.getElementById('jetonCouvertsInput').value=(estActif&&j.couverts)?j.couverts:'';
   document.getElementById('btnReimprimerJeton').style.display=estActif?'block':'none';
   document.getElementById('btnCopierLienJeton').style.display=estActif?'block':'none';
   document.getElementById('btnLibererJeton').style.display=estActif?'block':'none';
@@ -615,8 +866,12 @@ async function validerActivationJeton(){
   if(!jetonEnCoursActivation) return;
   const val=parseInt(document.getElementById('jetonTableInput').value);
   if(!val||val<1||val>150){showToast('⚠️ Numéro de table invalide');return;}
+  const couverts=parseInt(document.getElementById('jetonCouvertsInput').value)||null;
   try{
-    await db.collection('jetons').doc(jetonEnCoursActivation).update({statut:'actif',table:val});
+    await db.collection('jetons').doc(jetonEnCoursActivation).update({
+      statut:'actif', table:val, couverts,
+      timestamp:firebase.firestore.FieldValue.serverTimestamp()
+    });
     showToast(`✅ Jeton activé — Table ${val}`);
     fermerModalJeton();
   }catch(e){console.error(e);showToast('❌ Erreur activation');}
@@ -647,12 +902,13 @@ async function prochainNumeroJeton(){
 async function nouvelleTableAvecJeton(){
   const val=parseInt(prompt('N° de table pour ce jeton :'));
   if(!val||val<1||val>150){if(!isNaN(val))showToast('⚠️ Numéro de table invalide');return;}
+  const couverts=parseInt(prompt('Combien de couverts (personnes) à cette table ?'))||null;
 
   try{
     const numero=await prochainNumeroJeton();
     const token=genererTokenJeton();
     await db.collection('jetons').doc(token).set({
-      numero, token, statut:'actif', table:val, jetable:true,
+      numero, token, statut:'actif', table:val, couverts, jetable:true,
       timestamp:firebase.firestore.FieldValue.serverTimestamp()
     });
     showToast(`✅ Jeton n°${numero} activé — Table ${val}`);
@@ -1264,22 +1520,39 @@ async function encaisser(tableNum){
 
     showToast(`✅ Table ${tableNum} encaissée !`);
     chargerHistorique();
-    liberJetonDeTable(tableNum);
+    liberJetonDeTable(tableNum, addData.total||0);
   }catch(e){showToast('❌ Erreur encaissement');console.error(e);}
 }
 
 // Libère automatiquement le(s) jeton(s) rattaché(s) à cette table (encaissement = fin de service)
-async function liberJetonDeTable(tableNum){
+// et enregistre la visite (arrivée → départ) pour les statistiques.
+async function liberJetonDeTable(tableNum, totalAddition){
   try{
     const snap=await db.collection('jetons').where('table','==',tableNum).where('statut','==','actif').get();
     if(snap.empty) return;
     const b=db.batch();
+    const maintenant=Date.now();
     snap.forEach(d=>{
       const data=d.data();
+
+      // Enregistre la visite pour les statistiques (durée réelle, taille de table)
+      if(data.timestamp){
+        const arrivee=data.timestamp.toDate?data.timestamp.toDate():new Date(data.timestamp);
+        const dureeMinutes=Math.round((maintenant-arrivee.getTime())/60000);
+        db.collection('visites').add({
+          table:tableNum,
+          couverts:data.couverts||null,
+          dureeMinutes,
+          total:totalAddition||0,
+          heureArrivee:data.timestamp,
+          heureDepart:firebase.firestore.FieldValue.serverTimestamp()
+        }).catch(e=>console.error('Erreur enregistrement visite',e));
+      }
+
       if(data.jetable){
         b.delete(d.ref); // jeton à usage unique imprimé à la volée → supprimé définitivement
       } else {
-        b.update(d.ref,{statut:'libre',table:null}); // jeton réutilisable (lot pré-imprimé) → remis dans le pool
+        b.update(d.ref,{statut:'libre',table:null,couverts:null}); // jeton réutilisable (lot pré-imprimé) → remis dans le pool
       }
     });
     await b.commit();
