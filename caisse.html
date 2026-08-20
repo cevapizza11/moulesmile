@@ -312,6 +312,7 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
       <button class="btn-valider-modal" onclick="validerActivationJeton()">✅ Activer</button>
     </div>
     <button class="btn-sm" id="btnReimprimerJeton" onclick="reimprimerJetonDepuisModal()" style="display:none;margin-top:10px;width:100%;background:#1A2A3A;color:#8ac4ff;border:1px solid #2a6ab5">🖨️ Réimprimer ce jeton</button>
+    <button class="btn-sm" id="btnCopierLienJeton" onclick="copierLienJetonDepuisModal()" style="display:none;margin-top:8px;width:100%;background:#1A2A1A;color:#8aff9d;border:1px solid #2ab54a">📋 Copier le lien (test sur ordinateur)</button>
     <button class="btn-sm" id="btnLibererJeton" onclick="libererJetonDepuisModal()" style="display:none;margin-top:10px;width:100%;background:#3A1E1E;color:#E88;border:1px solid #C0392B">🔓 Libérer ce jeton</button>
     <button class="btn-sm" id="btnSupprimerJeton" onclick="supprimerJetonDepuisModal()" style="margin-top:8px;width:100%;background:#1A1A1A;color:#888;border:1px solid #555">🗑️ Supprimer définitivement</button>
   </div>
@@ -335,6 +336,8 @@ const firebaseConfig={
 };
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
+// ⚠️ Adaptez cette URL à celle de votre app si elle change un jour (utilisée pour impression + copie de lien)
+const BASE_URL_APP='https://cevapizza11.github.io/moulesmile/index.html';
 
 // ============================================================
 // STATE
@@ -551,6 +554,7 @@ function ouvrirModalJeton(jetonId,numero){
   document.getElementById('jetonModalTitre').textContent=`🎫 Jeton n°${numero}`;
   document.getElementById('jetonTableInput').value=estActif?j.table:'';
   document.getElementById('btnReimprimerJeton').style.display=estActif?'block':'none';
+  document.getElementById('btnCopierLienJeton').style.display=estActif?'block':'none';
   document.getElementById('btnLibererJeton').style.display=estActif?'block':'none';
   document.getElementById('modalActiverJeton').classList.add('visible');
   setTimeout(()=>document.getElementById('jetonTableInput').focus(),100);
@@ -568,6 +572,18 @@ function reimprimerJetonDepuisModal(){
   imprimerTicketJeton(j.numero, j.token, j.table);
   showToast(`🖨️ Réimpression jeton n°${j.numero} — Table ${j.table}`);
   fermerModalJeton();
+}
+
+function copierLienJetonDepuisModal(){
+  if(!jetonEnCoursActivation) return;
+  const j=allJetons[jetonEnCoursActivation];
+  if(!j||j.statut!=='actif'){showToast('⚠️ Ce jeton n\'est plus actif');return;}
+  const url=`${BASE_URL_APP}?j=${j.token}`;
+  navigator.clipboard.writeText(url).then(()=>{
+    showToast(`📋 Lien copié — Table ${j.table} (collez-le dans votre navigateur)`);
+  }).catch(()=>{
+    prompt('Copiez ce lien manuellement :', url);
+  });
 }
 
 async function libererJetonDepuisModal(){
@@ -638,8 +654,7 @@ async function nouvelleTableAvecJeton(){
 }
 
 function imprimerTicketJeton(numero, token, tableNum){
-  // ⚠️ Adaptez cette URL à celle de votre app (même que dans qrcodes.html)
-  const baseUrl='https://cevapizza11.github.io/moulesmile/index.html';
+  const baseUrl=BASE_URL_APP;
   const url=`${baseUrl}?j=${token}`;
 
   const win=window.open('','_blank','width=420,height=500');
