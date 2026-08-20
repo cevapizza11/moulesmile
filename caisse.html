@@ -347,6 +347,7 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
     <div class="modal-sub">Quelle table pour ce jeton ?</div>
     <input type="number" class="pwd-input" id="jetonTableInput" inputmode="numeric" placeholder="N° de table" min="1" max="150">
     <input type="number" class="pwd-input" id="jetonCouvertsInput" inputmode="numeric" placeholder="Nb de couverts (personnes)" min="1" max="30" style="font-size:16px;letter-spacing:normal">
+    <input type="number" class="pwd-input" id="jetonUnitesInput" inputmode="numeric" placeholder="Nb de tables 90x90 assemblées" min="1" max="15" style="font-size:16px;letter-spacing:normal">
     <div class="modal-actions">
       <button class="btn-annuler-modal" onclick="fermerModalJeton()">Annuler</button>
       <button class="btn-valider-modal" onclick="validerActivationJeton()">✅ Activer</button>
@@ -383,10 +384,13 @@ const BASE_URL_APP='https://cevapizza11.github.io/moulesmile/index.html';
 // (ex: "Apporter une marmite"). Ne JAMAIS écrire dans ce document depuis caisse.html.
 let carteConsignes={};
 let carteSauces=[]; // options de la famille "sauce" (pour la recharge rapide de marmite)
+let carteCapacite={salle:0,terrasse:0,terrasseOuverte:false};
 db.collection('config').doc('carte_v2').onSnapshot(doc=>{
   carteConsignes=(doc.exists && doc.data().consignesCuisine)||{};
   const famillesOptions=(doc.exists && doc.data().famillesOptions)||{};
   carteSauces=(famillesOptions.sauce&&famillesOptions.sauce.options||[]).filter(o=>o.actif);
+  carteCapacite=(doc.exists && doc.data().capaciteSalle)||{salle:0,terrasse:0,terrasseOuverte:false};
+  updateOccupationCounter();
 });
 
 // ============================================================
@@ -604,9 +608,18 @@ function updateOccupationCounter(){
   const el=document.getElementById('occupationCounter');
   if(!el)return;
   const actifs=Object.values(allJetons).filter(j=>j.statut==='actif');
+  const unitesOccupees=actifs.reduce((s,j)=>s+(j.unites||1),0);
   const totalCouverts=actifs.reduce((s,j)=>s+(j.couverts||0),0);
   const nb2=actifs.filter(j=>j.couverts===2).length;
-  el.textContent=`🪑 ${actifs.length} table(s) occupée(s)${totalCouverts?` — ${totalCouverts} couvert(s)`:''}${nb2?` — dont ${nb2} table(s) de 2`:''}`;
+
+  const capaciteTotale=(carteCapacite.salle||0)+(carteCapacite.terrasseOuverte?(carteCapacite.terrasse||0):0);
+
+  if(capaciteTotale>0){
+    const pct=Math.round((unitesOccupees/capaciteTotale)*100);
+    el.textContent=`🪑 ${unitesOccupees}/${capaciteTotale} unités occupées (${pct}%)${totalCouverts?` — ${totalCouverts} couvert(s)`:''}${nb2?` — dont ${nb2} table(s) de 2`:''}`;
+  } else {
+    el.textContent=`🪑 ${actifs.length} table(s) occupée(s)${totalCouverts?` — ${totalCouverts} couvert(s)`:''}${nb2?` — dont ${nb2} table(s) de 2`:''} — configurez la capacité dans Réglages`;
+  }
 }
 
 // ============================================================
@@ -811,6 +824,7 @@ function ouvrirModalJeton(jetonId,numero){
   document.getElementById('jetonModalTitre').textContent=`🎫 Jeton n°${numero}`;
   document.getElementById('jetonTableInput').value=estActif?j.table:'';
   document.getElementById('jetonCouvertsInput').value=(estActif&&j.couverts)?j.couverts:'';
+  document.getElementById('jetonUnitesInput').value=(estActif&&j.unites)?j.unites:'';
   document.getElementById('btnReimprimerJeton').style.display=estActif?'block':'none';
   document.getElementById('btnCopierLienJeton').style.display=estActif?'block':'none';
   document.getElementById('btnLibererJeton').style.display=estActif?'block':'none';
@@ -867,9 +881,10 @@ async function validerActivationJeton(){
   const val=parseInt(document.getElementById('jetonTableInput').value);
   if(!val||val<1||val>150){showToast('⚠️ Numéro de table invalide');return;}
   const couverts=parseInt(document.getElementById('jetonCouvertsInput').value)||null;
+  const unites=parseInt(document.getElementById('jetonUnitesInput').value)||1;
   try{
     await db.collection('jetons').doc(jetonEnCoursActivation).update({
-      statut:'actif', table:val, couverts,
+      statut:'actif', table:val, couverts, unites,
       timestamp:firebase.firestore.FieldValue.serverTimestamp()
     });
     showToast(`✅ Jeton activé — Table ${val}`);
@@ -879,7 +894,7 @@ async function validerActivationJeton(){
 
 async function libererJeton(jetonId){
   try{
-    await db.collection('jetons').doc(jetonId).update({statut:'libre',table:null});
+    await db.collection('jetons').doc(jetonId).update({statut:'libre',table:null,couverts:null,unites:null});
     showToast('✅ Jeton libéré');
   }catch(e){console.error(e);showToast('❌ Erreur libération');}
 }
@@ -903,12 +918,13 @@ async function nouvelleTableAvecJeton(){
   const val=parseInt(prompt('N° de table pour ce jeton :'));
   if(!val||val<1||val>150){if(!isNaN(val))showToast('⚠️ Numéro de table invalide');return;}
   const couverts=parseInt(prompt('Combien de couverts (personnes) à cette table ?'))||null;
+  const unites=parseInt(prompt('Combien de tables 90x90 assemblées ? (1 par défaut)'))||1;
 
   try{
     const numero=await prochainNumeroJeton();
     const token=genererTokenJeton();
     await db.collection('jetons').doc(token).set({
-      numero, token, statut:'actif', table:val, couverts, jetable:true,
+      numero, token, statut:'actif', table:val, couverts, unites, jetable:true,
       timestamp:firebase.firestore.FieldValue.serverTimestamp()
     });
     showToast(`✅ Jeton n°${numero} activé — Table ${val}`);

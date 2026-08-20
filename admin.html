@@ -234,6 +234,23 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 
   <div class="section" style="margin-top:14px">
+    <h2>🪑 Capacité de la salle (unités de table 90×90)</h2>
+    <div style="color:#888;font-size:12px;margin-bottom:12px">Utilisé pour le compteur d'occupation en temps réel dans la caisse.</div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label style="font-size:11px;color:#888;font-weight:bold;display:block;margin-bottom:4px">Salle intérieure — nombre d'unités</label>
+      <input type="number" id="capaciteSalle" min="0" placeholder="Ex: 40" style="width:100%;background:#2A2A2A;border:1px solid #D4AF37;border-radius:8px;color:#fff;padding:10px;font-size:13px" onchange="majCapacite()">
+    </div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label style="font-size:11px;color:#888;font-weight:bold;display:block;margin-bottom:4px">Terrasse — nombre d'unités</label>
+      <input type="number" id="capaciteTerrasse" min="0" placeholder="Ex: 30" style="width:100%;background:#2A2A2A;border:1px solid #D4AF37;border-radius:8px;color:#fff;padding:10px;font-size:13px" onchange="majCapacite()">
+    </div>
+    <div class="item-row">
+      <div class="item-info" style="cursor:default"><div class="item-nom">Terrasse ouverte aujourd'hui</div></div>
+      <label class="toggle"><input type="checkbox" id="terrasseOuverteToggle" onchange="majCapacite()"><span class="toggle-slider"></span></label>
+    </div>
+  </div>
+
+  <div class="section" style="margin-top:14px">
     <h2>🍽️ Consignes de service (ticket cuisine)</h2>
     <div style="color:#888;font-size:12px;margin-bottom:10px">Ex: "Apporter une marmite" pour les moules, "Apporter une assiette" pour les calamars/nuggets. Laissez vide si rien à ajouter. Imprimé automatiquement sous le plat sur le ticket cuisine.</div>
     <div id="consignesServiceList"></div>
@@ -726,6 +743,7 @@ function confirmerImport(){
     newCarte.produitsSuggestionAddition=carte.produitsSuggestionAddition;
     newCarte.categoriesSuggestionAddition=carte.categoriesSuggestionAddition;
     newCarte.consignesCuisine=carte.consignesCuisine;
+    newCarte.capaciteSalle=carte.capaciteSalle;
     newCarte.menuAdoOptions=carte.menuAdoOptions;
     newCarte.boissonsMenu=carte.boissonsMenu;
     newCarte.enfantMenu=carte.enfantMenu;
@@ -986,6 +1004,11 @@ function renderReglages(){
   document.getElementById('compteurToggle').checked=carte.compteurActif!==false;
   document.getElementById('groupeAperoToggle').checked=carte.groupeApero!==false;
 
+  if(!carte.capaciteSalle) carte.capaciteSalle={salle:40,terrasse:30,terrasseOuverte:false};
+  document.getElementById('capaciteSalle').value=carte.capaciteSalle.salle||'';
+  document.getElementById('capaciteTerrasse').value=carte.capaciteSalle.terrasse||'';
+  document.getElementById('terrasseOuverteToggle').checked=carte.capaciteSalle.terrasseOuverte===true;
+
   renderOrdreCategories();
   renderComposantsGroupeApero();
 
@@ -1131,6 +1154,17 @@ function renderConsignesService(){
     });
   });
   document.getElementById('consignesServiceList').innerHTML=html;
+}
+
+function majCapacite(){
+  if(!carte)return;
+  carte.capaciteSalle={
+    salle: parseInt(document.getElementById('capaciteSalle').value)||0,
+    terrasse: parseInt(document.getElementById('capaciteTerrasse').value)||0,
+    terrasseOuverte: document.getElementById('terrasseOuverteToggle').checked
+  };
+  sauvegarder();
+  showToast('✅ Capacité mise à jour');
 }
 
 function majConsigneService(prodId,texte){
