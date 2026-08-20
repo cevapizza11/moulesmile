@@ -819,6 +819,15 @@ async function chargerStats(jours){
       return limiteMs===Infinity || (maintenant-t)<=limiteMs;
     });
 
+    function jourStr(timestamp){
+      const d=timestamp?.toDate?timestamp.toDate():(timestamp?new Date(timestamp):new Date());
+      return d.toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'2-digit'});
+    }
+    function jourKey(timestamp){
+      const d=timestamp?.toDate?timestamp.toDate():(timestamp?new Date(timestamp):new Date());
+      return d.toISOString().slice(0,10);
+    }
+
     function compterCommandesInitiales(nomPlat){
       let n=0;
       historiqueFiltre.forEach(data=>{
@@ -829,6 +838,36 @@ async function chargerStats(jours){
         });
       });
       return n;
+    }
+
+    // Détail jour par jour pour un plat : {clé date: {label, nbInitial, nbRecharges}}
+    function detailParJour(nomPlat,inclureRecharges){
+      const parJour={};
+      historiqueFiltre.forEach(data=>{
+        const key=jourKey(data.timestamp);
+        (data.commandes||[]).forEach(cmd=>{
+          (cmd.items||[]).forEach(item=>{
+            if((item.nom||'').trim().toLowerCase()===nomPlat.trim().toLowerCase()){
+              if(!parJour[key]) parJour[key]={label:jourStr(data.timestamp),nbInitial:0,nbRecharges:0};
+              parJour[key].nbInitial++;
+            }
+          });
+        });
+      });
+      if(inclureRecharges){
+        recharges.filter(r=>r.plat===nomPlat).forEach(r=>{
+          const key=jourKey(r.timestamp);
+          if(!parJour[key]) parJour[key]={label:jourStr(r.timestamp),nbInitial:0,nbRecharges:0};
+          parJour[key].nbRecharges++;
+        });
+      }
+      return Object.entries(parJour).sort((a,b)=>b[0].localeCompare(a[0]));
+    }
+
+    function conditionnementHtml(totalQte,plat){
+      if(!plat.condTaille||plat.condTaille<=0)return '';
+      const nb=Math.ceil(totalQte/plat.condTaille);
+      return `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed #444;font-size:13px;color:#8aff9d">📦 ≈ <b>${nb}</b> ${plat.condLabel||'conditionnement(s)'} (de ${plat.condTaille} ${plat.unite})</div>`;
     }
 
     let html='';
@@ -861,25 +900,38 @@ async function chargerStats(jours){
       const nbInitial=compterCommandesInitiales(plat.nom);
       const rechargesPlat=recharges.filter(r=>r.plat===plat.nom);
       const total=nbInitial+rechargesPlat.length;
-      const qte=(total*(plat.quantite||0)).toFixed(1);
+      const qte=total*(plat.quantite||0);
+      const detailJour=detailParJour(plat.nom,true);
 
       html+=`
-        <div style="background:#242424;border:1px solid #444;border-radius:10px;padding:12px 14px;margin-bottom:10px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-            <span style="font-weight:bold;color:#fff">${plat.nom}</span>
+        <div style="background:#242424;border:1px solid #444;border-radius:10px;padding:14px;margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <span style="font-weight:bold;color:#fff;font-size:15px">${plat.nom}</span>
             <button class="btn-sm" style="background:#3A1E1E;color:#E88;border:1px solid #C0392B;padding:4px 10px;font-size:11px" onclick="supprimerPlatAVolonte(${i})">🗑️</button>
           </div>
-          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-            <input type="number" value="${plat.quantite}" step="0.1" min="0" style="width:70px;background:#111;border:1px solid #D4AF37;border-radius:6px;color:#D4AF37;font-weight:bold;padding:6px;font-size:13px;text-align:center" onchange="majPlatAVolonte(${i},'quantite',this.value)">
-            <span style="color:#888;font-size:12px">${plat.unite} par portion</span>
+
+          <div style="text-align:center;background:#111;border-radius:10px;padding:14px;margin-bottom:10px">
+            <div style="font-size:32px;font-weight:900;color:#D4AF37">${qte.toFixed(1)} ${plat.unite}</div>
+            <div style="font-size:11px;color:#888;margin-top:2px">Total période — ${nbInitial} servies + ${rechargesPlat.length} recharge(s)</div>
+            ${conditionnementHtml(qte,plat)}
+          </div>
+
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+            <div><span style="color:#888;font-size:11px;display:block">Qté/portion</span><input type="number" value="${plat.quantite}" step="0.1" min="0" style="width:65px;background:#111;border:1px solid #D4AF37;border-radius:6px;color:#D4AF37;font-weight:bold;padding:6px;font-size:13px;text-align:center" onchange="majPlatAVolonte(${i},'quantite',this.value)"></div>
+            <div><span style="color:#888;font-size:11px;display:block">Taille cond.</span><input type="number" value="${plat.condTaille||''}" step="0.1" min="0" placeholder="Ex: 5" style="width:65px;background:#111;border:1px solid #4ABA80;border-radius:6px;color:#4ABA80;font-weight:bold;padding:6px;font-size:13px;text-align:center" onchange="majPlatAVolonte(${i},'condTaille',this.value)"></div>
+            <div><span style="color:#888;font-size:11px;display:block">Nom conditionnement</span><input type="text" value="${plat.condLabel||''}" placeholder="Ex: sacs" style="width:90px;background:#111;border:1px solid #4ABA80;border-radius:6px;color:#4ABA80;padding:6px;font-size:12px" onchange="majPlatAVolonte(${i},'condLabel',this.value)"></div>
             <label style="display:flex;align-items:center;gap:4px;color:#888;font-size:12px;margin-left:auto">
-              <input type="checkbox" ${plat.sauce?'checked':''} onchange="majPlatAVolonte(${i},'sauce',this.checked)"> avec choix de sauce
+              <input type="checkbox" ${plat.sauce?'checked':''} onchange="majPlatAVolonte(${i},'sauce',this.checked)"> sauce
             </label>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;font-size:12px;color:#ccc">
-            <div>Servies : <b style="color:#D4AF37">${nbInitial}</b></div>
-            <div>Recharges : <b style="color:#D4AF37">${rechargesPlat.length}</b></div>
-            <div>Total : <b style="color:#D4AF37">${qte} ${plat.unite}</b></div>
+
+          <div class="jour-detail-toggle" style="cursor:pointer;color:#D4AF37;font-size:12px;margin-top:8px" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">📅 Détail par jour (${detailJour.length} jour${detailJour.length>1?'s':''}) ▾</div>
+          <div style="display:none;margin-top:8px">
+            ${detailJour.map(([key,d])=>{
+              const t=d.nbInitial+d.nbRecharges;
+              const q=(t*(plat.quantite||0)).toFixed(1);
+              return `<div class="cmd-item-row" style="font-size:12px"><span>${d.label}</span><span style="color:#D4AF37">${d.nbInitial} servies + ${d.nbRecharges} rech. = <b>${q} ${plat.unite}</b></span></div>`;
+            }).join('')||'<div style="color:#666;font-size:12px">Aucune donnée</div>'}
           </div>
         </div>`;
 
@@ -903,16 +955,20 @@ async function chargerStats(jours){
     html+=`
       <div style="background:#1A2A1A;border:1px dashed #2ab54a;border-radius:10px;padding:10px 14px;margin-bottom:20px">
         <input type="text" id="nouveauPlatVolonteNom" placeholder="Nom exact du plat (ex: Calamars à volonté)" style="width:100%;background:#111;border:1px solid #444;border-radius:6px;color:#fff;padding:8px;font-size:12px;margin-bottom:6px">
-        <div style="display:flex;gap:6px">
-          <input type="number" id="nouveauPlatVolonteQte" placeholder="Qté" step="0.1" min="0" style="width:70px;background:#111;border:1px solid #444;border-radius:6px;color:#fff;padding:8px;font-size:12px">
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <input type="number" id="nouveauPlatVolonteQte" placeholder="Qté/portion" step="0.1" min="0" style="width:80px;background:#111;border:1px solid #444;border-radius:6px;color:#fff;padding:8px;font-size:12px">
           <select id="nouveauPlatVolonteUnite" style="background:#111;border:1px solid #444;border-radius:6px;color:#fff;padding:8px;font-size:12px">
             <option value="kg">kg</option>
             <option value="pièces">pièces</option>
             <option value="portions">portions</option>
           </select>
           <label style="display:flex;align-items:center;gap:4px;color:#888;font-size:11px"><input type="checkbox" id="nouveauPlatVolonteSauce"> sauce</label>
-          <button class="btn-valider-modal" style="flex:1;padding:8px" onclick="ajouterPlatAVolonte()">+ Ajouter</button>
         </div>
+        <div style="display:flex;gap:6px;margin-top:6px">
+          <input type="number" id="nouveauPlatVolonteCondTaille" placeholder="Taille conditionnement (ex: 5)" step="0.1" min="0" style="width:130px;background:#111;border:1px solid #4ABA80;border-radius:6px;color:#4ABA80;padding:8px;font-size:12px">
+          <input type="text" id="nouveauPlatVolonteCondLabel" placeholder="Nom (ex: sacs, cartons)" style="flex:1;background:#111;border:1px solid #4ABA80;border-radius:6px;color:#4ABA80;padding:8px;font-size:12px">
+        </div>
+        <button class="btn-valider-modal" style="width:100%;margin-top:6px;padding:8px" onclick="ajouterPlatAVolonte()">+ Ajouter</button>
       </div>
     `;
 
@@ -921,18 +977,35 @@ async function chargerStats(jours){
 
     platsQuantiteFixe.forEach((plat,i)=>{
       const nb=compterCommandesInitiales(plat.nom);
-      const qte=(nb*(plat.quantite||0)).toFixed(1);
+      const qte=nb*(plat.quantite||0);
+      const detailJour=detailParJour(plat.nom,false);
+
       html+=`
-        <div style="background:#242424;border:1px solid #444;border-radius:10px;padding:12px 14px;margin-bottom:10px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-            <span style="font-weight:bold;color:#fff">${plat.nom}</span>
+        <div style="background:#242424;border:1px solid #444;border-radius:10px;padding:14px;margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <span style="font-weight:bold;color:#fff;font-size:15px">${plat.nom}</span>
             <button class="btn-sm" style="background:#3A1E1E;color:#E88;border:1px solid #C0392B;padding:4px 10px;font-size:11px" onclick="supprimerPlatQuantiteFixe(${i})">🗑️</button>
           </div>
-          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-            <input type="number" value="${plat.quantite}" step="0.1" min="0" style="width:70px;background:#111;border:1px solid #D4AF37;border-radius:6px;color:#D4AF37;font-weight:bold;padding:6px;font-size:13px;text-align:center" onchange="majPlatQuantiteFixe(${i},this.value)">
-            <span style="color:#888;font-size:12px">${plat.unite} par portion</span>
+
+          <div style="text-align:center;background:#111;border-radius:10px;padding:14px;margin-bottom:10px">
+            <div style="font-size:32px;font-weight:900;color:#D4AF37">${qte.toFixed(1)} ${plat.unite}</div>
+            <div style="font-size:11px;color:#888;margin-top:2px">Total période — ${nb} commandée(s)</div>
+            ${conditionnementHtml(qte,plat)}
           </div>
-          <div style="font-size:12px;color:#ccc">Commandées : <b style="color:#D4AF37">${nb}</b> — Total : <b style="color:#D4AF37">${qte} ${plat.unite}</b></div>
+
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+            <div><span style="color:#888;font-size:11px;display:block">Qté/portion</span><input type="number" value="${plat.quantite}" step="0.1" min="0" style="width:65px;background:#111;border:1px solid #D4AF37;border-radius:6px;color:#D4AF37;font-weight:bold;padding:6px;font-size:13px;text-align:center" onchange="majPlatQuantiteFixe(${i},'quantite',this.value)"></div>
+            <div><span style="color:#888;font-size:11px;display:block">Taille cond.</span><input type="number" value="${plat.condTaille||''}" step="0.1" min="0" placeholder="Ex: 40" style="width:65px;background:#111;border:1px solid #4ABA80;border-radius:6px;color:#4ABA80;font-weight:bold;padding:6px;font-size:13px;text-align:center" onchange="majPlatQuantiteFixe(${i},'condTaille',this.value)"></div>
+            <div><span style="color:#888;font-size:11px;display:block">Nom conditionnement</span><input type="text" value="${plat.condLabel||''}" placeholder="Ex: cartons" style="width:90px;background:#111;border:1px solid #4ABA80;border-radius:6px;color:#4ABA80;padding:6px;font-size:12px" onchange="majPlatQuantiteFixe(${i},'condLabel',this.value)"></div>
+          </div>
+
+          <div class="jour-detail-toggle" style="cursor:pointer;color:#D4AF37;font-size:12px;margin-top:8px" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">📅 Détail par jour (${detailJour.length} jour${detailJour.length>1?'s':''}) ▾</div>
+          <div style="display:none;margin-top:8px">
+            ${detailJour.map(([key,d])=>{
+              const q=(d.nbInitial*(plat.quantite||0)).toFixed(1);
+              return `<div class="cmd-item-row" style="font-size:12px"><span>${d.label}</span><span style="color:#D4AF37">${d.nbInitial} commandée(s) = <b>${q} ${plat.unite}</b></span></div>`;
+            }).join('')||'<div style="color:#666;font-size:12px">Aucune donnée</div>'}
+          </div>
         </div>`;
     });
 
@@ -940,14 +1013,18 @@ async function chargerStats(jours){
       <div style="background:#1A2A1A;border:1px dashed #2ab54a;border-radius:10px;padding:10px 14px;margin-bottom:10px">
         <input type="text" id="nouveauPlatFixeNom" placeholder="Nom exact du plat (ex: Fish and Chips)" style="width:100%;background:#111;border:1px solid #444;border-radius:6px;color:#fff;padding:8px;font-size:12px;margin-bottom:6px">
         <div style="display:flex;gap:6px">
-          <input type="number" id="nouveauPlatFixeQte" placeholder="Qté" step="0.1" min="0" style="width:70px;background:#111;border:1px solid #444;border-radius:6px;color:#fff;padding:8px;font-size:12px">
+          <input type="number" id="nouveauPlatFixeQte" placeholder="Qté/portion" step="0.1" min="0" style="width:80px;background:#111;border:1px solid #444;border-radius:6px;color:#fff;padding:8px;font-size:12px">
           <select id="nouveauPlatFixeUnite" style="background:#111;border:1px solid #444;border-radius:6px;color:#fff;padding:8px;font-size:12px">
             <option value="kg">kg</option>
             <option value="pièces">pièces</option>
             <option value="portions">portions</option>
           </select>
-          <button class="btn-valider-modal" style="flex:1;padding:8px" onclick="ajouterPlatQuantiteFixe()">+ Ajouter</button>
         </div>
+        <div style="display:flex;gap:6px;margin-top:6px">
+          <input type="number" id="nouveauPlatFixeCondTaille" placeholder="Taille conditionnement (ex: 40)" step="0.1" min="0" style="width:150px;background:#111;border:1px solid #4ABA80;border-radius:6px;color:#4ABA80;padding:8px;font-size:12px">
+          <input type="text" id="nouveauPlatFixeCondLabel" placeholder="Nom (ex: cartons)" style="flex:1;background:#111;border:1px solid #4ABA80;border-radius:6px;color:#4ABA80;padding:8px;font-size:12px">
+        </div>
+        <button class="btn-valider-modal" style="width:100%;margin-top:6px;padding:8px" onclick="ajouterPlatQuantiteFixe()">+ Ajouter</button>
       </div>
       <div style="color:#666;font-size:11px;margin-bottom:10px">💡 Pour un plat avec des quantités variables (ex: nuggets 4pcs enfant / 6pcs ado), ajoutez deux lignes avec des noms distincts s'ils apparaissent différemment sur vos tickets, ou ajustez la quantité en pièces moyennes.</div>
     `;
@@ -967,7 +1044,7 @@ async function sauvegarderStatsParams(){
 
 function majPlatAVolonte(index,champ,valeur){
   if(!platsAVolonte[index])return;
-  platsAVolonte[index][champ]=champ==='quantite'?parseFloat(valeur)||0:valeur;
+  platsAVolonte[index][champ]=(champ==='quantite'||champ==='condTaille')?(parseFloat(valeur)||0):valeur;
   sauvegarderStatsParams();
   showToast('✅ Réglage enregistré');
 }
@@ -984,15 +1061,17 @@ function ajouterPlatAVolonte(){
   const quantite=parseFloat(document.getElementById('nouveauPlatVolonteQte').value)||0;
   const unite=document.getElementById('nouveauPlatVolonteUnite').value;
   const sauce=document.getElementById('nouveauPlatVolonteSauce').checked;
+  const condTaille=parseFloat(document.getElementById('nouveauPlatVolonteCondTaille').value)||0;
+  const condLabel=document.getElementById('nouveauPlatVolonteCondLabel').value.trim();
   if(!nom){showToast('⚠️ Indiquez le nom exact du plat');return;}
-  platsAVolonte.push({nom,quantite,unite,sauce});
+  platsAVolonte.push({nom,quantite,unite,sauce,condTaille,condLabel});
   sauvegarderStatsParams();
   chargerStats(filtreStatsJours);
 }
 
-function majPlatQuantiteFixe(index,valeur){
+function majPlatQuantiteFixe(index,champ,valeur){
   if(!platsQuantiteFixe[index])return;
-  platsQuantiteFixe[index].quantite=parseFloat(valeur)||0;
+  platsQuantiteFixe[index][champ]=(champ==='quantite'||champ==='condTaille')?(parseFloat(valeur)||0):valeur;
   sauvegarderStatsParams();
   showToast('✅ Réglage enregistré');
 }
@@ -1008,8 +1087,10 @@ function ajouterPlatQuantiteFixe(){
   const nom=document.getElementById('nouveauPlatFixeNom').value.trim();
   const quantite=parseFloat(document.getElementById('nouveauPlatFixeQte').value)||0;
   const unite=document.getElementById('nouveauPlatFixeUnite').value;
+  const condTaille=parseFloat(document.getElementById('nouveauPlatFixeCondTaille').value)||0;
+  const condLabel=document.getElementById('nouveauPlatFixeCondLabel').value.trim();
   if(!nom){showToast('⚠️ Indiquez le nom exact du plat');return;}
-  platsQuantiteFixe.push({nom,quantite,unite});
+  platsQuantiteFixe.push({nom,quantite,unite,condTaille,condLabel});
   sauvegarderStatsParams();
   chargerStats(filtreStatsJours);
 }
