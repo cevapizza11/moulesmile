@@ -234,6 +234,12 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 
   <div class="section" style="margin-top:14px">
+    <h2>🍽️ Consignes de service (ticket cuisine)</h2>
+    <div style="color:#888;font-size:12px;margin-bottom:10px">Ex: "Apporter une marmite" pour les moules, "Apporter une assiette" pour les calamars/nuggets. Laissez vide si rien à ajouter. Imprimé automatiquement sous le plat sur le ticket cuisine.</div>
+    <div id="consignesServiceList"></div>
+  </div>
+
+  <div class="section" style="margin-top:14px">
     <h2>🍮 Popup avant addition (dessert/café)</h2>
     <div style="color:#888;font-size:12px;margin-bottom:10px">Familles entières affichées en tuile (ex: "Desserts") — le client clique sur la tuile puis choisit dedans</div>
     <div id="famillesSuggestionAdditionList"></div>
@@ -719,6 +725,7 @@ function confirmerImport(){
     newCarte.categoriesGroupeApero=carte.categoriesGroupeApero;
     newCarte.produitsSuggestionAddition=carte.produitsSuggestionAddition;
     newCarte.categoriesSuggestionAddition=carte.categoriesSuggestionAddition;
+    newCarte.consignesCuisine=carte.consignesCuisine;
     newCarte.menuAdoOptions=carte.menuAdoOptions;
     newCarte.boissonsMenu=carte.boissonsMenu;
     newCarte.enfantMenu=carte.enfantMenu;
@@ -1000,6 +1007,7 @@ function renderReglages(){
     </div>`;
   }).join('');
 
+  renderConsignesService();
   renderFamillesSuggestionAddition();
   renderSuggestionAddition();
   renderMenuAdoOptions();
@@ -1106,6 +1114,35 @@ function getDefautSuggestionAddition(){
 
 // Familles entières affichées en tuile (ex: "Desserts") dans le popup avant addition.
 // Le client clique la tuile → voit les produits de la catégorie → choisit dedans.
+// Consignes de service (ticket cuisine) — un texte libre par produit, ex: "Apporter une marmite"
+function renderConsignesService(){
+  if(!carte)return;
+  if(!carte.consignesCuisine) carte.consignesCuisine={};
+  const consignes=carte.consignesCuisine;
+  let html='';
+  carte.categories.forEach(cat=>{
+    (cat.produits||[]).forEach(p=>{
+      const val=consignes[p.id]||'';
+      html+=`<div class="item-row">
+        <div class="item-info" style="cursor:default;flex:0 0 auto;min-width:140px"><div class="item-nom">${p.nom}</div></div>
+        <input type="text" value="${val.replace(/"/g,'&quot;')}" placeholder="Ex: Apporter une marmite" style="flex:1;background:#2A2A2A;border:1px solid #444;border-radius:8px;color:#fff;padding:8px 10px;font-size:12px;margin-left:8px"
+          onchange="majConsigneService('${p.id}',this.value)">
+      </div>`;
+    });
+  });
+  document.getElementById('consignesServiceList').innerHTML=html;
+}
+
+function majConsigneService(prodId,texte){
+  if(!carte)return;
+  if(!carte.consignesCuisine) carte.consignesCuisine={};
+  const val=texte.trim();
+  if(val) carte.consignesCuisine[prodId]=val;
+  else delete carte.consignesCuisine[prodId];
+  sauvegarder();
+  showToast(val?'✅ Consigne enregistrée':'✅ Consigne supprimée');
+}
+
 function renderFamillesSuggestionAddition(){
   if(!carte)return;
   if(!carte.categoriesSuggestionAddition) carte.categoriesSuggestionAddition=[];

@@ -339,6 +339,13 @@ const db=firebase.firestore();
 // ⚠️ Adaptez cette URL à celle de votre app si elle change un jour (utilisée pour impression + copie de lien)
 const BASE_URL_APP='https://cevapizza11.github.io/moulesmile/index.html';
 
+// Lecture seule de la carte — uniquement pour connaître les consignes de service par produit
+// (ex: "Apporter une marmite"). Ne JAMAIS écrire dans ce document depuis caisse.html.
+let carteConsignes={};
+db.collection('config').doc('carte_v2').onSnapshot(doc=>{
+  carteConsignes=(doc.exists && doc.data().consignesCuisine)||{};
+});
+
 // ============================================================
 // STATE
 // ============================================================
@@ -940,7 +947,12 @@ function imprimerTicketCuisine(cmd,printWin){
       <td style="padding:3px 0 0 0;font-size:11px;font-weight:900;text-align:right;white-space:nowrap">${item.prix===0?'Incl.':item.prix.toFixed(2).replace('.',',')+' €'}</td>
     </tr>`;
     if(item.choix){
-      lignes+=`<tr><td colspan="2" style="padding:0 0 4px 8px;font-size:11px;color:#000;font-weight:900">→ ${item.choix}</td></tr>`;
+      lignes+=`<tr><td colspan="2" style="padding:0 0 2px 8px;font-size:11px;color:#000;font-weight:900">→ ${item.choix}</td></tr>`;
+    }
+    const idBase=(item.id||'').replace('_inclus','');
+    const consigne=carteConsignes[idBase];
+    if(consigne){
+      lignes+=`<tr><td colspan="2" style="padding:1px 0 4px 8px;font-size:11px;color:#000;font-weight:900;border-left:3px solid #000;padding-left:8px">🍽️ ${consigne}</td></tr>`;
     }
   });
 
