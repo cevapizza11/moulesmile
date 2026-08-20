@@ -581,9 +581,13 @@ db.collection('config').doc('carte_v2').onSnapshot(doc=>{
     if(!carte.famillesOptions) carte.famillesOptions=carteDefaut.famillesOptions;
     if(!carte.optionsProduits) carte.optionsProduits=carteDefaut.optionsProduits;
   } else {
+    // ⚠️ Ne JAMAIS écrire dans Firestore depuis index.html — cet écran est en lecture seule.
+    // Si le document est absent/incomplet, on utilise la carte par défaut UNIQUEMENT en mémoire locale,
+    // le temps qu'admin.html republie une carte valide. Ça évite d'écraser une vraie carte en base
+    // à cause d'un état temporaire (ex: pendant un import en cours côté admin).
+    console.warn('[carte] Document carte_v2 absent ou incomplet — utilisation de la carte par défaut EN LOCAL uniquement (aucune écriture Firestore).');
     carte=carteDefaut;
     carte.categoriesConsultationSeule={sauces:true};
-    db.collection('config').doc('carte_v2').set(carte).catch(()=>{});
   }
   if(catActive) renderProduits(catActive);
   renderTabs();
