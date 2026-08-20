@@ -306,7 +306,7 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
 
 <!-- ===== ONGLET RECHARGES (moules à volonté) ===== -->
 <div class="tab-content" id="tab-recharges">
-  <div class="status-bar"><div class="dot"></div>Enregistrez une recharge de marmite — imprime un mini-ticket cuisine et alimente les statistiques.</div>
+  <div class="status-bar"><div class="dot"></div>Enregistrez une recharge de marmite — alimente les statistiques (recharges/table pour les achats).</div>
   <div class="recherche-bar">
     <input type="number" id="rechercheTableRecharge" class="recherche-input" placeholder="🔍 N° de table..." inputmode="numeric" oninput="filtrerTablesRecharge()">
   </div>
@@ -687,7 +687,6 @@ function fermerModalRecharge(){
 async function validerRecharge(sauceNom){
   if(!tableRechargeEnCours)return;
   const tableNum=tableRechargeEnCours;
-  const printWin=window.open('','_blank','width=420,height=400');
   try{
     await db.collection('recharges').add({
       table:tableNum,
@@ -695,28 +694,8 @@ async function validerRecharge(sauceNom){
       timestamp:firebase.firestore.FieldValue.serverTimestamp()
     });
     showToast(`✅ Recharge enregistrée — Table ${tableNum}`);
-    imprimerTicketRecharge(tableNum, sauceNom, printWin);
-  }catch(e){console.error(e);showToast('❌ Erreur recharge');if(printWin)printWin.close();}
+  }catch(e){console.error(e);showToast('❌ Erreur recharge');}
   fermerModalRecharge();
-}
-
-function imprimerTicketRecharge(tableNum, sauceNom, printWin){
-  const win=printWin||window.open('','_blank','width=420,height=400');
-  if(!win){showToast('⚠️ Fenêtre d\'impression bloquée');return;}
-  win.document.write(`<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>Recharge Table ${tableNum}</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:900;color:#000;background:white;width:80mm;margin:0 auto;padding:8mm;text-align:center;-webkit-print-color-adjust:exact}
-.title{font-size:22px;font-weight:900;margin-bottom:8px;border-bottom:2px solid black;padding-bottom:8px}
-.sauce{font-size:16px;font-weight:900;margin-top:8px}
-@media print{body{width:80mm;margin:0;padding:6mm}@page{margin:0;size:80mm auto}}
-</style></head><body>
-<div class="title">🔄 RECHARGE — TABLE ${tableNum}</div>
-${sauceNom?`<div class="sauce">Sauce : ${sauceNom}</div>`:''}
-<script>window.onload=function(){window.print();setTimeout(()=>window.close(),1500);}<\/script>
-</body></html>`);
-  win.document.close();
 }
 
 function renderRechargesRecentes(){
