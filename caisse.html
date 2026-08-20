@@ -662,12 +662,12 @@ function imprimerTicketJeton(numero, token, tableNum){
 <html><head><meta charset="UTF-8"><title>Jeton Table ${tableNum}</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Courier New',monospace;font-size:13px;font-weight:bold;color:#000;background:white;width:80mm;margin:0 auto;padding:8mm;text-align:center;-webkit-print-color-adjust:exact}
-.title{font-size:18px;font-weight:bold;margin-bottom:4px}
-.sub{font-size:12px;font-weight:bold;margin-bottom:10px;border-bottom:1px dashed black;padding-bottom:6px}
-.table-num{font-size:22px;font-weight:bold;margin:10px 0}
+body{font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:900;color:#000;background:white;width:80mm;margin:0 auto;padding:8mm;text-align:center;-webkit-print-color-adjust:exact}
+.title{font-size:20px;font-weight:900;margin-bottom:4px}
+.sub{font-size:13px;font-weight:900;margin-bottom:10px;border-bottom:2px dashed black;padding-bottom:6px}
+.table-num{font-size:26px;font-weight:900;margin:10px 0}
 #qr{display:flex;justify-content:center;margin:10px 0}
-.footer{font-size:12px;font-weight:bold;margin-top:10px;border-top:1px dashed black;padding-top:6px}
+.footer{font-size:13px;font-weight:900;margin-top:10px;border-top:2px dashed black;padding-top:6px}
 @media print{body{width:80mm;margin:0;padding:6mm}@page{margin:0;size:80mm auto}}
 </style></head><body>
 <div class="title">🐚 MOULE & SMILE</div>
@@ -936,11 +936,11 @@ function imprimerTicketCuisine(cmd,printWin){
   let lignes='';
   (cmd.items||[]).forEach(item=>{
     lignes+=`<tr>
-      <td style="padding:3px 0 0 0;font-size:15px;font-weight:bold">${item.nom}</td>
-      <td style="padding:3px 0 0 0;font-size:13px;font-weight:bold;text-align:right;white-space:nowrap">${item.prix===0?'Incl.':item.prix.toFixed(2).replace('.',',')+' €'}</td>
+      <td style="padding:3px 0 0 0;font-size:16px;font-weight:900">${item.nom}</td>
+      <td style="padding:3px 0 0 0;font-size:14px;font-weight:900;text-align:right;white-space:nowrap">${item.prix===0?'Incl.':item.prix.toFixed(2).replace('.',',')+' €'}</td>
     </tr>`;
     if(item.choix){
-      lignes+=`<tr><td colspan="2" style="padding:0 0 4px 8px;font-size:13px;color:#000;font-weight:bold">→ ${item.choix}</td></tr>`;
+      lignes+=`<tr><td colspan="2" style="padding:0 0 4px 8px;font-size:14px;color:#000;font-weight:900">→ ${item.choix}</td></tr>`;
     }
   });
 
@@ -950,9 +950,9 @@ function imprimerTicketCuisine(cmd,printWin){
 <html><head><meta charset="UTF-8"><title>Cuisine Table ${cmd.table}</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Courier New',monospace;font-size:13px;font-weight:bold;color:#000;background:white;width:80mm;margin:0 auto;padding:8mm;-webkit-print-color-adjust:exact}
-.title{text-align:center;font-size:20px;font-weight:bold;margin-bottom:2px}
-.sub{text-align:center;font-size:13px;margin-bottom:8px;border-bottom:2px solid black;padding-bottom:8px;font-weight:bold}
+body{font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:900;color:#000;background:white;width:80mm;margin:0 auto;padding:8mm;-webkit-print-color-adjust:exact}
+.title{text-align:center;font-size:22px;font-weight:900;margin-bottom:2px}
+.sub{text-align:center;font-size:14px;margin-bottom:8px;border-bottom:2px solid black;padding-bottom:8px;font-weight:900}
 table{width:100%;border-collapse:collapse}
 @media print{body{width:80mm;margin:0;padding:6mm}@page{margin:0;size:80mm auto}}
 </style></head><body>
@@ -1393,17 +1393,17 @@ function imprimerTicket(key){
   const now=new Date().toLocaleString('fr-FR');
   let lignes='';
   (data.commandes||[]).forEach(cmd=>{
-    lignes+=`<tr><td colspan="2" style="padding:4px 0;border-top:1px dashed #000;font-size:11px;color:#000;font-weight:bold">🕐 ${cmd.heure||'--:--'}</td></tr>`;
+    lignes+=`<tr><td colspan="2" style="padding:4px 0;border-top:1px dashed #000;font-size:12px;color:#000;font-weight:900">🕐 ${cmd.heure||'--:--'}</td></tr>`;
     (cmd.items||[]).forEach(item=>{
       lignes+=`<tr>
-        <td style="padding:2px 0 0 0;font-size:13px;font-weight:bold">${item.nom}</td>
-        <td style="padding:2px 0 0 0;font-size:13px;font-weight:bold;text-align:right;white-space:nowrap">${item.prix===0?'Incl.':item.prix.toFixed(2).replace('.',',')+' €'}</td>
+        <td style="padding:2px 0 0 0;font-size:14px;font-weight:900">${item.nom}</td>
+        <td style="padding:2px 0 0 0;font-size:14px;font-weight:900;text-align:right;white-space:nowrap">${item.prix===0?'Incl.':item.prix.toFixed(2).replace('.',',')+' €'}</td>
       </tr>`;
       if(item.choix){
-        lignes+=`<tr><td colspan="2" style="padding:0 0 2px 8px;font-size:11px;color:#000;font-weight:bold">${item.choix}</td></tr>`;
+        lignes+=`<tr><td colspan="2" style="padding:0 0 2px 8px;font-size:12px;color:#000;font-weight:900">${item.choix}</td></tr>`;
       }
     });
-    lignes+=`<tr><td colspan="2" style="text-align:right;font-size:11px;color:#000;font-weight:bold;padding-bottom:4px">ss-total : ${(cmd.total||0).toFixed(2).replace('.',',')} €</td></tr>`;
+    lignes+=`<tr><td colspan="2" style="text-align:right;font-size:12px;color:#000;font-weight:900;padding-bottom:4px">ss-total : ${(cmd.total||0).toFixed(2).replace('.',',')} €</td></tr>`;
   });
 
   const win=window.open('','_blank','width=420,height=650');
@@ -1411,13 +1411,13 @@ function imprimerTicket(key){
 <html><head><meta charset="UTF-8"><title>Ticket Table ${data.table}</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Courier New',monospace;font-size:13px;font-weight:bold;color:#000;background:white;width:80mm;margin:0 auto;padding:8mm;-webkit-print-color-adjust:exact}
-.title{text-align:center;font-size:18px;font-weight:bold;margin-bottom:4px}
-.sub{text-align:center;font-size:12px;font-weight:bold;margin-bottom:8px;border-bottom:1px dashed black;padding-bottom:6px}
+body{font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:900;color:#000;background:white;width:80mm;margin:0 auto;padding:8mm;-webkit-print-color-adjust:exact}
+.title{text-align:center;font-size:20px;font-weight:900;margin-bottom:4px}
+.sub{text-align:center;font-size:13px;font-weight:900;margin-bottom:8px;border-bottom:2px dashed black;padding-bottom:6px}
 table{width:100%;border-collapse:collapse}
-.sep td{border-top:1px dashed black;padding:4px 0}
-.total-row td{font-weight:bold;font-size:16px;padding-top:6px;border-top:2px solid black}
-.footer{text-align:center;font-size:12px;font-weight:bold;margin-top:8px;border-top:1px dashed black;padding-top:6px}
+.sep td{border-top:2px dashed black;padding:4px 0}
+.total-row td{font-weight:900;font-size:18px;padding-top:6px;border-top:3px solid black}
+.footer{text-align:center;font-size:13px;font-weight:900;margin-top:8px;border-top:2px dashed black;padding-top:6px}
 @media print{body{width:80mm;margin:0;padding:6mm}@page{margin:0;size:80mm auto}}
 </style></head><body>
 <div class="title">MOULE & SMILE</div>
