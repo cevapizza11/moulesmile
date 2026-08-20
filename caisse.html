@@ -321,8 +321,8 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
 <div class="modal-overlay" id="modalRecharge">
   <div class="modal-box" style="text-align:center">
     <h3 id="rechargeModalTitre">🔄 Recharge — Table ?</h3>
-    <div class="modal-sub">Quelle sauce ?</div>
-    <div id="rechargeSaucesList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px"></div>
+    <div class="modal-sub" id="rechargeModalSub">Quel plat rechargez-vous ?</div>
+    <div id="rechargeContenuList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px"></div>
     <div class="modal-actions">
       <button class="btn-annuler-modal" onclick="fermerModalRecharge()">Annuler</button>
     </div>
@@ -628,10 +628,28 @@ function updateOccupationCounter(){
 }
 
 // ============================================================
-// RECHARGES DE MARMITE (moules à volonté)
+// RECHARGES DE PLATS À VOLONTÉ (moules, calamars, etc.)
 // ============================================================
 let tableRechargeEnCours=null;
+let platRechargeEnCours=null;
 let allRecharges={};
+
+// Liste des plats à volonté configurables — chargée/éditée depuis l'onglet Stats.
+// Format : [{nom:'Moules-frites à volonté', quantite:1.5, unite:'kg', sauce:true}, ...]
+let platsAVolonte=[];
+let platsQuantiteFixe=[]; // portions fixes : [{nom:'Fish and Chips', quantite:0.3, unite:'kg'}]
+
+db.collection('config').doc('statsParams').onSnapshot(doc=>{
+  const data=doc.exists?doc.data():{};
+  if(data.kgParMarmite && !data.platsAVolonte){
+    // Migration automatique depuis l'ancien réglage unique "kgParMarmite"
+    platsAVolonte=[{nom:'Moules-frites à volonté',quantite:data.kgParMarmite,unite:'kg',sauce:true}];
+  } else {
+    platsAVolonte=data.platsAVolonte||[];
+  }
+  platsQuantiteFixe=data.platsQuantiteFixe||[];
+  if(document.getElementById('tab-stats')?.classList.contains('actif')) chargerStats(filtreStatsJours);
+}, err=>console.error('statsParams listener error:',err));
 
 db.collection('recharges').orderBy('timestamp','desc').limit(100).onSnapshot(snap=>{
   snap.docChanges().forEach(change=>{
@@ -667,33 +685,54 @@ function renderTablesRecharge(){
 
 function ouvrirModalRecharge(tableNum){
   tableRechargeEnCours=tableNum;
+  platRechargeEnCours=null;
   document.getElementById('rechargeModalTitre').textContent=`🔄 Recharge — Table ${tableNum}`;
-  const list=document.getElementById('rechargeSaucesList');
-  if(carteSauces.length){
-    list.innerHTML=carteSauces.map(s=>`
-      <button class="btn-valider-modal" style="width:100%" onclick="validerRecharge('${s.nom.replace(/'/g,"\\'")}')">${s.nom}</button>
-    `).join('');
+  document.getElementById('rechargeModalSub').textContent='Quel plat rechargez-vous ?';
+  const list=document.getElementById('rechargeContenuList');
+
+  if(!platsAVolonte.length){
+    list.innerHTML=`<div style="color:#888;font-size:12px">Aucun plat à volonté configuré — ajoutez-en dans l'onglet 📊 Stats</div>`;
   } else {
-    list.innerHTML=`<button class="btn-valider-modal" style="width:100%" onclick="validerRecharge('')">✅ Confirmer (sans sauce)</button>`;
+    list.innerHTML=platsAVolonte.map((p,i)=>`
+      <button class="btn-valider-modal" style="width:100%" onclick="choisirPlatRecharge(${i})">${p.nom}</button>
+    `).join('');
   }
   document.getElementById('modalRecharge').classList.add('visible');
 }
 
+function choisirPlatRecharge(index){
+  platRechargeEnCours=platsAVolonte[index];
+  if(!platRechargeEnCours)return;
+
+  if(platRechargeEnCours.sauce && carteSauces.length){
+    document.getElementById('rechargeModalSub').textContent=`${platRechargeEnCours.nom} — quelle sauce ?`;
+    const list=document.getElementById('rechargeContenuList');
+    list.innerHTML=carteSauces.map(s=>`
+      <button class="btn-valider-modal" style="width:100%" onclick="validerRecharge('${s.nom.replace(/'/g,"\\'")}')">${s.nom}</button>
+    `).join('');
+  } else {
+    validerRecharge(null);
+  }
+}
+
 function fermerModalRecharge(){
   tableRechargeEnCours=null;
+  platRechargeEnCours=null;
   document.getElementById('modalRecharge').classList.remove('visible');
 }
 
 async function validerRecharge(sauceNom){
-  if(!tableRechargeEnCours)return;
+  if(!tableRechargeEnCours||!platRechargeEnCours)return;
   const tableNum=tableRechargeEnCours;
+  const platNom=platRechargeEnCours.nom;
   try{
     await db.collection('recharges').add({
       table:tableNum,
+      plat:platNom,
       sauce:sauceNom||null,
       timestamp:firebase.firestore.FieldValue.serverTimestamp()
     });
-    showToast(`✅ Recharge enregistrée — Table ${tableNum}`);
+    showToast(`✅ Recharge enregistrée — Table ${tableNum} (${platNom})`);
   }catch(e){console.error(e);showToast('❌ Erreur recharge');}
   fermerModalRecharge();
 }
@@ -744,11 +783,6 @@ async function chargerStats(jours){
       return (maintenant-t)<=limiteMs;
     });
 
-    if(!visites.length){
-      container.innerHTML='<div class="empty"><div class="em">📊</div><p>Aucune visite enregistrée sur cette période</p></div>';
-      return;
-    }
-
     // Regroupement par taille de table
     const buckets={'2 pers.':[],'3-4 pers.':[],'5-8 pers.':[],'9+ pers.':[],'Inconnu':[]};
     visites.forEach(v=>{
@@ -761,13 +795,12 @@ async function chargerStats(jours){
     });
 
     const moyenne=arr=>arr.length?Math.round(arr.reduce((s,v)=>s+(v.dureeMinutes||0),0)/arr.length):null;
-    const totalCA=visites.reduce((s,v)=>s+(v.total||0),0);
     const dureeGlobale=moyenne(visites);
 
     // Recharges sur la même période
     let rechargesSnap;
     try{
-      rechargesSnap=await db.collection('recharges').orderBy('timestamp','desc').limit(1000).get();
+      rechargesSnap=await db.collection('recharges').orderBy('timestamp','desc').limit(2000).get();
     }catch(e){rechargesSnap={docs:[]};}
     const recharges=rechargesSnap.docs.map(d=>d.data()).filter(r=>{
       if(limiteMs===Infinity)return true;
@@ -776,73 +809,148 @@ async function chargerStats(jours){
     });
     const rechargesParTable=visites.length?(recharges.length/visites.length).toFixed(1):'0';
 
-    // Répartition des sauces utilisées en recharge
-    const sauceCounts={};
-    recharges.forEach(r=>{
-      const s=r.sauce||'Non précisé';
-      sauceCounts[s]=(sauceCounts[s]||0)+1;
-    });
-
-    // Commandes initiales de Moules-frites à volonté (depuis l'historique, sur la même période)
+    // Historique des commandes initiales, sur la même période
     let historiqueSnap;
     try{
       historiqueSnap=await db.collection('historique').orderBy('timestamp','desc').limit(1000).get();
     }catch(e){historiqueSnap={docs:[]};}
-    let nbFormulesInitiales=0;
-    historiqueSnap.docs.forEach(d=>{
-      const data=d.data();
+    const historiqueFiltre=historiqueSnap.docs.map(d=>d.data()).filter(data=>{
       const t=data.timestamp?.toMillis?data.timestamp.toMillis():0;
-      if(limiteMs!==Infinity && (maintenant-t)>limiteMs) return;
-      (data.commandes||[]).forEach(cmd=>{
-        (cmd.items||[]).forEach(item=>{
-          if(item.id==='p1' || /moules-frites/i.test(item.nom||'')) nbFormulesInitiales++;
-        });
-      });
+      return limiteMs===Infinity || (maintenant-t)<=limiteMs;
     });
 
-    const nbMarmitesTotal=nbFormulesInitiales+recharges.length;
-    const totalKg=(nbMarmitesTotal*kgParMarmite).toFixed(1);
+    function compterCommandesInitiales(nomPlat){
+      let n=0;
+      historiqueFiltre.forEach(data=>{
+        (data.commandes||[]).forEach(cmd=>{
+          (cmd.items||[]).forEach(item=>{
+            if((item.nom||'').trim().toLowerCase()===nomPlat.trim().toLowerCase()) n++;
+          });
+        });
+      });
+      return n;
+    }
 
-    let html=`
-      <div class="ca-box" style="margin-bottom:14px">
-        <div class="ca-num">${visites.length}</div>
-        <div class="ca-lbl">table(s) sur la période</div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
-        <div class="ca-box"><div class="ca-num">${dureeGlobale!==null?dureeGlobale+' min':'—'}</div><div class="ca-lbl">Durée moyenne globale</div></div>
-        <div class="ca-box"><div class="ca-num">${rechargesParTable}</div><div class="ca-lbl">Recharges / table</div></div>
-      </div>
-      <h3 style="color:#D4AF37;font-size:14px;margin-bottom:10px">⏱️ Durée moyenne par taille de table</h3>
-    `;
+    let html='';
 
-    Object.entries(buckets).forEach(([label,arr])=>{
-      if(!arr.length)return;
-      const m=moyenne(arr);
-      html+=`<div class="cmd-item-row"><span>${label}</span><span style="color:#D4AF37;font-weight:bold">${m} min <span style="color:#888;font-weight:normal;font-size:11px">(${arr.length} table${arr.length>1?'s':''})</span></span></div>`;
+    if(!visites.length){
+      html+='<div class="empty"><div class="em">📊</div><p>Aucune visite enregistrée sur cette période</p></div>';
+    } else {
+      html+=`
+        <div class="ca-box" style="margin-bottom:14px">
+          <div class="ca-num">${visites.length}</div>
+          <div class="ca-lbl">table(s) sur la période</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+          <div class="ca-box"><div class="ca-num">${dureeGlobale!==null?dureeGlobale+' min':'—'}</div><div class="ca-lbl">Durée moyenne globale</div></div>
+          <div class="ca-box"><div class="ca-num">${rechargesParTable}</div><div class="ca-lbl">Recharges / table</div></div>
+        </div>
+        <h3 style="color:#D4AF37;font-size:14px;margin-bottom:10px">⏱️ Durée moyenne par taille de table</h3>
+      `;
+      Object.entries(buckets).forEach(([label,arr])=>{
+        if(!arr.length)return;
+        const m=moyenne(arr);
+        html+=`<div class="cmd-item-row"><span>${label}</span><span style="color:#D4AF37;font-weight:bold">${m} min <span style="color:#888;font-weight:normal;font-size:11px">(${arr.length} table${arr.length>1?'s':''})</span></span></div>`;
+      });
+    }
+
+    // ===== PLATS À VOLONTÉ (avec recharge) =====
+    html+=`<h3 style="color:#D4AF37;font-size:14px;margin:20px 0 10px">🐚 Plats à volonté (avec recharges)</h3>`;
+
+    platsAVolonte.forEach((plat,i)=>{
+      const nbInitial=compterCommandesInitiales(plat.nom);
+      const rechargesPlat=recharges.filter(r=>r.plat===plat.nom);
+      const total=nbInitial+rechargesPlat.length;
+      const qte=(total*(plat.quantite||0)).toFixed(1);
+
+      html+=`
+        <div style="background:#242424;border:1px solid #444;border-radius:10px;padding:12px 14px;margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <span style="font-weight:bold;color:#fff">${plat.nom}</span>
+            <button class="btn-sm" style="background:#3A1E1E;color:#E88;border:1px solid #C0392B;padding:4px 10px;font-size:11px" onclick="supprimerPlatAVolonte(${i})">🗑️</button>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+            <input type="number" value="${plat.quantite}" step="0.1" min="0" style="width:70px;background:#111;border:1px solid #D4AF37;border-radius:6px;color:#D4AF37;font-weight:bold;padding:6px;font-size:13px;text-align:center" onchange="majPlatAVolonte(${i},'quantite',this.value)">
+            <span style="color:#888;font-size:12px">${plat.unite} par portion</span>
+            <label style="display:flex;align-items:center;gap:4px;color:#888;font-size:12px;margin-left:auto">
+              <input type="checkbox" ${plat.sauce?'checked':''} onchange="majPlatAVolonte(${i},'sauce',this.checked)"> avec choix de sauce
+            </label>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;font-size:12px;color:#ccc">
+            <div>Servies : <b style="color:#D4AF37">${nbInitial}</b></div>
+            <div>Recharges : <b style="color:#D4AF37">${rechargesPlat.length}</b></div>
+            <div>Total : <b style="color:#D4AF37">${qte} ${plat.unite}</b></div>
+          </div>
+        </div>`;
+
+      if(plat.sauce){
+        const sauceCounts={};
+        rechargesPlat.forEach(r=>{
+          const s=r.sauce||'Non précisé';
+          sauceCounts[s]=(sauceCounts[s]||0)+1;
+        });
+        const sauceEntries=Object.entries(sauceCounts).sort((a,b)=>b[1]-a[1]);
+        if(sauceEntries.length){
+          html+=`<div style="margin:0 0 14px 14px">`;
+          sauceEntries.forEach(([sauce,count])=>{
+            html+=`<div class="cmd-item-row" style="font-size:12px"><span>🧂 ${sauce}</span><span style="color:#D4AF37;font-weight:bold">${count}</span></div>`;
+          });
+          html+=`</div>`;
+        }
+      }
     });
 
     html+=`
-      <h3 style="color:#D4AF37;font-size:14px;margin:20px 0 10px">🐚 Moules consommées</h3>
-      <div style="background:#242424;border:1px solid #444;border-radius:10px;padding:12px 14px;margin-bottom:10px">
-        <label style="font-size:11px;color:#888;font-weight:bold;display:block;margin-bottom:4px">⚖️ Quantité (kg) par marmite servie</label>
-        <input type="number" id="kgParMarmiteInput" value="${kgParMarmite}" step="0.1" min="0" style="width:100%;background:#111;border:1px solid #D4AF37;border-radius:8px;color:#D4AF37;font-weight:bold;padding:8px 10px;font-size:14px" onchange="majKgParMarmite(this.value)">
+      <div style="background:#1A2A1A;border:1px dashed #2ab54a;border-radius:10px;padding:10px 14px;margin-bottom:20px">
+        <input type="text" id="nouveauPlatVolonteNom" placeholder="Nom exact du plat (ex: Calamars à volonté)" style="width:100%;background:#111;border:1px solid #444;border-radius:6px;color:#fff;padding:8px;font-size:12px;margin-bottom:6px">
+        <div style="display:flex;gap:6px">
+          <input type="number" id="nouveauPlatVolonteQte" placeholder="Qté" step="0.1" min="0" style="width:70px;background:#111;border:1px solid #444;border-radius:6px;color:#fff;padding:8px;font-size:12px">
+          <select id="nouveauPlatVolonteUnite" style="background:#111;border:1px solid #444;border-radius:6px;color:#fff;padding:8px;font-size:12px">
+            <option value="kg">kg</option>
+            <option value="pièces">pièces</option>
+            <option value="portions">portions</option>
+          </select>
+          <label style="display:flex;align-items:center;gap:4px;color:#888;font-size:11px"><input type="checkbox" id="nouveauPlatVolonteSauce"> sauce</label>
+          <button class="btn-valider-modal" style="flex:1;padding:8px" onclick="ajouterPlatAVolonte()">+ Ajouter</button>
+        </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">
-        <div class="ca-box"><div class="ca-num" style="font-size:18px">${nbFormulesInitiales}</div><div class="ca-lbl">Formules servies</div></div>
-        <div class="ca-box"><div class="ca-num" style="font-size:18px">${recharges.length}</div><div class="ca-lbl">Recharges</div></div>
-        <div class="ca-box"><div class="ca-num" style="font-size:18px">${totalKg} kg</div><div class="ca-lbl">Total estimé</div></div>
-      </div>
-      <h3 style="color:#D4AF37;font-size:14px;margin-bottom:10px">🧂 Sauces demandées en recharge</h3>
     `;
 
-    const sauceEntries=Object.entries(sauceCounts).sort((a,b)=>b[1]-a[1]);
-    if(!sauceEntries.length){
-      html+='<div class="empty"><div class="em">🧂</div><p>Aucune recharge avec sauce enregistrée</p></div>';
-    } else {
-      sauceEntries.forEach(([sauce,count])=>{
-        html+=`<div class="cmd-item-row"><span>${sauce}</span><span style="color:#D4AF37;font-weight:bold">${count}</span></div>`;
-      });
-    }
+    // ===== PLATS À QUANTITÉ FIXE (sans recharge) =====
+    html+=`<h3 style="color:#D4AF37;font-size:14px;margin:20px 0 10px">🍽️ Plats à portion fixe</h3>`;
+
+    platsQuantiteFixe.forEach((plat,i)=>{
+      const nb=compterCommandesInitiales(plat.nom);
+      const qte=(nb*(plat.quantite||0)).toFixed(1);
+      html+=`
+        <div style="background:#242424;border:1px solid #444;border-radius:10px;padding:12px 14px;margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <span style="font-weight:bold;color:#fff">${plat.nom}</span>
+            <button class="btn-sm" style="background:#3A1E1E;color:#E88;border:1px solid #C0392B;padding:4px 10px;font-size:11px" onclick="supprimerPlatQuantiteFixe(${i})">🗑️</button>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+            <input type="number" value="${plat.quantite}" step="0.1" min="0" style="width:70px;background:#111;border:1px solid #D4AF37;border-radius:6px;color:#D4AF37;font-weight:bold;padding:6px;font-size:13px;text-align:center" onchange="majPlatQuantiteFixe(${i},this.value)">
+            <span style="color:#888;font-size:12px">${plat.unite} par portion</span>
+          </div>
+          <div style="font-size:12px;color:#ccc">Commandées : <b style="color:#D4AF37">${nb}</b> — Total : <b style="color:#D4AF37">${qte} ${plat.unite}</b></div>
+        </div>`;
+    });
+
+    html+=`
+      <div style="background:#1A2A1A;border:1px dashed #2ab54a;border-radius:10px;padding:10px 14px;margin-bottom:10px">
+        <input type="text" id="nouveauPlatFixeNom" placeholder="Nom exact du plat (ex: Fish and Chips)" style="width:100%;background:#111;border:1px solid #444;border-radius:6px;color:#fff;padding:8px;font-size:12px;margin-bottom:6px">
+        <div style="display:flex;gap:6px">
+          <input type="number" id="nouveauPlatFixeQte" placeholder="Qté" step="0.1" min="0" style="width:70px;background:#111;border:1px solid #444;border-radius:6px;color:#fff;padding:8px;font-size:12px">
+          <select id="nouveauPlatFixeUnite" style="background:#111;border:1px solid #444;border-radius:6px;color:#fff;padding:8px;font-size:12px">
+            <option value="kg">kg</option>
+            <option value="pièces">pièces</option>
+            <option value="portions">portions</option>
+          </select>
+          <button class="btn-valider-modal" style="flex:1;padding:8px" onclick="ajouterPlatQuantiteFixe()">+ Ajouter</button>
+        </div>
+      </div>
+      <div style="color:#666;font-size:11px;margin-bottom:10px">💡 Pour un plat avec des quantités variables (ex: nuggets 4pcs enfant / 6pcs ado), ajoutez deux lignes avec des noms distincts s'ils apparaissent différemment sur vos tickets, ou ajustez la quantité en pièces moyennes.</div>
+    `;
 
     container.innerHTML=html;
   }catch(e){
@@ -851,20 +959,59 @@ async function chargerStats(jours){
   }
 }
 
-let kgParMarmite=1.5; // valeur par défaut, rechargée depuis Firestore au démarrage
-db.collection('config').doc('statsParams').get().then(doc=>{
-  if(doc.exists && doc.data().kgParMarmite) kgParMarmite=doc.data().kgParMarmite;
-}).catch(()=>{});
-
-async function majKgParMarmite(val){
-  const nb=parseFloat(val);
-  if(!nb||nb<=0){showToast('⚠️ Valeur invalide');return;}
-  kgParMarmite=nb;
+async function sauvegarderStatsParams(){
   try{
-    await db.collection('config').doc('statsParams').set({kgParMarmite:nb},{merge:true});
-    showToast('✅ Quantité par marmite enregistrée');
-    chargerStats(filtreStatsJours);
-  }catch(e){console.error(e);showToast('❌ Erreur sauvegarde');}
+    await db.collection('config').doc('statsParams').set({platsAVolonte,platsQuantiteFixe},{merge:true});
+  }catch(e){console.error(e);showToast('❌ Erreur sauvegarde réglages');}
+}
+
+function majPlatAVolonte(index,champ,valeur){
+  if(!platsAVolonte[index])return;
+  platsAVolonte[index][champ]=champ==='quantite'?parseFloat(valeur)||0:valeur;
+  sauvegarderStatsParams();
+  showToast('✅ Réglage enregistré');
+}
+
+function supprimerPlatAVolonte(index){
+  if(!confirm(`Supprimer "${platsAVolonte[index]?.nom}" des plats à volonté ?`))return;
+  platsAVolonte.splice(index,1);
+  sauvegarderStatsParams();
+  chargerStats(filtreStatsJours);
+}
+
+function ajouterPlatAVolonte(){
+  const nom=document.getElementById('nouveauPlatVolonteNom').value.trim();
+  const quantite=parseFloat(document.getElementById('nouveauPlatVolonteQte').value)||0;
+  const unite=document.getElementById('nouveauPlatVolonteUnite').value;
+  const sauce=document.getElementById('nouveauPlatVolonteSauce').checked;
+  if(!nom){showToast('⚠️ Indiquez le nom exact du plat');return;}
+  platsAVolonte.push({nom,quantite,unite,sauce});
+  sauvegarderStatsParams();
+  chargerStats(filtreStatsJours);
+}
+
+function majPlatQuantiteFixe(index,valeur){
+  if(!platsQuantiteFixe[index])return;
+  platsQuantiteFixe[index].quantite=parseFloat(valeur)||0;
+  sauvegarderStatsParams();
+  showToast('✅ Réglage enregistré');
+}
+
+function supprimerPlatQuantiteFixe(index){
+  if(!confirm(`Supprimer "${platsQuantiteFixe[index]?.nom}" ?`))return;
+  platsQuantiteFixe.splice(index,1);
+  sauvegarderStatsParams();
+  chargerStats(filtreStatsJours);
+}
+
+function ajouterPlatQuantiteFixe(){
+  const nom=document.getElementById('nouveauPlatFixeNom').value.trim();
+  const quantite=parseFloat(document.getElementById('nouveauPlatFixeQte').value)||0;
+  const unite=document.getElementById('nouveauPlatFixeUnite').value;
+  if(!nom){showToast('⚠️ Indiquez le nom exact du plat');return;}
+  platsQuantiteFixe.push({nom,quantite,unite});
+  sauvegarderStatsParams();
+  chargerStats(filtreStatsJours);
 }
 
 function ouvrirModalJeton(jetonId,numero){
