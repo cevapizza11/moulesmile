@@ -813,9 +813,11 @@ async function chargerStats(jours){
       return (maintenant-t)<=limiteMs;
     });
 
-    // Regroupement par taille de table
-    const buckets={'2 pers.':[],'3-4 pers.':[],'5-8 pers.':[],'9+ pers.':[],'Inconnu':[]};
+    // Regroupement : d'abord "Boisson seule" (peu importe le nombre de couverts, table sans plat commandé),
+    // puis par taille de table pour les visites "repas" uniquement.
+    const buckets={'🍹 Boisson seule':[],'2 pers.':[],'3-4 pers.':[],'5-8 pers.':[],'9+ pers.':[],'Inconnu':[]};
     visites.forEach(v=>{
+      if(v.type==='boisson'){ buckets['🍹 Boisson seule'].push(v); return; }
       const c=v.couverts;
       if(!c) buckets['Inconnu'].push(v);
       else if(c===2) buckets['2 pers.'].push(v);
@@ -1818,6 +1820,13 @@ async function encaisser(tableNum){
     const addSnap=await addRef.get();
     const addData=addSnap.exists?addSnap.data():{total:0,commandes:[]};
 
+    // Détecte si un vrai plat (formule à volonté ou portion fixe) a été commandé sur cette table,
+    // pour distinguer "repas" de "boisson seule" dans les statistiques.
+    const nomsPlatsRepas=[...platsAVolonte.map(p=>p.nom),...platsQuantiteFixe.map(p=>p.nom)].map(n=>n.trim().toLowerCase());
+    const aCommandeRepas=(addData.commandes||[]).some(cmd=>
+      (cmd.items||[]).some(item=>nomsPlatsRepas.includes((item.nom||'').trim().toLowerCase()))
+    );
+
     // Archiver dans historique
     await db.collection('historique').add({
       table:tableNum,
@@ -1844,13 +1853,13 @@ async function encaisser(tableNum){
 
     showToast(`✅ Table ${tableNum} encaissée !`);
     chargerHistorique();
-    liberJetonDeTable(tableNum, addData.total||0);
+    liberJetonDeTable(tableNum, addData.total||0, aCommandeRepas);
   }catch(e){showToast('❌ Erreur encaissement');console.error(e);}
 }
 
 // Libère automatiquement le(s) jeton(s) rattaché(s) à cette table (encaissement = fin de service)
 // et enregistre la visite (arrivée → départ) pour les statistiques.
-async function liberJetonDeTable(tableNum, totalAddition){
+async function liberJetonDeTable(tableNum, totalAddition, aCommandeRepas){
   try{
     const snap=await db.collection('jetons').where('table','==',tableNum).where('statut','==','actif').get();
     if(snap.empty) return;
@@ -1860,12 +1869,14 @@ async function liberJetonDeTable(tableNum, totalAddition){
       const data=d.data();
 
       // Enregistre la visite pour les statistiques (durée réelle, taille de table)
+      // Si aucun plat n'a été commandé, la visite est classée "boisson" — peu importe le nombre de couverts.
       if(data.timestamp){
         const arrivee=data.timestamp.toDate?data.timestamp.toDate():new Date(data.timestamp);
         const dureeMinutes=Math.round((maintenant-arrivee.getTime())/60000);
         db.collection('visites').add({
           table:tableNum,
           couverts:data.couverts||null,
+          type:aCommandeRepas?'repas':'boisson',
           dureeMinutes,
           total:totalAddition||0,
           heureArrivee:data.timestamp,
