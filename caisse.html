@@ -337,6 +337,7 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
     <button class="btn-filtre" id="filtreStats30" onclick="setFiltreStats(30,this)">30 derniers jours</button>
     <button class="btn-filtre" id="filtreStatsTout" onclick="setFiltreStats(9999,this)">Tout</button>
   </div>
+  <button class="btn-sm" style="width:100%;margin-top:10px;background:#3A1E1E;color:#E88;border:1px solid #C0392B;padding:10px" onclick="reinitialiserStats()">🗑️ Réinitialiser toutes les statistiques</button>
   <div id="statsContent" style="margin-top:14px"></div>
 </div>
 
@@ -765,6 +766,35 @@ function setFiltreStats(jours,el){
   document.querySelectorAll('#tab-stats .btn-filtre').forEach(b=>b.classList.remove('actif'));
   el.classList.add('actif');
   chargerStats(jours);
+}
+
+async function reinitialiserStats(){
+  if(!confirm('⚠️ Réinitialiser TOUTES les statistiques (durées, recharges, sauces) ?\n\nCeci supprime définitivement les données "Visites" et "Recharges". Les réglages (plats, quantités, conditionnements) sont conservés.\n\nCette action est irréversible.')) return;
+
+  try{
+    const container=document.getElementById('statsContent');
+    container.innerHTML='<div class="empty"><div class="em">⏳</div><p>Réinitialisation en cours...</p></div>';
+
+    // Suppression par lots de 400 (limite Firestore = 500 par batch)
+    async function viderCollection(nomCollection){
+      let snap=await db.collection(nomCollection).limit(400).get();
+      while(!snap.empty){
+        const b=db.batch();
+        snap.forEach(d=>b.delete(d.ref));
+        await b.commit();
+        snap=await db.collection(nomCollection).limit(400).get();
+      }
+    }
+
+    await viderCollection('visites');
+    await viderCollection('recharges');
+
+    showToast('✅ Statistiques réinitialisées');
+    chargerStats(filtreStatsJours);
+  }catch(e){
+    console.error('Erreur réinitialisation stats',e);
+    showToast('❌ Erreur réinitialisation');
+  }
 }
 
 async function chargerStats(jours){
