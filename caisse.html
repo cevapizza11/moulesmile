@@ -915,7 +915,11 @@ function renderCommandesDeux(){
 // ACTIONS — COMMANDES
 // ============================================================
 async function marquerVuEtAddition(id,tableNum){
+  // Ouvre la fenêtre d'impression tout de suite (au clic) pour éviter le blocage anti-popup des navigateurs,
+  // on la remplira une fois les données prêtes.
+  const printWin=window.open('','_blank','width=420,height=600');
   try{
+    const cmd=allCommandes[id];
     await db.collection('commandes').doc(id).update({statut:'en_addition'});
     await recalcAddition(tableNum);
     await db.collection('notifications').doc(`table_${tableNum}`).set({
@@ -923,7 +927,41 @@ async function marquerVuEtAddition(id,tableNum){
       ts:firebase.firestore.FieldValue.serverTimestamp()
     });
     showToast(`✅ Table ${tableNum} → Addition`);
-  }catch(e){showToast('❌ Erreur');console.error(e);}
+    if(cmd) imprimerTicketCuisine(cmd,printWin);
+    else if(printWin) printWin.close();
+  }catch(e){showToast('❌ Erreur');console.error(e);if(printWin) printWin.close();}
+}
+
+function imprimerTicketCuisine(cmd,printWin){
+  let lignes='';
+  (cmd.items||[]).forEach(item=>{
+    lignes+=`<tr>
+      <td style="padding:3px 0 0 0;font-size:14px;font-weight:bold">${item.nom}</td>
+      <td style="padding:3px 0 0 0;font-size:12px;text-align:right;white-space:nowrap">${item.prix===0?'Incl.':item.prix.toFixed(2).replace('.',',')+' €'}</td>
+    </tr>`;
+    if(item.choix){
+      lignes+=`<tr><td colspan="2" style="padding:0 0 4px 8px;font-size:12px;color:#333">→ ${item.choix}</td></tr>`;
+    }
+  });
+
+  const win=printWin||window.open('','_blank','width=420,height=600');
+  if(!win){showToast('⚠️ Fenêtre d\'impression bloquée par le navigateur');return;}
+  win.document.write(`<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Cuisine Table ${cmd.table}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Courier New',monospace;font-size:12px;color:black;background:white;width:80mm;margin:0 auto;padding:8mm}
+.title{text-align:center;font-size:18px;font-weight:bold;margin-bottom:2px}
+.sub{text-align:center;font-size:12px;margin-bottom:8px;border-bottom:2px solid black;padding-bottom:8px;font-weight:bold}
+table{width:100%;border-collapse:collapse}
+@media print{body{width:80mm;margin:0;padding:6mm}@page{margin:0;size:80mm auto}}
+</style></head><body>
+<div class="title">🍳 CUISINE</div>
+<div class="sub">Table ${cmd.table} — ${cmd.heure||new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</div>
+<table>${lignes}</table>
+<script>window.onload=function(){window.print();setTimeout(()=>window.close(),1500);}<\/script>
+</body></html>`);
+  win.document.close();
 }
 
 async function recalcAddition(tableNum){
