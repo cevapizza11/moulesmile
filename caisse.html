@@ -54,6 +54,9 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
 .jeton-pastille:active{transform:scale(.95)}
 .jeton-pastille.libre{border-color:#555}
 .jeton-pastille.actif{background:#1E3A2E;border-color:#4ABA80}
+.jeton-pastille.en-attente{background:#3A2E1A;border-color:#D4941E}
+.jeton-pastille.en-attente .jp-num{color:#D4941E}
+.jeton-pastille.en-attente .jp-sub{color:#D4941E}
 .jeton-pastille .jp-num{font-weight:bold;font-size:15px;color:#ddd}
 .jeton-pastille.actif .jp-num{color:#4ABA80}
 .jeton-pastille .jp-sub{font-size:10px;color:#888;margin-top:3px}
@@ -289,7 +292,8 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
 <div class="tab-content" id="tab-jetons">
   <div class="status-bar"><div class="dot"></div>Imprimez un jeton jetable au moment de placer une table — il s'active tout seul, se libère automatiquement à l'encaissement.</div>
   <div id="occupationCounter" style="background:#1A2A1A;border:1px solid #2ab54a;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#8aff9d;font-weight:bold;text-align:center"></div>
-  <button class="btn-encaisser" style="width:100%;font-size:15px;padding:14px;margin-bottom:14px" onclick="nouvelleTableAvecJeton()">🖨️ Nouvelle table — imprimer un jeton</button>
+  <button class="btn-encaisser" style="width:100%;font-size:15px;padding:14px;margin-bottom:8px" onclick="nouvelleTableAvecJeton()">🖨️ Nouvelle table — imprimer un jeton</button>
+  <button class="btn-encaisser" style="width:100%;font-size:15px;padding:14px;margin-bottom:14px;background:#2A6FB5" onclick="imprimerJetonAvance()">🖨️ Imprimer à l'avance (sans table — à attribuer ensuite)</button>
   <div class="recherche-bar">
     <input type="number" id="rechercheJeton" class="recherche-input" placeholder="🔍 Rechercher par n° de jeton OU n° de table..." inputmode="numeric" oninput="filtrerJetons()">
     <button class="btn-sm" onclick="document.getElementById('rechercheJeton').value='';filtrerJetons()" id="btnViderRechercheJeton" style="display:none">✕ Effacer</button>
@@ -600,12 +604,16 @@ function renderJetons(){
 
   grid.innerHTML=jetons.map(j=>{
     const actif=j.statut==='actif';
-    return `<div class="jeton-pastille ${actif?'actif':'libre'}" style="position:relative">
+    const enAttente=j.statut==='en_attente';
+    const classe=actif?'actif':(enAttente?'en-attente':'libre');
+    const sousLibelle=actif?'Table '+j.table+(j.couverts?' ('+j.couverts+'p)':''):(enAttente?'⏳ À attribuer':'Libre');
+    return `<div class="jeton-pastille ${classe}" style="position:relative">
       <div onclick="ouvrirModalJeton('${j.id}',${j.numero})">
         <div class="jp-num">🎫 ${j.numero}</div>
-        <div class="jp-sub">${actif?'Table '+j.table+(j.couverts?' ('+j.couverts+'p)':''):'Libre'}</div>
+        <div class="jp-sub">${sousLibelle}</div>
       </div>
       ${actif?`<button class="jp-print" onclick="event.stopPropagation();imprimerTicketJeton(${j.numero},'${j.token}',${j.table});showToast('🖨️ Réimpression jeton n°${j.numero} — Table ${j.table}')" title="Réimprimer">🖨️</button>`:''}
+      ${enAttente?`<button class="jp-print" onclick="event.stopPropagation();imprimerTicketJeton(${j.numero},'${j.token}',null);showToast('🖨️ Réimpression jeton n°${j.numero}')" title="Réimprimer">🖨️</button>`:''}
     </div>`;
   }).join('');
 }
@@ -1130,8 +1138,9 @@ function ajouterPlatQuantiteFixe(){
 function ouvrirModalJeton(jetonId,numero){
   const j=allJetons[jetonId];
   const estActif=j&&j.statut==='actif';
+  const enAttente=j&&j.statut==='en_attente';
   jetonEnCoursActivation=jetonId;
-  document.getElementById('jetonModalTitre').textContent=`🎫 Jeton n°${numero}`;
+  document.getElementById('jetonModalTitre').textContent=enAttente?`🎫 Jeton n°${numero} — Attribuer une table`:`🎫 Jeton n°${numero}`;
   document.getElementById('jetonTableInput').value=estActif?j.table:'';
   document.getElementById('jetonCouvertsInput').value=(estActif&&j.couverts)?j.couverts:'';
   document.getElementById('jetonUnitesInput').value=(estActif&&j.unites)?j.unites:'';
@@ -1242,13 +1251,30 @@ async function nouvelleTableAvecJeton(){
   }catch(e){console.error(e);showToast('❌ Erreur création jeton');}
 }
 
+// Imprime un jeton tout de suite, SANS table assignée (statut "en_attente") — pratique pour
+// l'accueil : on donne le ticket au client en le conduisant à sa table, puis on attribue le
+// numéro de table depuis n'importe quel poste (Jetons → pastille orange → renseigner la table).
+// Le client ne peut PAS encore commander tant que la table n'est pas attribuée.
+async function imprimerJetonAvance(){
+  try{
+    const numero=await prochainNumeroJeton();
+    const token=genererTokenJeton();
+    await db.collection('jetons').doc(token).set({
+      numero, token, statut:'en_attente', table:null, couverts:null, unites:null, jetable:true
+    });
+    showToast(`✅ Jeton n°${numero} imprimé — à attribuer à une table`);
+    imprimerTicketJeton(numero, token, null);
+  }catch(e){console.error(e);showToast('❌ Erreur création jeton');}
+}
+
 function imprimerTicketJeton(numero, token, tableNum){
   const baseUrl=BASE_URL_APP;
   const url=`${baseUrl}?j=${token}`;
+  const aTable=tableNum!==null && tableNum!==undefined;
 
   const win=window.open('','_blank','width=420,height=500');
   win.document.write(`<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>Jeton Table ${tableNum}</title>
+<html><head><meta charset="UTF-8"><title>${aTable?'Jeton Table '+tableNum:'Jeton n°'+numero}</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:900;color:#000;background:white;width:80mm;margin:0 auto;padding:8mm;text-align:center;-webkit-print-color-adjust:exact}
@@ -1260,8 +1286,8 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:900;color
 @media print{body{width:80mm;margin:0;padding:6mm}@page{margin:0;size:80mm auto}}
 </style></head><body>
 <div class="title">🐚 MOULE & SMILE</div>
-<div class="sub">Scannez pour commander depuis votre table</div>
-<div class="table-num">Table ${tableNum}</div>
+<div class="sub">${aTable?'Scannez pour commander depuis votre table':'Bienvenue ! Votre table va vous être attribuée'}</div>
+${aTable?`<div class="table-num">Table ${tableNum}</div>`:''}
 <div id="qr"></div>
 <div class="footer">Jeton n°${numero}<br>À usage unique — ne pas transférer</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
