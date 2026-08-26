@@ -1256,15 +1256,71 @@ async function nouvelleTableAvecJeton(){
 // numéro de table depuis n'importe quel poste (Jetons → pastille orange → renseigner la table).
 // Le client ne peut PAS encore commander tant que la table n'est pas attribuée.
 async function imprimerJetonAvance(){
+  const nb=parseInt(prompt('Combien de jetons imprimer à l\'avance ? (1 par défaut)'))||1;
+  if(nb<1||nb>50){showToast('⚠️ Entre 1 et 50 jetons à la fois');return;}
+
   try{
-    const numero=await prochainNumeroJeton();
-    const token=genererTokenJeton();
-    await db.collection('jetons').doc(token).set({
-      numero, token, statut:'en_attente', table:null, couverts:null, unites:null, jetable:true
+    const numeroDepart=await prochainNumeroJeton();
+    const jetons=[];
+    for(let i=0;i<nb;i++){
+      jetons.push({numero:numeroDepart+i, token:genererTokenJeton()});
+    }
+
+    const batch=db.batch();
+    jetons.forEach(j=>{
+      const ref=db.collection('jetons').doc(j.token);
+      batch.set(ref,{numero:j.numero, token:j.token, statut:'en_attente', table:null, couverts:null, unites:null, jetable:true});
     });
-    showToast(`✅ Jeton n°${numero} imprimé — à attribuer à une table`);
-    imprimerTicketJeton(numero, token, null);
-  }catch(e){console.error(e);showToast('❌ Erreur création jeton');}
+    await batch.commit();
+
+    showToast(`✅ ${nb} jeton${nb>1?'s':''} créé${nb>1?'s':''} — n°${numeroDepart}${nb>1?' à n°'+(numeroDepart+nb-1):''}`);
+    imprimerTicketsJetonAvance(jetons);
+  }catch(e){console.error(e);showToast('❌ Erreur création jeton(s)');}
+}
+
+// Imprime N jetons "en attente" en un seul job (une étiquette par jeton, saut de page entre chaque —
+// idéal pour une imprimante à étiquettes autocollantes en rouleau continu).
+function imprimerTicketsJetonAvance(jetons){
+  const baseUrl=BASE_URL_APP;
+  const win=window.open('','_blank','width=420,height=500');
+
+  const etiquettes=jetons.map(j=>`
+    <div class="etiquette">
+      <div class="title">🐚 MOULE & SMILE</div>
+      <div class="sub">Bienvenue ! Votre table va vous être attribuée</div>
+      <div id="qr_${j.numero}"></div>
+      <div class="footer">Jeton n°${j.numero}<br>À usage unique — ne pas transférer</div>
+    </div>`).join('');
+
+  const scriptsQr=jetons.map(j=>`
+    new QRCode(document.getElementById('qr_${j.numero}'), {
+      text: "${baseUrl}?j=${j.token}",
+      width: 160, height: 160,
+      colorDark: "#000000", colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.H
+    });`).join('');
+
+  win.document.write(`<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Jetons à l'avance</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,Helvetica,sans-serif;color:#000;background:white;-webkit-print-color-adjust:exact}
+.etiquette{width:80mm;margin:0 auto;padding:8mm;text-align:center;page-break-after:always;font-weight:900}
+.etiquette:last-child{page-break-after:auto}
+.title{font-size:15px;font-weight:900;margin-bottom:4px}
+.sub{font-size:10px;font-weight:900;margin-bottom:10px;border-bottom:2px dashed black;padding-bottom:6px}
+.etiquette [id^="qr_"]{display:flex;justify-content:center;margin:10px 0}
+.footer{font-size:10px;font-weight:900;margin-top:10px;border-top:2px dashed black;padding-top:6px}
+@media print{.etiquette{width:80mm;margin:0;padding:6mm}@page{margin:0;size:80mm auto}}
+</style></head><body>
+${etiquettes}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+<script>
+${scriptsQr}
+window.onload=function(){setTimeout(()=>{window.print();setTimeout(()=>window.close(),1500);},400);}
+<\/script>
+</body></html>`);
+  win.document.close();
 }
 
 function imprimerTicketJeton(numero, token, tableNum){
