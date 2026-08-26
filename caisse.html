@@ -1239,6 +1239,9 @@ async function nouvelleTableAvecJeton(){
   const unites=parseInt(prompt('🪑 Combien de tables 90x90 assemblées ? (pour la capacité — 1 par défaut)'))||1;
   const couverts=parseInt(prompt('👥 Combien de couverts (personnes) à cette table ?'))||null;
 
+  const printWin=window.open('','_blank','width=420,height=500');
+  if(!printWin){showToast('⚠️ Fenêtre d\'impression bloquée par le navigateur — autorisez les popups pour ce site');return;}
+
   try{
     const numero=await prochainNumeroJeton();
     const token=genererTokenJeton();
@@ -1247,8 +1250,8 @@ async function nouvelleTableAvecJeton(){
       timestamp:firebase.firestore.FieldValue.serverTimestamp()
     });
     showToast(`✅ Jeton n°${numero} activé — Table ${val}`);
-    imprimerTicketJeton(numero, token, val);
-  }catch(e){console.error(e);showToast('❌ Erreur création jeton');}
+    imprimerTicketJeton(numero, token, val, printWin);
+  }catch(e){console.error(e);showToast('❌ Erreur création jeton');if(printWin)printWin.close();}
 }
 
 // Imprime un jeton tout de suite, SANS table assignée (statut "en_attente") — pratique pour
@@ -1258,6 +1261,11 @@ async function nouvelleTableAvecJeton(){
 async function imprimerJetonAvance(){
   const nb=parseInt(prompt('Combien de jetons imprimer à l\'avance ? (1 par défaut)'))||1;
   if(nb<1||nb>50){showToast('⚠️ Entre 1 et 50 jetons à la fois');return;}
+
+  // Ouvre la fenêtre d'impression tout de suite (au clic) pour éviter le blocage anti-popup des
+  // navigateurs — on la remplira une fois les jetons créés dans Firestore.
+  const printWin=window.open('','_blank','width=420,height=500');
+  if(!printWin){showToast('⚠️ Fenêtre d\'impression bloquée par le navigateur — autorisez les popups pour ce site');return;}
 
   try{
     const numeroDepart=await prochainNumeroJeton();
@@ -1274,15 +1282,16 @@ async function imprimerJetonAvance(){
     await batch.commit();
 
     showToast(`✅ ${nb} jeton${nb>1?'s':''} créé${nb>1?'s':''} — n°${numeroDepart}${nb>1?' à n°'+(numeroDepart+nb-1):''}`);
-    imprimerTicketsJetonAvance(jetons);
-  }catch(e){console.error(e);showToast('❌ Erreur création jeton(s)');}
+    imprimerTicketsJetonAvance(jetons,printWin);
+  }catch(e){console.error(e);showToast('❌ Erreur création jeton(s)');if(printWin)printWin.close();}
 }
 
 // Imprime N jetons "en attente" en un seul job (une étiquette par jeton, saut de page entre chaque —
 // idéal pour une imprimante à étiquettes autocollantes en rouleau continu).
-function imprimerTicketsJetonAvance(jetons){
+function imprimerTicketsJetonAvance(jetons,printWin){
   const baseUrl=BASE_URL_APP;
-  const win=window.open('','_blank','width=420,height=500');
+  const win=printWin||window.open('','_blank','width=420,height=500');
+  if(!win){showToast('⚠️ Fenêtre d\'impression bloquée par le navigateur');return;}
 
   const etiquettes=jetons.map(j=>`
     <div class="etiquette">
@@ -1323,12 +1332,13 @@ window.onload=function(){setTimeout(()=>{window.print();setTimeout(()=>window.cl
   win.document.close();
 }
 
-function imprimerTicketJeton(numero, token, tableNum){
+function imprimerTicketJeton(numero, token, tableNum, printWin){
   const baseUrl=BASE_URL_APP;
   const url=`${baseUrl}?j=${token}`;
   const aTable=tableNum!==null && tableNum!==undefined;
 
-  const win=window.open('','_blank','width=420,height=500');
+  const win=printWin||window.open('','_blank','width=420,height=500');
+  if(!win){showToast('⚠️ Fenêtre d\'impression bloquée par le navigateur');return;}
   win.document.write(`<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><title>${aTable?'Jeton Table '+tableNum:'Jeton n°'+numero}</title>
 <style>
