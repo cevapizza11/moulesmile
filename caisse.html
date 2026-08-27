@@ -373,6 +373,7 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-functions-compat.js"></script>
 <script>
 // ============================================================
 // FIREBASE
@@ -387,6 +388,7 @@ const firebaseConfig={
 };
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
+const fonctions=firebase.app().functions('europe-west3');
 // ⚠️ Adaptez cette URL à celle de votre app si elle change un jour (utilisée pour impression + copie de lien)
 const BASE_URL_APP='https://cevapizza11.github.io/moulesmile/index.html';
 
@@ -1905,6 +1907,39 @@ function renderAdditions(){
 // ============================================================
 // ENCAISSER
 // ============================================================
+// ============================================================
+// TRANSMISSION HIBOUTIK — appelle la Cloud Function au moment de l'encaissement.
+// Ne bloque jamais le flux local : une erreur ici n'empêche pas l'encaissement de se terminer.
+// ============================================================
+async function envoyerVenteVersHiboutik(tableNum, commandes){
+  try{
+    // Agrège tous les articles de toutes les commandes de cette table, avec quantité
+    const compteur={};
+    commandes.forEach(cmd=>{
+      (cmd.items||[]).forEach(item=>{
+        const idBase=(item.id||'').replace('_inclus','');
+        if(!compteur[idBase]) compteur[idBase]={id:idBase, nom:item.nom, quantite:0};
+        compteur[idBase].quantite++;
+      });
+    });
+    const items=Object.values(compteur);
+    if(!items.length) return;
+
+    const appel=fonctions.httpsCallable('envoyerVenteHiboutik');
+    const result=await appel({table:tableNum, items});
+
+    if(result.data && result.data.nonMappes && result.data.nonMappes.length){
+      console.warn(`Table ${tableNum} — produits non transmis à Hiboutik :`, result.data.nonMappes);
+      showToast(`⚠️ Table ${tableNum} : ${result.data.nonMappes.length} produit(s) non transmis à Hiboutik`);
+    } else {
+      console.log(`✅ Vente table ${tableNum} transmise à Hiboutik (id ${result.data?.saleId})`);
+    }
+  }catch(e){
+    console.error(`❌ Échec transmission Hiboutik — table ${tableNum} :`, e.message);
+    showToast(`⚠️ Table ${tableNum} encaissée, mais échec transmission Hiboutik`);
+  }
+}
+
 async function encaisser(tableNum){
   if(!confirm(`Encaisser la table ${tableNum} ?`)) return;
   try{
@@ -1927,6 +1962,9 @@ async function encaisser(tableNum){
       heureReglement:new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}),
       timestamp:firebase.firestore.FieldValue.serverTimestamp()
     });
+
+    // Transmission à Hiboutik (caisse certifiée) — ne bloque JAMAIS l'encaissement local en cas d'échec.
+    envoyerVenteVersHiboutik(tableNum, addData.commandes||[]);
 
     // Marquer toutes les commandes réglées + supprimer addition + supprimer alerte
     const snap=await db.collection('commandes').where('table','==',tableNum).get();
