@@ -1911,7 +1911,7 @@ function renderAdditions(){
 // TRANSMISSION HIBOUTIK — appelle la Cloud Function au moment de l'encaissement.
 // Ne bloque jamais le flux local : une erreur ici n'empêche pas l'encaissement de se terminer.
 // ============================================================
-async function envoyerVenteVersHiboutik(tableNum, commandes){
+async function envoyerVenteVersHiboutik(tableNum, commandes, couverts){
   try{
     // Agrège tous les articles de toutes les commandes de cette table, avec quantité
     const compteur={};
@@ -1926,7 +1926,7 @@ async function envoyerVenteVersHiboutik(tableNum, commandes){
     if(!items.length) return;
 
     const appel=fonctions.httpsCallable('envoyerVenteHiboutik');
-    const result=await appel({table:tableNum, items});
+    const result=await appel({table:tableNum, items, couverts});
 
     if(result.data && result.data.nonMappes && result.data.nonMappes.length){
       console.warn(`Table ${tableNum} — produits non transmis à Hiboutik :`, result.data.nonMappes);
@@ -1964,7 +1964,8 @@ async function encaisser(tableNum){
     });
 
     // Transmission à Hiboutik (caisse certifiée) — ne bloque JAMAIS l'encaissement local en cas d'échec.
-    envoyerVenteVersHiboutik(tableNum, addData.commandes||[]);
+    const jetonActif=Object.values(allJetons).find(j=>j.statut==='actif' && j.table===tableNum);
+    envoyerVenteVersHiboutik(tableNum, addData.commandes||[], jetonActif?.couverts||null);
 
     // Marquer toutes les commandes réglées + supprimer addition + supprimer alerte
     const snap=await db.collection('commandes').where('table','==',tableNum).get();
