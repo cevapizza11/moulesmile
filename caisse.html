@@ -1913,16 +1913,22 @@ function renderAdditions(){
 // ============================================================
 async function envoyerVenteVersHiboutik(tableNum, commandes, couverts){
   try{
-    // Une ligne par article individuel (pas de regroupement par quantité) : deux articles
-    // identiques mais avec des suppléments différents (ex: 2 Sundae, un avec croquant Daim
-    // +0,50€, un sans) doivent garder chacun leur propre prix réellement payé.
-    const items=[];
+    // Regroupe par (produit + prix exact) : deux articles identiques au même prix →
+    // une seule ligne avec quantity=2. Deux articles identiques mais à des prix différents
+    // (suppléments différents, ex: Sundae avec/sans croquant en plus) → deux lignes séparées,
+    // chacune avec son propre prix. Hiboutik ignore silencieusement un 2e ajout du même
+    // produit sans cette distinction, d'où l'importance de regrouper correctement ici.
+    const compteur={};
     commandes.forEach(cmd=>{
       (cmd.items||[]).forEach(item=>{
         const idBase=(item.id||'').replace('_inclus','');
-        items.push({id:idBase, nom:item.nom, prix:item.prix||0});
+        const prix=item.prix||0;
+        const cle=idBase+'|'+prix;
+        if(!compteur[cle]) compteur[cle]={id:idBase, nom:item.nom, prix, quantite:0};
+        compteur[cle].quantite++;
       });
     });
+    const items=Object.values(compteur);
     if(!items.length) return;
 
     const appel=fonctions.httpsCallable('envoyerVenteHiboutik');
