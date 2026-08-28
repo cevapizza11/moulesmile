@@ -1913,16 +1913,16 @@ function renderAdditions(){
 // ============================================================
 async function envoyerVenteVersHiboutik(tableNum, commandes, couverts){
   try{
-    // Agrège tous les articles de toutes les commandes de cette table, avec quantité
-    const compteur={};
+    // Une ligne par article individuel (pas de regroupement par quantité) : deux articles
+    // identiques mais avec des suppléments différents (ex: 2 Sundae, un avec croquant Daim
+    // +0,50€, un sans) doivent garder chacun leur propre prix réellement payé.
+    const items=[];
     commandes.forEach(cmd=>{
       (cmd.items||[]).forEach(item=>{
         const idBase=(item.id||'').replace('_inclus','');
-        if(!compteur[idBase]) compteur[idBase]={id:idBase, nom:item.nom, quantite:0};
-        compteur[idBase].quantite++;
+        items.push({id:idBase, nom:item.nom, prix:item.prix||0});
       });
     });
-    const items=Object.values(compteur);
     if(!items.length) return;
 
     const appel=fonctions.httpsCallable('envoyerVenteHiboutik');
