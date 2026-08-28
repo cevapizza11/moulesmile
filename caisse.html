@@ -1915,16 +1915,20 @@ async function envoyerVenteVersHiboutik(tableNum, commandes, couverts){
   try{
     // Regroupe par (produit + prix exact) : deux articles identiques au même prix →
     // une seule ligne avec quantity=2. Deux articles identiques mais à des prix différents
-    // (suppléments différents, ex: Sundae avec/sans croquant en plus) → deux lignes séparées,
-    // chacune avec son propre prix. Hiboutik ignore silencieusement un 2e ajout du même
-    // produit sans cette distinction, d'où l'importance de regrouper correctement ici.
+    // (suppléments différents) → deux lignes séparées. Le prix envoyé à Hiboutik est de
+    // toute façon ignoré par leur API (toujours le prix catalogue) — donc pour refléter un
+    // supplément payant (ex: croquant +0,50€), on ajoute une ligne "Supplément" séparée,
+    // en plus du produit de base, plutôt que d'essayer de forcer un prix personnalisé.
     const compteur={};
     commandes.forEach(cmd=>{
       (cmd.items||[]).forEach(item=>{
         const idBase=(item.id||'').replace('_inclus','');
         const prix=item.prix||0;
+        // Extrait le total des suppléments depuis le texte du choix, ex: "(+0,50 €)"
+        const matches=[...(item.choix||'').matchAll(/\(\+([\d,]+)\s*€\)/g)];
+        const supplement=matches.reduce((s,m)=>s+parseFloat(m[1].replace(',','.')),0);
         const cle=idBase+'|'+prix;
-        if(!compteur[cle]) compteur[cle]={id:idBase, nom:item.nom, prix, quantite:0};
+        if(!compteur[cle]) compteur[cle]={id:idBase, nom:item.nom, prix, quantite:0, supplement, choix:item.choix||''};
         compteur[cle].quantite++;
       });
     });
