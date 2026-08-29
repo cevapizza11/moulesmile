@@ -396,11 +396,13 @@ const BASE_URL_APP='https://cevapizza11.github.io/moulesmile/index.html';
 // (ex: "Apporter une marmite"). Ne JAMAIS écrire dans ce document depuis caisse.html.
 let carteConsignes={};
 let carteSauces=[]; // options de la famille "sauce" (pour la recharge rapide de marmite)
+let carteCroquants=[]; // options de la famille "croquant" (pour la transmission Hiboutik)
 let carteCapacite={salle:0,terrasse:0,terrasseOuverte:false};
 db.collection('config').doc('carte_v2').onSnapshot(doc=>{
   carteConsignes=(doc.exists && doc.data().consignesCuisine)||{};
   const famillesOptions=(doc.exists && doc.data().famillesOptions)||{};
   carteSauces=(famillesOptions.sauce&&famillesOptions.sauce.options||[]).filter(o=>o.actif);
+  carteCroquants=(famillesOptions.croquant&&famillesOptions.croquant.options||[]).filter(o=>o.actif);
   carteCapacite=(doc.exists && doc.data().capaciteSalle)||{salle:0,terrasse:0,terrasseOuverte:false};
   updateOccupationCounter();
 });
@@ -1935,8 +1937,16 @@ async function envoyerVenteVersHiboutik(tableNum, commandes, couverts){
           const sauceTrouvee=carteSauces.find(s=>s.nom.trim().toLowerCase()===nomSauce.toLowerCase());
           if(sauceTrouvee) sauceId=sauceTrouvee.id;
         }
+        // Idem pour le croquant choisi (ex: "Croquant : Daim" → id "c2")
+        let croquantId=null;
+        const croquantMatch=choixTexte.match(/Croquant\s*:\s*([^—(]+)/);
+        if(croquantMatch){
+          const nomCroquant=croquantMatch[1].trim();
+          const croquantTrouve=carteCroquants.find(c=>c.nom.trim().toLowerCase()===nomCroquant.toLowerCase());
+          if(croquantTrouve) croquantId=croquantTrouve.id;
+        }
         const cle=idBase+'|'+prix+'|'+choixTexte;
-        if(!compteur[cle]) compteur[cle]={id:idBase, nom:item.nom, prix, quantite:0, supplement, sauceId, choix:choixTexte};
+        if(!compteur[cle]) compteur[cle]={id:idBase, nom:item.nom, prix, quantite:0, supplement, sauceId, croquantId, choix:choixTexte};
         compteur[cle].quantite++;
       });
     });
