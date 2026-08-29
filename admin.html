@@ -251,6 +251,16 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 
   <div class="section" style="margin-top:14px">
+    <h2>🔗 Correspondance Hiboutik</h2>
+    <div style="color:#888;font-size:12px;margin-bottom:10px">Associe chaque produit de la carte à son ID Hiboutik (visible dans l'URL de sa fiche produit). Vide = ce produit ne sera pas transmis à Hiboutik lors de l'encaissement.</div>
+    <div id="mappingHiboutikList"></div>
+    <div style="background:#1A2A1A;border:1px dashed #2ab54a;border-radius:10px;padding:10px 14px;margin-top:10px">
+      <div style="color:#888;font-size:11px;margin-bottom:6px">Entrée technique "SUPPLEMENT" (produit générique +0,50€ pour les suppléments payants) :</div>
+      <input type="number" id="mappingSupplementInput" placeholder="ID Hiboutik du produit Supplément" style="width:100%;background:#111;border:1px solid #4ABA80;border-radius:8px;color:#4ABA80;padding:8px 10px;font-size:13px" onchange="majMappingSupplement(this.value)">
+    </div>
+  </div>
+
+  <div class="section" style="margin-top:14px">
     <h2>🍽️ Consignes de service (ticket cuisine)</h2>
     <div style="color:#888;font-size:12px;margin-bottom:10px">Ex: "Apporter une marmite" pour les moules, "Apporter une assiette" pour les calamars/nuggets. Laissez vide si rien à ajouter. Imprimé automatiquement sous le plat sur le ticket cuisine.</div>
     <div id="consignesServiceList"></div>
@@ -1030,6 +1040,7 @@ function renderReglages(){
     </div>`;
   }).join('');
 
+  chargerMappingHiboutik();
   renderConsignesService();
   renderFamillesSuggestionAddition();
   renderSuggestionAddition();
@@ -1138,6 +1149,55 @@ function getDefautSuggestionAddition(){
 // Familles entières affichées en tuile (ex: "Desserts") dans le popup avant addition.
 // Le client clique la tuile → voit les produits de la catégorie → choisit dedans.
 // Consignes de service (ticket cuisine) — un texte libre par produit, ex: "Apporter une marmite"
+// Correspondance Hiboutik — stockée séparément (config/hiboutikMapping), pas dans carte_v2,
+// car lue directement par la Cloud Function côté serveur.
+let mappingHiboutik={};
+async function chargerMappingHiboutik(){
+  try{
+    const doc=await db.collection('config').doc('hiboutikMapping').get();
+    mappingHiboutik=(doc.exists && doc.data().mapping)||{};
+  }catch(e){console.error('Erreur chargement correspondance Hiboutik',e);mappingHiboutik={};}
+  renderMappingHiboutik();
+}
+
+function renderMappingHiboutik(){
+  if(!carte)return;
+  let html='';
+  carte.categories.forEach(cat=>{
+    (cat.produits||[]).forEach(p=>{
+      const val=mappingHiboutik[p.id]||'';
+      html+=`<div class="item-row">
+        <div class="item-info" style="cursor:default;flex:0 0 auto;min-width:140px"><div class="item-nom">${p.nom} <span style="color:#666;font-size:10px">(${p.id})</span></div></div>
+        <input type="number" value="${val}" placeholder="ID Hiboutik" style="width:140px;background:#2A2A2A;border:1px solid #444;border-radius:8px;color:#fff;padding:8px 10px;font-size:12px;margin-left:8px"
+          onchange="majMappingHiboutik('${p.id}',this.value)">
+      </div>`;
+    });
+  });
+  document.getElementById('mappingHiboutikList').innerHTML=html;
+  document.getElementById('mappingSupplementInput').value=mappingHiboutik['SUPPLEMENT']||'';
+}
+
+async function majMappingHiboutik(prodId,valeur){
+  const id=parseInt(valeur);
+  if(id) mappingHiboutik[prodId]=id;
+  else delete mappingHiboutik[prodId];
+  await sauvegarderMappingHiboutik();
+}
+
+async function majMappingSupplement(valeur){
+  const id=parseInt(valeur);
+  if(id) mappingHiboutik['SUPPLEMENT']=id;
+  else delete mappingHiboutik['SUPPLEMENT'];
+  await sauvegarderMappingHiboutik();
+}
+
+async function sauvegarderMappingHiboutik(){
+  try{
+    await db.collection('config').doc('hiboutikMapping').set({mapping:mappingHiboutik},{merge:false});
+    showToast('✅ Correspondance Hiboutik enregistrée');
+  }catch(e){console.error(e);showToast('❌ Erreur sauvegarde correspondance');}
+}
+
 function renderConsignesService(){
   if(!carte)return;
   if(!carte.consignesCuisine) carte.consignesCuisine={};
