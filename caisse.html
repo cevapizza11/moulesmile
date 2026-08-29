@@ -1913,22 +1913,30 @@ function renderAdditions(){
 // ============================================================
 async function envoyerVenteVersHiboutik(tableNum, commandes, couverts){
   try{
-    // Regroupe par (produit + prix exact) : deux articles identiques au même prix →
-    // une seule ligne avec quantity=2. Deux articles identiques mais à des prix différents
-    // (suppléments différents) → deux lignes séparées. Le prix envoyé à Hiboutik est de
-    // toute façon ignoré par leur API (toujours le prix catalogue) — donc pour refléter un
-    // supplément payant (ex: croquant +0,50€), on ajoute une ligne "Supplément" séparée,
-    // en plus du produit de base, plutôt que d'essayer de forcer un prix personnalisé.
+    // Regroupe par (produit + prix + choix exact) : deux articles identiques au même prix
+    // ET au même choix (même sauce, même supplément) → une seule ligne avec quantity=2.
+    // Toute différence de prix OU de choix (sauce différente, supplément différent) →
+    // lignes séparées, pour ne jamais perdre le détail de ce qui a été réellement choisi.
     const compteur={};
     commandes.forEach(cmd=>{
       (cmd.items||[]).forEach(item=>{
         const idBase=(item.id||'').replace('_inclus','');
         const prix=item.prix||0;
+        const choixTexte=item.choix||'';
         // Extrait le total des suppléments depuis le texte du choix, ex: "(+0,50 €)"
-        const matches=[...(item.choix||'').matchAll(/\(\+([\d,]+)\s*€\)/g)];
+        const matches=[...choixTexte.matchAll(/\(\+([\d,]+)\s*€\)/g)];
         const supplement=matches.reduce((s,m)=>s+parseFloat(m[1].replace(',','.')),0);
-        const cle=idBase+'|'+prix;
-        if(!compteur[cle]) compteur[cle]={id:idBase, nom:item.nom, prix, quantite:0, supplement, choix:item.choix||''};
+        // Retrouve l'ID de la sauce choisie (si applicable) via son nom, pour la transmettre
+        // à Hiboutik comme une ligne à part (ex: "Sauce : Marinière" → id "s1")
+        let sauceId=null;
+        const sauceMatch=choixTexte.match(/Sauce\s*:\s*([^—(]+)/);
+        if(sauceMatch){
+          const nomSauce=sauceMatch[1].trim();
+          const sauceTrouvee=carteSauces.find(s=>s.nom.trim().toLowerCase()===nomSauce.toLowerCase());
+          if(sauceTrouvee) sauceId=sauceTrouvee.id;
+        }
+        const cle=idBase+'|'+prix+'|'+choixTexte;
+        if(!compteur[cle]) compteur[cle]={id:idBase, nom:item.nom, prix, quantite:0, supplement, sauceId, choix:choixTexte};
         compteur[cle].quantite++;
       });
     });
