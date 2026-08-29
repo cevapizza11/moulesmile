@@ -396,13 +396,13 @@ const BASE_URL_APP='https://cevapizza11.github.io/moulesmile/index.html';
 // (ex: "Apporter une marmite"). Ne JAMAIS écrire dans ce document depuis caisse.html.
 let carteConsignes={};
 let carteSauces=[]; // options de la famille "sauce" (pour la recharge rapide de marmite)
-let carteCroquants=[]; // options de la famille "croquant" (pour la transmission Hiboutik)
+let carteFamillesOptions={}; // TOUTES les familles d'options (sauce, croquant, coulis, nappage...) — transmission Hiboutik générique
 let carteCapacite={salle:0,terrasse:0,terrasseOuverte:false};
 db.collection('config').doc('carte_v2').onSnapshot(doc=>{
   carteConsignes=(doc.exists && doc.data().consignesCuisine)||{};
   const famillesOptions=(doc.exists && doc.data().famillesOptions)||{};
   carteSauces=(famillesOptions.sauce&&famillesOptions.sauce.options||[]).filter(o=>o.actif);
-  carteCroquants=(famillesOptions.croquant&&famillesOptions.croquant.options||[]).filter(o=>o.actif);
+  carteFamillesOptions=famillesOptions;
   carteCapacite=(doc.exists && doc.data().capaciteSalle)||{salle:0,terrasse:0,terrasseOuverte:false};
   updateOccupationCounter();
 });
@@ -1928,25 +1928,27 @@ async function envoyerVenteVersHiboutik(tableNum, commandes, couverts){
         // Extrait le total des suppléments depuis le texte du choix, ex: "(+0,50 €)"
         const matches=[...choixTexte.matchAll(/\(\+([\d,]+)\s*€\)/g)];
         const supplement=matches.reduce((s,m)=>s+parseFloat(m[1].replace(',','.')),0);
-        // Retrouve l'ID de la sauce choisie (si applicable) via son nom, pour la transmettre
-        // à Hiboutik comme une ligne à part (ex: "Sauce : Marinière" → id "s1")
-        let sauceId=null;
-        const sauceMatch=choixTexte.match(/Sauce\s*:\s*([^—(]+)/);
-        if(sauceMatch){
-          const nomSauce=sauceMatch[1].trim();
-          const sauceTrouvee=carteSauces.find(s=>s.nom.trim().toLowerCase()===nomSauce.toLowerCase());
-          if(sauceTrouvee) sauceId=sauceTrouvee.id;
-        }
-        // Idem pour le croquant choisi (ex: "Croquant : Daim" → id "c2")
-        let croquantId=null;
-        const croquantMatch=choixTexte.match(/Croquant\s*:\s*([^—(]+)/);
-        if(croquantMatch){
-          const nomCroquant=croquantMatch[1].trim();
-          const croquantTrouve=carteCroquants.find(c=>c.nom.trim().toLowerCase()===nomCroquant.toLowerCase());
-          if(croquantTrouve) croquantId=croquantTrouve.id;
-        }
+
+        // Extraction GÉNÉRIQUE : le texte du choix est composé de segments "Famille : Option"
+        // séparés par " — " (ex: "Coulis : Chocolat — Croquant : Daim (+0,50 €)"). Pour chaque
+        // segment, on retrouve la famille et l'option correspondantes dans carteFamillesOptions,
+        // quelle que soit la famille (Sauce, Croquant, Coulis, Nappage, ou toute future famille)
+        // — aucun code à ajouter ici quand tu crées une nouvelle famille d'options.
+        const optionIds=[];
+        choixTexte.split('—').forEach(segment=>{
+          const m=segment.match(/^\s*(.+?)\s*:\s*([^()]+)/);
+          if(!m)return;
+          const [,nomFamilleTexte,nomOptionTexte]=m;
+          const familleTrouvee=Object.values(carteFamillesOptions).find(f=>
+            (f.nom||'').trim().toLowerCase()===nomFamilleTexte.trim().toLowerCase());
+          if(!familleTrouvee)return;
+          const optionTrouvee=(familleTrouvee.options||[]).find(o=>
+            o.nom.trim().toLowerCase()===nomOptionTexte.trim().toLowerCase());
+          if(optionTrouvee) optionIds.push(optionTrouvee.id);
+        });
+
         const cle=idBase+'|'+prix+'|'+choixTexte;
-        if(!compteur[cle]) compteur[cle]={id:idBase, nom:item.nom, prix, quantite:0, supplement, sauceId, croquantId, choix:choixTexte};
+        if(!compteur[cle]) compteur[cle]={id:idBase, nom:item.nom, prix, quantite:0, supplement, optionIds, choix:choixTexte};
         compteur[cle].quantite++;
       });
     });
