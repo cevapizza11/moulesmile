@@ -253,6 +253,16 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   <div class="section" style="margin-top:14px">
     <h2>🔗 Correspondance Hiboutik</h2>
     <div style="color:#888;font-size:12px;margin-bottom:10px">Associe chaque produit de la carte à son ID Hiboutik (visible dans l'URL de sa fiche produit). Vide = ce produit ne sera pas transmis à Hiboutik lors de l'encaissement.</div>
+
+    <div style="background:#1A1A2E;border:1px solid #444;border-radius:10px;padding:14px;margin-bottom:14px;font-size:12px;color:#ccc;line-height:1.7">
+      <strong style="color:#D4AF37">📋 Marche à suivre pour un nouveau produit ou une nouvelle sauce :</strong><br><br>
+      <strong>1. Crée-le dans ta carte</strong> (Excel réimporté, ou réglages admin habituels) — il aura un nouvel ID (ex: b36, s8...).<br>
+      <strong>2. Crée le même produit dans Hiboutik</strong> — même nom exact, même prix (0€ pour une sauce/option gratuite), bonne TVA (10% nourriture/soft, 20% alcool). Note son ID Hiboutik (visible dans l'URL de sa fiche produit).<br>
+      <strong>3. Renseigne la correspondance ici</strong> — le nouveau produit apparaît automatiquement dans la liste ci-dessous (champ vide). Tape son ID Hiboutik à côté. Sauvegarde automatique, rien d'autre à faire.<br>
+      <strong>4. Teste</strong> — commande avec ce produit, encaisse, vérifie qu'il apparaît bien dans Hiboutik avec le bon prix.<br><br>
+      <strong style="color:#D4AF37">⚠️ Pour une sauce/option (famille "Sauce")</strong> : le rapprochement se fait sur le <u>nom exact</u> (insensible à la casse) entre le choix du client et le nom du produit Hiboutik — pas besoin de toucher au code tant que les noms correspondent mot pour mot.
+    </div>
+
     <div id="mappingHiboutikList"></div>
     <div style="background:#1A2A1A;border:1px dashed #2ab54a;border-radius:10px;padding:10px 14px;margin-top:10px">
       <div style="color:#888;font-size:11px;margin-bottom:6px">Entrée technique "SUPPLEMENT" (produit générique +0,50€ pour les suppléments payants) :</div>
