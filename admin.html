@@ -1151,11 +1151,31 @@ function getDefautSuggestionAddition(){
 // Consignes de service (ticket cuisine) — un texte libre par produit, ex: "Apporter une marmite"
 // Correspondance Hiboutik — stockée séparément (config/hiboutikMapping), pas dans carte_v2,
 // car lue directement par la Cloud Function côté serveur.
-let mappingHiboutik={};
+// Valeurs connues au moment de la mise en place (utilisées une seule fois pour initialiser
+// automatiquement Firestore si le document n'existe pas encore — évite de tout retaper à la main).
+const MAPPING_HIBOUTIK_INITIAL={
+  "b0": 71, "b1": 39, "b10": 45, "b11": 46, "b12": 47, "b13": 48, "b14": 49,
+  "b15": 50, "b16": 51, "b17": 52, "b18": 53, "b19": 54, "b2": 40, "b20": 55,
+  "b21": 56, "b22": 57, "b23": 58, "b24": 59, "b25": 60, "b26": 61, "b27": 62,
+  "b28": 63, "b29": 64, "b3": 36, "b30": 65, "b31": 66, "b32": 67, "b33": 68,
+  "b34": 69, "b35": 41, "b4": 37, "b5": 70, "b6": 38, "b7": 42, "b8": 43,
+  "b9": 44, "ca1": 32, "d4": 72, "d5": 73, "d6": 74, "dg1": 75, "dg2": 76,
+  "dg3": 77, "en1": 78, "en2": 35, "fc1": 33, "fc2": 34, "p1": 31,
+  "SUPPLEMENT": 79
+};
+
 async function chargerMappingHiboutik(){
   try{
     const doc=await db.collection('config').doc('hiboutikMapping').get();
-    mappingHiboutik=(doc.exists && doc.data().mapping)||{};
+    if(doc.exists && doc.data().mapping && Object.keys(doc.data().mapping).length){
+      mappingHiboutik=doc.data().mapping;
+    } else {
+      // Document absent/vide : première ouverture depuis la migration — on l'initialise
+      // automatiquement avec les valeurs connues, une seule fois.
+      mappingHiboutik={...MAPPING_HIBOUTIK_INITIAL};
+      await db.collection('config').doc('hiboutikMapping').set({mapping:mappingHiboutik});
+      showToast('✅ Correspondance Hiboutik initialisée automatiquement');
+    }
   }catch(e){console.error('Erreur chargement correspondance Hiboutik',e);mappingHiboutik={};}
   renderMappingHiboutik();
 }
