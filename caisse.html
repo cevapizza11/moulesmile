@@ -1238,13 +1238,17 @@ async function prochainNumeroJeton(){
 }
 
 async function nouvelleTableAvecJeton(){
-  const val=parseInt(prompt('N° de table pour ce jeton :'));
-  if(!val||val<1||val>150){if(!isNaN(val))showToast('⚠️ Numéro de table invalide');return;}
-  const unites=parseInt(prompt('🪑 Combien de tables 90x90 assemblées ? (pour la capacité — 1 par défaut)'))||1;
-  const couverts=parseInt(prompt('👥 Combien de couverts (personnes) à cette table ?'))||null;
-
+  // La fenêtre d'impression doit s'ouvrir en tout premier, dans la foulée immédiate du clic —
+  // sinon, après plusieurs prompt() d'affilée, certains navigateurs (Chrome en tête) ne
+  // considèrent plus l'ouverture comme faisant partie du geste utilisateur d'origine et la
+  // bloquent silencieusement (ou avec l'avertissement popup bloqué).
   const printWin=window.open('','_blank','width=420,height=500');
   if(!printWin){showToast('⚠️ Fenêtre d\'impression bloquée par le navigateur — autorisez les popups pour ce site');return;}
+
+  const val=parseInt(prompt('N° de table pour ce jeton :'));
+  if(!val||val<1||val>150){if(!isNaN(val))showToast('⚠️ Numéro de table invalide');printWin.close();return;}
+  const unites=parseInt(prompt('🪑 Combien de tables 90x90 assemblées ? (pour la capacité — 1 par défaut)'))||1;
+  const couverts=parseInt(prompt('👥 Combien de couverts (personnes) à cette table ?'))||null;
 
   try{
     const numero=await prochainNumeroJeton();
