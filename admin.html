@@ -414,7 +414,7 @@ afficherBuildTimestamp();
 // ===== AUTHENTIFICATION ADMIN (non-bloquante) - Sept 2026 =====
 let userAuth = null;
 const adminEmail = 'admin@commandemoulesmile.fr';
-const adminPin = '793879'; // Remplace par ton PIN à toi (6 chiffres)
+const adminPin = '[METS TON PIN ADMIN ICI]'; // Remplace par ton PIN à toi (6 chiffres)
 
 async function loginAdmin() {
   const pin = prompt('🔐 Tape le PIN admin (6 chiffres) :\n\n');
@@ -485,6 +485,8 @@ async function changerPinCaisse() {
   }
 }
 let carte=null,catActive=null,importedData=null;
+let carteFamillesOptions={};
+let carteOptionsProduits={};
 let mappingHiboutik={}; // Hiboutik product mapping
 
 const CATS=[
@@ -493,9 +495,13 @@ const CATS=[
   {id:"desserts",nom:"🍮 Desserts"},{id:"digestifs",nom:"✨ Digestifs"},{id:"chauds",nom:"☕ Chauds"},
 ];
 
-// Remplir select catégorie
-const sel=document.getElementById('newCat');
-CATS.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.nom;sel.appendChild(o);});
+// Remplir select catégorie — sera appelé après le chargement du DOM
+function remplirSelectCategories(){
+  const sel=document.getElementById('newCat');
+  if(!sel)return;
+  sel.innerHTML='';
+  CATS.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.nom;sel.appendChild(o);});
+}
 
 const boissonsMenuDefaut = [
   {id:"bm1", nom:"Coca-Cola", desc:"33cl", emoji:"🥤", actif:true},
@@ -1580,6 +1586,121 @@ function exporterCarteEnExcel(){
   XLSX.writeFile(wb,'MouleSmile_Carte_Admin.xlsx');
   showToast('✅ Carte téléchargée ! Modifie et réimporte-la.');
 }
+
+// ============================================================
+// INITIALISATION AU CHARGEMENT
+// ============================================================
+async function initAdmin(){
+  console.log('✅ Initialisation admin.html...');
+  
+  // Charger la carte depuis Firestore
+  try{
+    const doc=await db.collection('config').doc('carte').get();
+    if(doc.exists){
+      carte=doc.data();
+      if(carte && carte.categories && carte.categories.length){
+        catActive=carte.categories[0].id;
+        console.log('✅ Carte chargée:',carte.categories.length,'catégories');
+      }
+    } else {
+      console.warn('⚠️ Pas de carte trouvée — création d\'une carte vide...');
+      // Créer une carte vide par défaut avec les catégories standard
+      carte={
+        categories:[
+          {id:'formules',nom:'🍽️ Formules',produits:[]},
+          {id:'sauces',nom:'🥘 Sauces',produits:[]},
+          {id:'softs',nom:'🧃 Softs',produits:[]},
+          {id:'bieres',nom:'🍺 Bières',produits:[]},
+          {id:'vins_blancs',nom:'🍷 Vins blancs',produits:[]},
+          {id:'vins_roses',nom:'🍷 Vins rosés',produits:[]},
+          {id:'vins_rouges',nom:'🍷 Vins rouges',produits:[]},
+          {id:'cocktails',nom:'🍹 Cocktails',produits:[]},
+          {id:'sangria',nom:'🍷 Sangria',produits:[]},
+          {id:'desserts',nom:'🍮 Desserts',produits:[]},
+          {id:'digestifs',nom:'🥃 Digestifs',produits:[]},
+          {id:'chauds',nom:'☕ Chauds',produits:[]}
+        ],
+        famillesOptions:{},
+        optionsProduits:{}
+      };
+      catActive='formules';
+      await db.collection('config').doc('carte').set(carte);
+      console.log('✅ Carte vide créée dans Firestore');
+    }
+  }catch(e){
+    console.error('❌ Erreur chargement/création carte:',e);
+    // Créer une carte vide localement en cas d'erreur
+    carte={
+      categories:[
+        {id:'formules',nom:'🍽️ Formules',produits:[]},
+        {id:'sauces',nom:'🥘 Sauces',produits:[]},
+        {id:'softs',nom:'🧃 Softs',produits:[]},
+        {id:'bieres',nom:'🍺 Bières',produits:[]},
+        {id:'vins_blancs',nom:'🍷 Vins blancs',produits:[]},
+        {id:'vins_roses',nom:'🍷 Vins rosés',produits:[]},
+        {id:'vins_rouges',nom:'🍷 Vins rouges',produits:[]},
+        {id:'cocktails',nom:'🍹 Cocktails',produits:[]},
+        {id:'sangria',nom:'🍷 Sangria',produits:[]},
+        {id:'desserts',nom:'🍮 Desserts',produits:[]},
+        {id:'digestifs',nom:'🥃 Digestifs',produits:[]},
+        {id:'chauds',nom:'☕ Chauds',produits:[]}
+      ],
+      famillesOptions:{},
+      optionsProduits:{}
+    };
+    catActive='formules';
+    console.log('⚠️ Carte vide créée localement (Firestore indisponible)');
+  }
+  
+  // Charger les familles d'options
+  try{
+    const doc=await db.collection('config').doc('famillesOptions').get();
+    if(doc.exists){
+      carteFamillesOptions=doc.data().famillesOptions||{};
+      console.log('✅ Familles options chargées');
+    }
+  }catch(e){
+    console.error('❌ Erreur familles:',e);
+  }
+  
+  // Charger les options produits
+  try{
+    const doc=await db.collection('config').doc('optionsProduits').get();
+    if(doc.exists){
+      carteOptionsProduits=doc.data().optionsProduits||{};
+      console.log('✅ Options produits chargées');
+    }
+  }catch(e){
+    console.error('❌ Erreur options produits:',e);
+  }
+  
+  // Afficher l'onglet Carte par défaut
+  const carteTab=document.querySelector('[onclick="switchNav(\'Carte\',this)"]');
+  if(carteTab) switchNav('Carte',carteTab);
+  
+  // Afficher la carte si elle existe
+  if(carte && carte.categories && carte.categories.length){
+    render();
+  } else {
+    // Afficher un message "Aucune carte"
+    const catContent=document.getElementById('catContent');
+    if(catContent) catContent.innerHTML='<div style="color:#888;text-align:center;padding:40px">📭 Aucun produit — Importe une carte (onglet 📥 Excel) ou ajoute des produits manuellement (onglet ➕)</div>';
+  }
+  
+  // Remplir les selects et autres UI dépendantes du DOM
+  remplirSelectCategories();
+  
+  // Charger stats, mapping, autres
+  try{loadStats();}catch(e){console.error('Erreur stats:',e);}
+  try{chargerMappingHiboutik();}catch(e){console.error('Erreur mapping:',e);}
+  
+  console.log('✅ Admin.html initialisé !');
+}
+
+// Démarrer l'initialisation avec un délai pour laisser Firebase se charger
+console.log('🔄 Démarrage de l\'initialisation dans 1 seconde...');
+setTimeout(initAdmin, 1000);
+console.log('✅ Script admin.html chargé — en attente de l\'initialisation');
 </script>
 </body>
 </html>
