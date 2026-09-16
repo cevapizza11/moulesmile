@@ -1455,6 +1455,7 @@ async function validerAvantAddition(){
   const total=panierAvantAddition.reduce((s,p)=>s+p.prix,0);
   try{
     await db.collection('commandes').add({
+      clientUid: firebase.auth().currentUser.uid,
       table:tableNum,
       couverts:nbCouverts||null,
       nbAdultes:nbAdultes!=null?nbAdultes:null,
@@ -1489,7 +1490,8 @@ async function validerCommande(){
   const total=panier.reduce((s,p)=>s+p.prix,0);
   const heure=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
   try{
-    await db.collection('commandes').add({
+      await db.collection('commandes').add({
+      clientUid: firebase.auth().currentUser.uid,
       table:tableNum,
       couverts:nbCouverts||null,
       nbAdultes:nbAdultes!=null?nbAdultes:null,
