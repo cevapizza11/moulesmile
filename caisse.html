@@ -428,6 +428,7 @@ async function loginCaisse() {
       userAuth = userCredential.user;
       console.log('✅ Caisse connectée:', userAuth.email);
       localStorage.setItem('caisseConnected', 'true');
+      demarrerEcoutesFirestore(); // Lancer les listeners APRÈS la connexion
     } catch (error) {
       console.error('❌ Erreur login caisse:', error.message);
       alert('❌ PIN incorrect !');
@@ -443,10 +444,12 @@ async function loginCaisse() {
 if (localStorage.getItem('caisseConnected') === 'true' && firebase.auth().currentUser) {
   userAuth = firebase.auth().currentUser;
   console.log('✅ Caisse reconnectée automatiquement');
+  demarrerEcoutesFirestore(); // Lancer les listeners APRÈS reconnexion
 } else if (firebase.auth().currentUser) {
   userAuth = firebase.auth().currentUser;
   console.log('✅ Caisse reconnectée via session Firebase');
   localStorage.setItem('caisseConnected', 'true');
+  demarrerEcoutesFirestore(); // Lancer les listeners APRÈS reconnexion
 } else {
   loginCaisse();
 }
@@ -583,59 +586,95 @@ demarrerEcouteCommandes();
 })();
 
 // ============================================================
-// ÉCOUTE FIRESTORE — ADDITIONS
-// ============================================================
-db.collection('additions').onSnapshot(snap=>{
-  let hasNew=false;
-  snap.docChanges().forEach(change=>{
-    const data=change.doc.data();
-    if(change.type==='added' && !allAdditions[change.doc.id] && data.statut==='demandee') hasNew=true;
-    if(change.type==='removed'){
-      delete allAdditions[change.doc.id];
-    } else {
-      allAdditions[change.doc.id]={id:change.doc.id,...change.doc.data()};
-    }
-  });
-  if(hasNew) playBeep(2);
-  renderAdditions();
-  updateStats();
-}, err=>{console.error('Additions listener error:',err);});
-
-// ============================================================
-// ÉCOUTE FIRESTORE — ALERTES
-// ============================================================
-db.collection('alertes').onSnapshot(snap=>{
-  let hasNew=false;
-  snap.docChanges().forEach(change=>{
-    if(change.type==='added' && !allAlertes[change.doc.id]) hasNew=true;
-    if(change.type==='removed'){
-      delete allAlertes[change.doc.id];
-    } else {
-      allAlertes[change.doc.id]={id:change.doc.id,...change.doc.data()};
-    }
-  });
-  if(hasNew) playBeep(3);
-  renderAlertes();
-  updateStats();
-}, err=>{console.error('Alertes listener error:',err);});
-
-// ============================================================
-// ÉCOUTE FIRESTORE — JETONS
+// VARIABLES JETONS
 // ============================================================
 let allJetons={};
 let filtreJetonsCourant='tous';
 let jetonEnCoursActivation=null;
 
-db.collection('jetons').orderBy('numero').onSnapshot(snap=>{
-  snap.docChanges().forEach(change=>{
-    if(change.type==='removed'){
-      delete allJetons[change.doc.id];
+// ============================================================
+// DÉMARRAGE DES LISTENERS APRÈS AUTHENTIFICATION
+// ============================================================
+let unsubscribeAdditions=null;
+let unsubscribeAlertes=null;
+let unsubscribeJetons=null;
+let unsubscribeStatsParams=null;
+let unsubscribeRecharges=null;
+
+function demarrerEcoutesFirestore(){
+  // Arrêter les anciens listeners s'ils existent
+  if(unsubscribeAdditions) unsubscribeAdditions();
+  if(unsubscribeAlertes) unsubscribeAlertes();
+  if(unsubscribeJetons) unsubscribeJetons();
+  if(unsubscribeStatsParams) unsubscribeStatsParams();
+  if(unsubscribeRecharges) unsubscribeRecharges();
+
+  // ÉCOUTE FIRESTORE — ADDITIONS
+  unsubscribeAdditions=db.collection('additions').onSnapshot(snap=>{
+    let hasNew=false;
+    snap.docChanges().forEach(change=>{
+      const data=change.doc.data();
+      if(change.type==='added' && !allAdditions[change.doc.id] && data.statut==='demandee') hasNew=true;
+      if(change.type==='removed'){
+        delete allAdditions[change.doc.id];
+      } else {
+        allAdditions[change.doc.id]={id:change.doc.id,...change.doc.data()};
+      }
+    });
+    if(hasNew) playBeep(2);
+    renderAdditions();
+    updateStats();
+  }, err=>{console.error('Additions listener error:',err);});
+
+  // ÉCOUTE FIRESTORE — ALERTES
+  unsubscribeAlertes=db.collection('alertes').onSnapshot(snap=>{
+    let hasNew=false;
+    snap.docChanges().forEach(change=>{
+      if(change.type==='added' && !allAlertes[change.doc.id]) hasNew=true;
+      if(change.type==='removed'){
+        delete allAlertes[change.doc.id];
+      } else {
+        allAlertes[change.doc.id]={id:change.doc.id,...change.doc.data()};
+      }
+    });
+    if(hasNew) playBeep(3);
+    renderAlertes();
+    updateStats();
+  }, err=>{console.error('Alertes listener error:',err);});
+
+  // ÉCOUTE FIRESTORE — JETONS
+  unsubscribeJetons=db.collection('jetons').orderBy('numero').onSnapshot(snap=>{
+    snap.docChanges().forEach(change=>{
+      if(change.type==='removed'){
+        delete allJetons[change.doc.id];
+      } else {
+        allJetons[change.doc.id]={id:change.doc.id,...change.doc.data()};
+      }
+    });
+    renderJetons();
+  }, err=>{console.error('Jetons listener error:',err);});
+
+  // ÉCOUTE FIRESTORE — STATS PARAMS
+  unsubscribeStatsParams=db.collection('config').doc('statsParams').onSnapshot(doc=>{
+    const data=doc.exists?doc.data():{};
+    if(data.kgParMarmite && !data.platsAVolonte){
+      platsAVolonte=[{nom:'Moules-frites à volonté',quantite:data.kgParMarmite,unite:'kg',sauce:true}];
     } else {
-      allJetons[change.doc.id]={id:change.doc.id,...change.doc.data()};
+      platsAVolonte=data.platsAVolonte||[];
     }
-  });
-  renderJetons();
-}, err=>{console.error('Jetons listener error:',err);});
+    platsQuantiteFixe=data.platsQuantiteFixe||[];
+    if(document.getElementById('tab-stats')?.classList.contains('actif')) chargerStats(filtreStatsJours);
+  }, err=>console.error('statsParams listener error:',err));
+
+  // ÉCOUTE FIRESTORE — RECHARGES
+  unsubscribeRecharges=db.collection('recharges').orderBy('timestamp','desc').limit(100).onSnapshot(snap=>{
+    snap.docChanges().forEach(change=>{
+      if(change.type==='removed') delete allRecharges[change.doc.id];
+      else allRecharges[change.doc.id]={id:change.doc.id,...change.doc.data()};
+    });
+    renderRechargesRecentes();
+  }, err=>console.error('Recharges listener error:',err));
+}
 
 function setFiltreJetons(mode,el){
   filtreJetonsCourant=mode;
@@ -713,25 +752,8 @@ let allRecharges={};
 let platsAVolonte=[];
 let platsQuantiteFixe=[]; // portions fixes : [{nom:'Fish and Chips', quantite:0.3, unite:'kg'}]
 
-db.collection('config').doc('statsParams').onSnapshot(doc=>{
-  const data=doc.exists?doc.data():{};
-  if(data.kgParMarmite && !data.platsAVolonte){
-    // Migration automatique depuis l'ancien réglage unique "kgParMarmite"
-    platsAVolonte=[{nom:'Moules-frites à volonté',quantite:data.kgParMarmite,unite:'kg',sauce:true}];
-  } else {
-    platsAVolonte=data.platsAVolonte||[];
-  }
-  platsQuantiteFixe=data.platsQuantiteFixe||[];
-  if(document.getElementById('tab-stats')?.classList.contains('actif')) chargerStats(filtreStatsJours);
-}, err=>console.error('statsParams listener error:',err));
-
-db.collection('recharges').orderBy('timestamp','desc').limit(100).onSnapshot(snap=>{
-  snap.docChanges().forEach(change=>{
-    if(change.type==='removed') delete allRecharges[change.doc.id];
-    else allRecharges[change.doc.id]={id:change.doc.id,...change.doc.data()};
-  });
-  renderRechargesRecentes();
-}, err=>console.error('Recharges listener error:',err));
+// Les listeners statsParams et recharges sont maintenant dans demarrerEcoutesFirestore()
+// qui est appelée APRÈS l'authentification
 
 function filtrerTablesRecharge(){
   renderTablesRecharge();
