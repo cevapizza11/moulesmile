@@ -395,6 +395,7 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-functions-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script>
 // ============================================================
 // FIREBASE
@@ -409,6 +410,40 @@ const firebaseConfig={
 };
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
+// ===== AUTHENTIFICATION CAISSE =====
+let userAuth = null;
+const caisseEmail = 'caisse@commandemoulesmile.fr';
+const caissePin = '123456'; // Le PIN que tu as configuré dans Firebase
+
+async function loginCaisse() {
+  const pin = prompt('🔐 Tape le PIN caisse (6 chiffres) :\n\n');
+  
+  if (pin === null) {
+    // Utilisateur a cliqué "Annuler"
+    loginCaisse(); // Redemande le PIN
+    return;
+  }
+  
+  if (pin === caissePin) {
+    try {
+      const userCredential = await firebase.auth().signInWithEmailAndPassword(caisseEmail, caissePin);
+      userAuth = userCredential.user;
+      console.log('✅ Caisse connectée:', userAuth.email);
+      // Continue le chargement de l'app
+    } catch (error) {
+      console.error('❌ Erreur login caisse:', error.message);
+      alert('❌ Erreur de connexion. Réessaye.');
+      loginCaisse(); // Redemande le PIN
+    }
+  } else {
+    alert('❌ PIN incorrect !');
+    loginCaisse(); // Redemande le PIN
+  }
+}
+
+// Lance la demande de PIN au démarrage
+loginCaisse();
+
 const fonctions=firebase.app().functions('europe-west3');
 // ⚠️ Adaptez cette URL à celle de votre app si elle change un jour (utilisée pour impression + copie de lien)
 const BASE_URL_APP='https://cevapizza11.github.io/moulesmile/index.html';

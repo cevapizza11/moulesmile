@@ -251,26 +251,6 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 
   <div class="section" style="margin-top:14px">
-    <h2>🔗 Correspondance Hiboutik</h2>
-    <div style="color:#888;font-size:12px;margin-bottom:10px">Associe chaque produit de la carte <u>et chaque option (sauce, croquant, coulis...)</u> à son ID Hiboutik (visible dans l'URL de sa fiche produit). Vide = non transmis à Hiboutik lors de l'encaissement.</div>
-
-    <div style="background:#1A1A2E;border:1px solid #444;border-radius:10px;padding:14px;margin-bottom:14px;font-size:12px;color:#ccc;line-height:1.7">
-      <strong style="color:#D4AF37">📋 Marche à suivre pour un nouveau produit ou une nouvelle sauce :</strong><br><br>
-      <strong>1. Crée-le dans ta carte</strong> (Excel réimporté, ou réglages admin habituels) — il aura un nouvel ID (ex: b36, s8...).<br>
-      <strong>2. Crée le même produit dans Hiboutik</strong> — même nom exact, même prix (0€ pour une sauce/option gratuite), bonne TVA (10% nourriture/soft, 20% alcool). Note son ID Hiboutik (visible dans l'URL de sa fiche produit).<br>
-      <strong>3. Renseigne la correspondance ici</strong> — le nouveau produit apparaît automatiquement dans la liste ci-dessous (champ vide). Tape son ID Hiboutik à côté. Sauvegarde automatique, rien d'autre à faire.<br>
-      <strong>4. Teste</strong> — commande avec ce produit, encaisse, vérifie qu'il apparaît bien dans Hiboutik avec le bon prix.<br><br>
-      <strong style="color:#D4AF37">⚠️ Pour une sauce/option (famille "Sauce")</strong> : le rapprochement se fait sur le <u>nom exact</u> (insensible à la casse) entre le choix du client et le nom du produit Hiboutik — pas besoin de toucher au code tant que les noms correspondent mot pour mot.
-    </div>
-
-    <div id="mappingHiboutikList"></div>
-    <div style="background:#1A2A1A;border:1px dashed #2ab54a;border-radius:10px;padding:10px 14px;margin-top:10px">
-      <div style="color:#888;font-size:11px;margin-bottom:6px">Entrée technique "SUPPLEMENT" (produit générique +0,50€ pour les suppléments payants) :</div>
-      <input type="number" id="mappingSupplementInput" placeholder="ID Hiboutik du produit Supplément" style="width:100%;background:#111;border:1px solid #4ABA80;border-radius:8px;color:#4ABA80;padding:8px 10px;font-size:13px" onchange="majMappingSupplement(this.value)">
-    </div>
-  </div>
-
-  <div class="section" style="margin-top:14px">
     <h2>🍽️ Consignes de service (ticket cuisine)</h2>
     <div style="color:#888;font-size:12px;margin-bottom:10px">Ex: "Apporter une marmite" pour les moules, "Apporter une assiette" pour les calamars/nuggets. Laissez vide si rien à ajouter. Imprimé automatiquement sous le plat sur le ticket cuisine.</div>
     <div id="consignesServiceList"></div>
@@ -385,10 +365,44 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script>
 const firebaseConfig={apiKey:"AIzaSyDUb3LtVsMAq986DgtHwkMBeQFr8A8A2nU",authDomain:"commandemoulesmile.firebaseapp.com",projectId:"commandemoulesmile",storageBucket:"commandemoulesmile.firebasestorage.app",messagingSenderId:"303564394584",appId:"1:303564394584:web:cbde6960f99cac83517a2d"};
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
+// ===== AUTHENTIFICATION ADMIN =====
+let userAuth = null;
+const adminEmail = 'admin@commandemoulesmile.fr';
+const adminPin = '793879'; // Remplace par ton PIN à toi (6 chiffres)
+
+async function loginAdmin() {
+  const pin = prompt('🔐 Tape le PIN admin (6 chiffres) :\n\n');
+  
+  if (pin === null) {
+    // Utilisateur a cliqué "Annuler"
+    loginAdmin(); // Redemande le PIN
+    return;
+  }
+  
+  if (pin === adminPin) {
+    try {
+      const userCredential = await firebase.auth().signInWithEmailAndPassword(adminEmail, adminPin);
+      userAuth = userCredential.user;
+      console.log('✅ Admin connecté:', userAuth.email);
+      // Continue le chargement de l'app
+    } catch (error) {
+      console.error('❌ Erreur login admin:', error.message);
+      alert('❌ Erreur de connexion. Réessaye.');
+      loginAdmin(); // Redemande le PIN
+    }
+  } else {
+    alert('❌ PIN incorrect !');
+    loginAdmin(); // Redemande le PIN
+  }
+}
+
+// Lance la demande de PIN au démarrage
+loginAdmin();
 let carte=null,catActive=null,importedData=null;
 
 const CATS=[
@@ -1050,7 +1064,6 @@ function renderReglages(){
     </div>`;
   }).join('');
 
-  chargerMappingHiboutik();
   renderConsignesService();
   renderFamillesSuggestionAddition();
   renderSuggestionAddition();
@@ -1159,94 +1172,6 @@ function getDefautSuggestionAddition(){
 // Familles entières affichées en tuile (ex: "Desserts") dans le popup avant addition.
 // Le client clique la tuile → voit les produits de la catégorie → choisit dedans.
 // Consignes de service (ticket cuisine) — un texte libre par produit, ex: "Apporter une marmite"
-// Correspondance Hiboutik — stockée séparément (config/hiboutikMapping), pas dans carte_v2,
-// car lue directement par la Cloud Function côté serveur.
-// Valeurs connues au moment de la mise en place (utilisées une seule fois pour initialiser
-// automatiquement Firestore si le document n'existe pas encore — évite de tout retaper à la main).
-const MAPPING_HIBOUTIK_INITIAL={
-  "b0": 71, "b1": 39, "b10": 45, "b11": 46, "b12": 47, "b13": 48, "b14": 49,
-  "b15": 50, "b16": 51, "b17": 52, "b18": 53, "b19": 54, "b2": 40, "b20": 55,
-  "b21": 56, "b22": 57, "b23": 58, "b24": 59, "b25": 60, "b26": 61, "b27": 62,
-  "b28": 63, "b29": 64, "b3": 36, "b30": 65, "b31": 66, "b32": 67, "b33": 68,
-  "b34": 69, "b35": 41, "b4": 37, "b5": 70, "b6": 38, "b7": 42, "b8": 43,
-  "b9": 44, "ca1": 32, "d4": 72, "d5": 73, "d6": 74, "dg1": 75, "dg2": 76,
-  "dg3": 77, "en1": 78, "en2": 35, "fc1": 33, "fc2": 34, "p1": 31,
-  "SUPPLEMENT": 79
-};
-
-async function chargerMappingHiboutik(){
-  try{
-    const doc=await db.collection('config').doc('hiboutikMapping').get();
-    if(doc.exists && doc.data().mapping && Object.keys(doc.data().mapping).length){
-      mappingHiboutik=doc.data().mapping;
-    } else {
-      // Document absent/vide : première ouverture depuis la migration — on l'initialise
-      // automatiquement avec les valeurs connues, une seule fois.
-      mappingHiboutik={...MAPPING_HIBOUTIK_INITIAL};
-      await db.collection('config').doc('hiboutikMapping').set({mapping:mappingHiboutik});
-      showToast('✅ Correspondance Hiboutik initialisée automatiquement');
-    }
-  }catch(e){console.error('Erreur chargement correspondance Hiboutik',e);mappingHiboutik={};}
-  renderMappingHiboutik();
-}
-
-function renderMappingHiboutik(){
-  if(!carte)return;
-  let html='';
-
-  // Produits de la carte (Formules, Boissons, Desserts...)
-  carte.categories.forEach(cat=>{
-    (cat.produits||[]).forEach(p=>{
-      const val=mappingHiboutik[p.id]||'';
-      html+=`<div class="item-row">
-        <div class="item-info" style="cursor:default;flex:0 0 auto;min-width:140px"><div class="item-nom">${p.nom} <span style="color:#666;font-size:10px">(${p.id})</span></div></div>
-        <input type="number" value="${val}" placeholder="ID Hiboutik" style="width:140px;background:#2A2A2A;border:1px solid #444;border-radius:8px;color:#fff;padding:8px 10px;font-size:12px;margin-left:8px"
-          onchange="majMappingHiboutik('${p.id}',this.value)">
-      </div>`;
-    });
-  });
-
-  // Options de toutes les familles (Sauce, Croquant, Coulis...) — transmissibles à Hiboutik
-  // comme des lignes séparées, même si elles n'existent pas comme "produits" de la carte.
-  const famillesOptions=carte.famillesOptions||{};
-  Object.values(famillesOptions).forEach(famille=>{
-    if(!famille.options||!famille.options.length)return;
-    html+=`<div style="color:#D4AF37;font-size:12px;font-weight:bold;margin:12px 0 4px">— ${famille.nom||'Options'} —</div>`;
-    famille.options.forEach(o=>{
-      const val=mappingHiboutik[o.id]||'';
-      html+=`<div class="item-row">
-        <div class="item-info" style="cursor:default;flex:0 0 auto;min-width:140px"><div class="item-nom">${o.nom} <span style="color:#666;font-size:10px">(${o.id})</span></div></div>
-        <input type="number" value="${val}" placeholder="ID Hiboutik" style="width:140px;background:#2A2A2A;border:1px solid #444;border-radius:8px;color:#fff;padding:8px 10px;font-size:12px;margin-left:8px"
-          onchange="majMappingHiboutik('${o.id}',this.value)">
-      </div>`;
-    });
-  });
-
-  document.getElementById('mappingHiboutikList').innerHTML=html;
-  document.getElementById('mappingSupplementInput').value=mappingHiboutik['SUPPLEMENT']||'';
-}
-
-async function majMappingHiboutik(prodId,valeur){
-  const id=parseInt(valeur);
-  if(id) mappingHiboutik[prodId]=id;
-  else delete mappingHiboutik[prodId];
-  await sauvegarderMappingHiboutik();
-}
-
-async function majMappingSupplement(valeur){
-  const id=parseInt(valeur);
-  if(id) mappingHiboutik['SUPPLEMENT']=id;
-  else delete mappingHiboutik['SUPPLEMENT'];
-  await sauvegarderMappingHiboutik();
-}
-
-async function sauvegarderMappingHiboutik(){
-  try{
-    await db.collection('config').doc('hiboutikMapping').set({mapping:mappingHiboutik},{merge:false});
-    showToast('✅ Correspondance Hiboutik enregistrée');
-  }catch(e){console.error(e);showToast('❌ Erreur sauvegarde correspondance');}
-}
-
 function renderConsignesService(){
   if(!carte)return;
   if(!carte.consignesCuisine) carte.consignesCuisine={};

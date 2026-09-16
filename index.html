@@ -159,7 +159,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 <!-- BANDEAU NOTIFICATION SERVEUR -->
 <div class="notif-banner" id="notifBanner">
   <span class="notif-icon">✅</span>
-  <div class="notif-text" id="notifText">Un serveur s'occupe de votre commande !</div>
+  <div class="notif-text" id="notifText">Un serveur prends en charge votre commande !</div>
 </div>
 
 <div class="header">
@@ -393,10 +393,22 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script>
 const firebaseConfig={apiKey:"AIzaSyDUb3LtVsMAq986DgtHwkMBeQFr8A8A2nU",authDomain:"commandemoulesmile.firebaseapp.com",projectId:"commandemoulesmile",storageBucket:"commandemoulesmile.firebasestorage.app",messagingSenderId:"303564394584",appId:"1:303564394584:web:cbde6960f99cac83517a2d"};
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
+// ===== AUTHENTIFICATION ANONYME =====
+let userAuth = null;
+
+firebase.auth().signInAnonymously()
+  .then(userCredential => {
+    userAuth = userCredential.user;
+    console.log('✅ Client authentifié anonymement:', userAuth.uid);
+  })
+  .catch(error => {
+    console.error('❌ Erreur auth anonyme:', error);
+  });
 
 let tableNum=null, panier=[], catActive=null, carte=null;
 let refuserSuggestionFormule=false; // "C'est juste pour boire" — mémorisé pour toute la session client
