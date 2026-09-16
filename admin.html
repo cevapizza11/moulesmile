@@ -96,7 +96,10 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 </head>
 <body>
 <div class="header">
-  <h1>⚙️ Admin — Moule & Smile</h1>
+  <div>
+    <h1>⚙️ Admin — Moule & Smile</h1>
+    <div style="font-size:10px;color:#888;margin-top:2px">v.<span id="buildTimestamp"></span></div>
+  </div>
   <button class="save-btn" onclick="sauvegarder()">💾 Publier</button>
 </div>
 <div class="nav-tabs" style="overflow-x:auto;display:flex">
@@ -290,6 +293,12 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
     </div>
   </div>
 
+  <div class="section" style="margin-top:14px">
+    <h2>📥 Exporter la carte</h2>
+    <div style="color:#aaa;font-size:12px;margin-bottom:12px">Télécharge la carte actuelle en Excel pour la modifier localement, puis réimporte-la.</div>
+    <button class="btn-vert btn-full" onclick="exporterCarteEnExcel()">📥 Télécharger MouleSmile_Carte_Admin.xlsx</button>
+  </div>
+
 <!-- AJOUTER -->
 <div id="navAjouter" class="content" style="display:none">
   <div class="add-form">
@@ -390,10 +399,22 @@ const firebaseConfig={apiKey:"AIzaSyDUb3LtVsMAq986DgtHwkMBeQFr8A8A2nU",authDomai
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 
+// ===== BUILD TIMESTAMP (v.JJ/MM/AAAA HH:MM) =====
+function afficherBuildTimestamp(){
+  const now=new Date();
+  const jour=String(now.getDate()).padStart(2,'0');
+  const mois=String(now.getMonth()+1).padStart(2,'0');
+  const annee=now.getFullYear();
+  const heure=String(now.getHours()).padStart(2,'0');
+  const minute=String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('buildTimestamp').textContent=`${jour}/${mois}/${annee} ${heure}:${minute}`;
+}
+afficherBuildTimestamp();
+
 // ===== AUTHENTIFICATION ADMIN (non-bloquante) - Sept 2026 =====
 let userAuth = null;
 const adminEmail = 'admin@commandemoulesmile.fr';
-const adminPin = '793879'; // Remplace par ton PIN à toi (6 chiffres)
+const adminPin = '[METS TON PIN ADMIN ICI]'; // Remplace par ton PIN à toi (6 chiffres)
 
 async function loginAdmin() {
   const pin = prompt('🔐 Tape le PIN admin (6 chiffres) :\n\n');
@@ -514,6 +535,7 @@ function switchNav(tab,el){
   if(tab==='BoissonMenu') renderBoissonMenu();
   if(tab==='EnfantMenu') renderEnfantMenu();
   if(tab==='Reglages') renderReglages();
+  if(tab==='Actions') loadStats();
 }
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
@@ -1481,6 +1503,82 @@ async function sauvegarderMappingHiboutik(){
     await db.collection('config').doc('hiboutikMapping').set({mapping:mappingHiboutik},{merge:false});
     showToast('✅ Correspondance Hiboutik enregistrée');
   }catch(e){console.error(e);showToast('❌ Erreur sauvegarde correspondance');}
+}
+
+// ============================================================
+// EXPORT EXCEL
+// ============================================================
+function exporterCarteEnExcel(){
+  if(!carte){showToast('⚠️ Aucune carte à exporter');return;}
+  
+  // Onglet Boissons, Desserts, etc. — produits
+  const wb=XLSX.utils.book_new();
+  
+  // Créer onglet par catégorie avec tous les produits
+  carte.categories.forEach(cat=>{
+    const data=[];
+    data.push(['ID','Catégorie','Sous-catégorie','Nom','Description','Emoji','Prix EUR','Actif (OUI/NON)','Ordre']);
+    (cat.produits||[]).forEach((p,idx)=>{
+      data.push([
+        p.id,
+        cat.id,
+        p.subcat||'',
+        p.nom,
+        p.desc||'',
+        p.emoji||'',
+        p.prix||0,
+        p.actif!==false?'OUI':'NON',
+        idx+1
+      ]);
+    });
+    const ws=XLSX.utils.aoa_to_sheet(data);
+    ws['!cols']=[{wch:12},{wch:14},{wch:14},{wch:20},{wch:25},{wch:6},{wch:10},{wch:12},{wch:8}];
+    XLSX.utils.book_append_sheet(wb,ws,cat.nom.substring(0,20));
+  });
+  
+  // Onglet Familles Options
+  if(carte.famillesOptions&&Object.keys(carte.famillesOptions).length){
+    const famData=[['ID Famille','Nom Famille','ID Option','Nom Option','Supplément €','Actif (OUI/NON)','Ordre']];
+    Object.values(carte.famillesOptions).forEach(fam=>{
+      (fam.options||[]).forEach(opt=>{
+        famData.push([
+          fam.id,
+          fam.nom,
+          opt.id,
+          opt.nom,
+          opt.supplement||0,
+          opt.actif!==false?'OUI':'NON',
+          opt.ordre||9999
+        ]);
+      });
+    });
+    const ws=XLSX.utils.aoa_to_sheet(famData);
+    ws['!cols']=[{wch:14},{wch:14},{wch:14},{wch:20},{wch:12},{wch:12},{wch:8}];
+    XLSX.utils.book_append_sheet(wb,ws,'Familles Options');
+  }
+  
+  // Onglet Options Produits
+  if(carte.optionsProduits&&Object.keys(carte.optionsProduits).length){
+    const optData=[['ID Produit','','ID Famille','Étape','Actif (OUI/NON)']];
+    Object.entries(carte.optionsProduits).forEach(([idProd,famillesEtapes])=>{
+      famillesEtapes.forEach(fe=>{
+        optData.push([
+          idProd,
+          '',
+          fe.idFamille,
+          fe.etape,
+          'OUI'
+        ]);
+      });
+    });
+    const ws=XLSX.utils.aoa_to_sheet(optData);
+    ws['!cols']=[{wch:14},{wch:2},{wch:14},{wch:8},{wch:12}];
+    XLSX.utils.book_append_sheet(wb,ws,'Options Produits');
+  }
+  
+  // Télécharger
+  XLSX.writeFile(wb,'MouleSmile_Carte_Admin.xlsx');
+  showToast('✅ Carte téléchargée ! Modifie et réimporte-la.');
 }
 </script>
 </body>
