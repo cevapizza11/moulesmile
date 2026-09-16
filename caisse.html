@@ -410,41 +410,46 @@ const firebaseConfig={
 };
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
-// ===== AUTHENTIFICATION CAISSE =====
+const fonctions=firebase.app().functions('europe-west3');
+
+// ===== AUTHENTIFICATION CAISSE (non-bloquante) - Sept 2026 =====
 let userAuth = null;
 const caisseEmail = 'caisse@commandemoulesmile.fr';
-const caissePin = '123456'; // Le PIN que tu as configuré dans Firebase
+const caissePin = '123456';
 
 async function loginCaisse() {
   const pin = prompt('🔐 Tape le PIN caisse (6 chiffres) :\n\n');
   
-  if (pin === null) {
-    // Utilisateur a cliqué "Annuler"
-    loginCaisse(); // Redemande le PIN
-    return;
-  }
+  if (pin === null) return; // Annuler ne rebloque rien
   
   if (pin === caissePin) {
     try {
       const userCredential = await firebase.auth().signInWithEmailAndPassword(caisseEmail, caissePin);
       userAuth = userCredential.user;
       console.log('✅ Caisse connectée:', userAuth.email);
-      // Continue le chargement de l'app
+      localStorage.setItem('caisseConnected', 'true');
     } catch (error) {
       console.error('❌ Erreur login caisse:', error.message);
-      alert('❌ Erreur de connexion. Réessaye.');
-      loginCaisse(); // Redemande le PIN
+      alert('❌ PIN incorrect !');
+      loginCaisse();
     }
   } else {
     alert('❌ PIN incorrect !');
-    loginCaisse(); // Redemande le PIN
+    loginCaisse();
   }
 }
 
-// Lance la demande de PIN au démarrage
-loginCaisse();
-
-const fonctions=firebase.app().functions('europe-west3');
+// Au démarrage : essayer de se reconnecter si déjà connectée
+if (localStorage.getItem('caisseConnected') === 'true' && firebase.auth().currentUser) {
+  userAuth = firebase.auth().currentUser;
+  console.log('✅ Caisse reconnectée automatiquement');
+} else if (firebase.auth().currentUser) {
+  userAuth = firebase.auth().currentUser;
+  console.log('✅ Caisse reconnectée via session Firebase');
+  localStorage.setItem('caisseConnected', 'true');
+} else {
+  loginCaisse();
+}
 // ⚠️ Adaptez cette URL à celle de votre app si elle change un jour (utilisée pour impression + copie de lien)
 const BASE_URL_APP='https://cevapizza11.github.io/moulesmile/index.html';
 

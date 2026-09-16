@@ -370,7 +370,8 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 const firebaseConfig={apiKey:"AIzaSyDUb3LtVsMAq986DgtHwkMBeQFr8A8A2nU",authDomain:"commandemoulesmile.firebaseapp.com",projectId:"commandemoulesmile",storageBucket:"commandemoulesmile.firebasestorage.app",messagingSenderId:"303564394584",appId:"1:303564394584:web:cbde6960f99cac83517a2d"};
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
-// ===== AUTHENTIFICATION ADMIN =====
+
+// ===== AUTHENTIFICATION ADMIN (non-bloquante) - Sept 2026 =====
 let userAuth = null;
 const adminEmail = 'admin@commandemoulesmile.fr';
 const adminPin = '793879'; // Remplace par ton PIN à toi (6 chiffres)
@@ -378,31 +379,71 @@ const adminPin = '793879'; // Remplace par ton PIN à toi (6 chiffres)
 async function loginAdmin() {
   const pin = prompt('🔐 Tape le PIN admin (6 chiffres) :\n\n');
   
-  if (pin === null) {
-    // Utilisateur a cliqué "Annuler"
-    loginAdmin(); // Redemande le PIN
-    return;
-  }
+  if (pin === null) return; // Annuler ne rebloque rien
   
   if (pin === adminPin) {
     try {
       const userCredential = await firebase.auth().signInWithEmailAndPassword(adminEmail, adminPin);
       userAuth = userCredential.user;
       console.log('✅ Admin connecté:', userAuth.email);
-      // Continue le chargement de l'app
+      localStorage.setItem('adminConnected', 'true');
     } catch (error) {
       console.error('❌ Erreur login admin:', error.message);
-      alert('❌ Erreur de connexion. Réessaye.');
-      loginAdmin(); // Redemande le PIN
+      alert('❌ PIN incorrect ou erreur de connexion !');
+      loginAdmin();
     }
   } else {
     alert('❌ PIN incorrect !');
-    loginAdmin(); // Redemande le PIN
+    loginAdmin();
   }
 }
 
-// Lance la demande de PIN au démarrage
-loginAdmin();
+// Au démarrage : essayer de se reconnecter si déjà connectée
+if (localStorage.getItem('adminConnected') === 'true' && firebase.auth().currentUser) {
+  userAuth = firebase.auth().currentUser;
+  console.log('✅ Admin reconnecté automatiquement');
+} else if (firebase.auth().currentUser) {
+  userAuth = firebase.auth().currentUser;
+  console.log('✅ Admin reconnecté via session Firebase');
+  localStorage.setItem('adminConnected', 'true');
+} else {
+  loginAdmin();
+}
+
+// ===== FONCTION CHANGEMENT PIN CAISSE =====
+async function changerPinCaisse() {
+  const newPin = document.getElementById('newCaissePin').value.trim();
+  
+  if (!newPin) {
+    alert('⚠️ Tape le nouveau PIN !');
+    return;
+  }
+  
+  if (newPin.length !== 6 || !/^\d+$/.test(newPin)) {
+    alert('⚠️ Le PIN doit avoir exactement 6 chiffres !');
+    return;
+  }
+  
+  if (!confirm(`✅ Confirmer le changement du PIN caisse à "${newPin}" ?\n\nLa caisse devra utiliser ce nouveau PIN au prochain démarrage.`)) {
+    return;
+  }
+  
+  try {
+    await db.collection('config').doc('caissePin').set({
+      pin: newPin,
+      changedBy: userAuth.email,
+      changedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    alert('✅ PIN caisse changé avec succès !\n\nLa caisse devra utiliser le nouveau PIN au prochain démarrage.');
+    document.getElementById('newCaissePin').value = '';
+    showToast('✅ PIN caisse mis à jour');
+    
+  } catch (error) {
+    console.error('Erreur:', error);
+    alert('❌ Erreur : ' + error.message);
+  }
+}
 let carte=null,catActive=null,importedData=null;
 
 const CATS=[
