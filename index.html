@@ -605,15 +605,30 @@ db.collection('config').doc('carte_v2').onSnapshot(doc=>{
 });
 
 // Écouter notifications caisse → téléphone client
+let unsubscribeNotifications=null;
+let notificationAffichee=false; // Flag pour éviter les doublons
+
 function ecouterNotifications(){
   if(!tableNum) return;
-  db.collection('notifications').doc(`table_${tableNum}`).onSnapshot(doc=>{
-    if(!doc.exists) return;
+  
+  // Arrêter l'ancien listener s'il existe
+  if(unsubscribeNotifications) unsubscribeNotifications();
+  
+  notificationAffichee=false;
+  
+  unsubscribeNotifications=db.collection('notifications').doc(`table_${tableNum}`).onSnapshot(doc=>{
+    if(!doc.exists){
+      notificationAffichee=false; // Réinitialiser si le doc n'existe plus
+      return;
+    }
+    
     const data=doc.data();
-    if(data&&data.message&&data.ts){
+    // Afficher UNE SEULE FOIS et marquer comme affichée
+    if(data&&data.message&&data.ts && !notificationAffichee){
+      notificationAffichee=true;
       afficherNotification(data.message);
-      // Supprimer après lecture
-      db.collection('notifications').doc(`table_${tableNum}`).delete();
+      // Supprimer après lecture (sans attendre la suppression pour arrêter le listener)
+      db.collection('notifications').doc(`table_${tableNum}`).delete().catch(e=>console.error(e));
     }
   });
   activerNotificationsPush();
