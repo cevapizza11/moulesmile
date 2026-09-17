@@ -7,1822 +7,362 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh;padding-bottom:40px}
-.header{background:#111;padding:12px 20px;border-bottom:2px solid #D4AF37;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+.header{background:#111;padding:12px 20px;border-bottom:2px solid #D4AF37;display:flex;justify-content:space-between;align-items:center}
 .header h1{color:#D4AF37;font-size:15px}
 .save-btn{background:#D4AF37;color:#1A1A1A;border:none;padding:8px 16px;border-radius:8px;font-weight:bold;font-size:12px;cursor:pointer}
 .nav-tabs{display:flex;background:#111;border-bottom:2px solid #D4AF37}
-.nav-tab{flex:1;padding:12px 8px;text-align:center;cursor:pointer;font-size:11px;color:#888;border-bottom:3px solid transparent;transition:all .2s;font-weight:bold}
+.nav-tab{flex:1;padding:12px 8px;text-align:center;cursor:pointer;font-size:11px;color:#888;border-bottom:3px solid transparent;font-weight:bold}
 .nav-tab.active{color:#D4AF37;border-bottom-color:#D4AF37}
-.content{padding:16px;max-width:620px;margin:0 auto}
-.status-bar{background:#1A3A2A;border:1px solid #1A7A50;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#4ABA80;display:flex;align-items:center;gap:8px}
-.dot{width:8px;height:8px;background:#4ABA80;border-radius:50%;animation:blink 1.5s infinite;flex-shrink:0}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-.cat-tabs{display:flex;overflow-x:auto;gap:8px;padding:0 0 12px;scrollbar-width:none;margin-bottom:12px}
-.cat-tabs::-webkit-scrollbar{display:none}
-.cat-tab{flex-shrink:0;padding:7px 12px;background:#2A2A2A;border:2px solid #333;border-radius:20px;font-size:11px;font-weight:bold;cursor:pointer;color:#aaa;white-space:nowrap}
-.cat-tab.active{background:#D4AF37;color:#1A1A1A;border-color:#D4AF37}
+.content{padding:16px;max-width:620px;margin:0 auto;display:none}
+.content.active{display:block}
+.cat-tabs{display:flex;overflow-x:auto;gap:8px;padding:0 0 12px;margin-bottom:12px}
+.cat-tab{flex-shrink:0;padding:7px 12px;background:#2A2A2A;border:2px solid #333;border-radius:20px;font-size:11px;font-weight:bold;cursor:pointer;color:#aaa}
+.cat-tab.active{background:#D4AF37;color:#1A1A1A}
 .section{background:#222;border-radius:12px;padding:14px;margin-bottom:14px}
-.section h2{color:#D4AF37;font-size:13px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #333;display:flex;justify-content:space-between;align-items:center}
+.section h2{color:#D4AF37;font-size:13px;margin-bottom:10px;border-bottom:1px solid #333}
 .item-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #2A2A2A}
-.item-row:last-child{border-bottom:none}
-.item-info{flex:1}
 .item-nom{font-size:13px;font-weight:bold}
-.item-detail{font-size:11px;color:#888;margin-top:2px}
-.toggle{position:relative;width:46px;height:24px;flex-shrink:0}
-.toggle input{opacity:0;width:0;height:0}
-.toggle-slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#444;border-radius:24px;transition:.3s}
-.toggle-slider:before{position:absolute;content:"";height:16px;width:16px;left:4px;bottom:4px;background:white;border-radius:50%;transition:.3s}
-.toggle input:checked+.toggle-slider{background:#D4AF37}
-.toggle input:checked+.toggle-slider:before{transform:translateX(22px)}
-.prix-input{background:#333;border:1px solid #D4AF37;border-radius:6px;color:#D4AF37;font-weight:bold;font-size:12px;padding:3px 6px;width:68px;text-align:center;margin-left:6px}
-.del-prod-btn{background:none;border:none;color:#C0392B;font-size:16px;cursor:pointer;padding:0 4px;margin-left:4px}
 .add-form{background:#1E2A1E;border:2px solid #1A7A50;border-radius:12px;padding:16px;margin-bottom:14px}
 .add-form h3{color:#4ABA80;font-size:14px;margin-bottom:12px}
-.form-row{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}
-.form-group{display:flex;flex-direction:column;gap:4px;flex:1;min-width:100px}
+.form-row{display:flex;gap:10px;margin-bottom:10px}
+.form-group{flex:1;display:flex;flex-direction:column}
 .form-group label{font-size:11px;color:#888;font-weight:bold}
-.form-group input,.form-group select{background:#2A2A2A;border:1px solid #444;border-radius:8px;color:#fff;padding:9px 10px;font-size:13px;width:100%}
-.form-group input:focus,.form-group select:focus{border-color:#D4AF37;outline:none}
-.btn-add-prod{background:#1A7A50;color:white;border:none;padding:11px 20px;border-radius:8px;font-weight:bold;font-size:13px;cursor:pointer;width:100%}
-.import-zone{background:#1A1A2E;border:2px dashed #444;border-radius:12px;padding:24px;text-align:center;margin-bottom:16px;cursor:pointer;transition:all .2s}
-.import-zone:hover,.import-zone.dragover{border-color:#D4AF37;background:#1E1A2E}
-.import-zone .ez{font-size:36px;margin-bottom:8px}
-.import-zone h3{color:#D4AF37;font-size:15px;margin-bottom:4px}
-.import-zone p{color:#888;font-size:12px;margin-bottom:12px;line-height:1.5}
-.import-btn{background:#D4AF37;color:#1A1A1A;border:none;padding:10px 24px;border-radius:8px;font-weight:bold;font-size:13px;cursor:pointer}
-.import-input{display:none}
-.import-preview{background:#222;border-radius:12px;padding:14px;margin-bottom:14px;display:none}
-.import-preview h3{color:#D4AF37;font-size:14px;margin-bottom:10px}
-.preview-item{padding:5px 0;border-bottom:1px solid #2A2A2A;font-size:12px;display:flex;justify-content:space-between}
-.preview-item:last-child{border-bottom:none}
-.btn-confirm{background:#D4AF37;color:#1A1A1A;border:none;padding:12px;border-radius:8px;font-weight:bold;font-size:14px;cursor:pointer;width:100%;margin-top:12px}
-.btn-cancel{background:#333;color:#aaa;border:none;padding:10px;border-radius:8px;font-size:13px;cursor:pointer;width:100%;margin-top:6px}
-.excel-format{background:#2A2A2A;border-radius:10px;padding:12px;margin-bottom:14px;font-size:11px;color:#aaa;line-height:1.8}
-.excel-format strong{color:#D4AF37}
-.actions-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.btn-vert{background:#1A7A50;color:white;border:none;padding:12px;border-radius:10px;font-weight:bold;cursor:pointer;font-size:12px}
-.btn-rouge{background:#C0392B;color:white;border:none;padding:12px;border-radius:10px;font-weight:bold;cursor:pointer;font-size:12px}
-.btn-full{grid-column:1/-1}
-.lien-card{background:#2A2A2A;border-radius:8px;padding:10px 14px;color:#D4AF37;text-decoration:none;font-size:13px;font-weight:bold;display:block;margin-bottom:8px}
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#D4AF37;color:#1A1A1A;padding:10px 22px;border-radius:30px;font-weight:bold;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+.form-group input,.form-group select{background:#2A2A2A;border:1px solid #444;border-radius:8px;color:#fff;padding:9px 10px;font-size:13px}
+.btn-add{background:#1A7A50;color:white;border:none;padding:11px 20px;border-radius:8px;font-weight:bold;font-size:13px;cursor:pointer;width:100%}
+.import-zone{background:#1A1A2E;border:2px dashed #444;border-radius:12px;padding:24px;text-align:center;margin-bottom:16px;cursor:pointer}
+.import-zone.dragover{border-color:#D4AF37;background:#1E1A2E}
+.btn-confirm{background:#D4AF37;color:#1A1A1A;border:none;padding:12px;border-radius:8px;font-weight:bold;width:100%;margin-top:12px}
+.btn-cancel{background:#333;color:#aaa;border:none;padding:10px;border-radius:8px;width:100%;margin-top:6px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#D4AF37;color:#1A1A1A;padding:10px 22px;border-radius:30px;font-weight:bold;z-index:999;opacity:0;transition:opacity .3s}
 .toast.show{opacity:1}
 .badge{background:#D4AF37;color:#1A1A1A;font-size:10px;font-weight:bold;padding:2px 6px;border-radius:10px;margin-left:6px}
-.version{text-align:center;padding:16px;color:#333;font-size:10px}
-
-/* MODAL ÉDITION PRODUIT */
-.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:500;display:none;align-items:center;justify-content:center;padding:16px}
-.modal-overlay.visible{display:flex}
-.modal-box{background:#1E1E1E;border:2px solid #D4AF37;border-radius:16px;padding:20px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto}
-.modal-box h3{color:#D4AF37;font-size:16px;margin-bottom:14px}
-.modal-actions{display:flex;gap:10px;margin-top:14px}
-.btn-annuler{background:#333;color:#aaa;border:none;padding:11px;border-radius:8px;font-weight:bold;font-size:13px;cursor:pointer;flex:1}
-.item-info{cursor:pointer}
-.item-info:active{opacity:.7}
-
-/* GLISSER-DÉPOSER PRODUITS (desktop) */
-.item-row{cursor:default}
-.item-row.dragging{opacity:.4}
-.item-row.drag-over{border-top:2px solid #D4AF37}
-
-/* BOUTONS RÉORDONNER ▲▼ (fonctionne aussi sur mobile) */
-.reorder-btns{display:flex;flex-direction:column;gap:2px;margin-right:6px;flex-shrink:0}
-.reorder-btn{background:#2A2A2A;border:1px solid #444;color:#D4AF37;font-size:10px;width:22px;height:18px;border-radius:4px;cursor:pointer;padding:0;line-height:1;display:flex;align-items:center;justify-content:center}
-.reorder-btn:active{background:#D4AF37;color:#1A1A1A}
-.reorder-btn:disabled{opacity:.25;cursor:default}
-.reorder-btn:disabled:active{background:#2A2A2A;color:#D4AF37}
-.mini-cat-titre{color:#D4AF37;font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:.5px;margin:14px 0 6px;padding-bottom:4px;border-bottom:1px solid #333}
-.mini-cat-titre:first-child{margin-top:0}
 </style>
 </head>
 <body>
+
 <div class="header">
   <div>
     <h1>⚙️ Admin — Moule & Smile</h1>
-    <div style="font-size:10px;color:#888;margin-top:2px">v.<span id="buildTimestamp"></span></div>
+    <div style="font-size:10px;color:#888;margin-top:2px">v.<span id="timestamp"></span></div>
   </div>
   <button class="save-btn" onclick="sauvegarder()">💾 Publier</button>
 </div>
-<div class="nav-tabs" style="overflow-x:auto;display:flex">
-  <div class="nav-tab active" onclick="switchNav('Carte',this)" style="flex-shrink:0">📋 Carte</div>
-  <div class="nav-tab" onclick="switchNav('BoissonMenu',this)" style="flex-shrink:0">🍺 Menu</div>
-  <div class="nav-tab" onclick="switchNav('EnfantMenu',this)" style="flex-shrink:0">🧒 Enfant</div>
-  <div class="nav-tab" onclick="switchNav('Reglages',this)" style="flex-shrink:0">⚙️ Réglages</div>
-  <div class="nav-tab" onclick="switchNav('Ajouter',this)" style="flex-shrink:0">➕ Ajouter</div>
-  <div class="nav-tab" onclick="switchNav('Importer',this)" style="flex-shrink:0">📥 Excel</div>
-  <div class="nav-tab" onclick="switchNav('Actions',this)" style="flex-shrink:0">⚡ Actions</div>
-</div>
-<div class="toast" id="toast"></div>
 
-<!-- MODAL ÉDITION PRODUIT -->
-<div class="modal-overlay" id="modalEdition">
-  <div class="modal-box">
-    <h3>✏️ Modifier le produit</h3>
-    <div class="form-row">
-      <div class="form-group" style="flex:1;min-width:80px"><label>Emoji</label><input type="text" id="editEmoji" maxlength="4"></div>
-      <div class="form-group" style="flex:2"><label>Nom *</label><input type="text" id="editNom"></div>
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label>Description</label><input type="text" id="editDesc"></div>
-    </div>
-    <div class="form-row">
-      <div class="form-group" style="flex:1"><label>Prix (€)</label><input type="number" id="editPrix" step="0.10" min="0"></div>
-      <div class="form-group" style="flex:1"><label>Sous-catégorie</label><input type="text" id="editSubcat" placeholder="Ex: Rouge, Softs..."></div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn-annuler" onclick="fermerModalEdition()">Annuler</button>
-      <button class="btn-add-prod" onclick="validerEdition()" style="flex:2">✅ Enregistrer</button>
-    </div>
-  </div>
+<div class="nav-tabs" style="overflow-x:auto">
+  <div class="nav-tab active" onclick="switchTab('carte',this)">📋 Carte</div>
+  <div class="nav-tab" onclick="switchTab('ajouter',this)">➕ Ajouter</div>
+  <div class="nav-tab" onclick="switchTab('excel',this)">📥 Excel</div>
+  <div class="nav-tab" onclick="switchTab('actions',this)">⚡ Actions</div>
+  <div class="nav-tab" onclick="switchTab('reglages',this)">⚙️ Réglages</div>
 </div>
 
-<!-- CARTE -->
-<div id="navCarte" class="content">
-  <div class="status-bar"><div class="dot"></div>Modifications instantanées sur tous les téléphones</div>
+<!-- ONGLET CARTE -->
+<div id="carte" class="content active">
   <div class="cat-tabs" id="catTabs"></div>
-  <div id="catContent"></div>
+  <div id="carteContent"></div>
 </div>
 
-<!-- BOISSONS MENU -->
-<div id="navBoissonMenu" class="content" style="display:none">
-  <div class="status-bar"><div class="dot"></div>Boissons proposées <strong>gratuitement</strong> dans les paliers 2 et 3</div>
-  <div class="section">
-    <h2>🍺 Boissons incluses dans les menus</h2>
-    <div id="boissonMenuList"></div>
-  </div>
-  <div class="section" style="margin-top:14px">
-    <h2>➕ Ajouter une boisson au menu</h2>
-    <div class="form-row">
-      <div class="form-group" style="flex:1;min-width:80px"><label>Emoji</label><input type="text" id="bmEmoji" placeholder="🍷" maxlength="4"></div>
-      <div class="form-group" style="flex:2"><label>Nom *</label><input type="text" id="bmNom" placeholder="Ex: Verre de vin rosé"></div>
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label>Description</label><input type="text" id="bmDesc" placeholder="Ex: Codet 25cl — Corbières AOP"></div>
-    </div>
-    <button class="btn-add-prod" onclick="ajouterBoissonMenu()">✅ Ajouter au menu</button>
-  </div>
-  <div style="background:#2A2A2A;border-radius:10px;padding:12px;margin-top:14px;font-size:12px;color:#888;line-height:1.7">
-    💡 Ces boissons apparaissent <strong style="color:#D4AF37">gratuitement</strong> dans le popup du client quand il choisit le palier 2 ou 3.<br>
-    Les autres boissons restent sur la carte et sont <strong style="color:#D4AF37">facturées normalement</strong>.
-  </div>
-</div>
-
-<!-- MENU ENFANT -->
-<div id="navEnfantMenu" class="content" style="display:none">
-  <div class="status-bar"><div class="dot"></div>Choix proposé au client après confirmation d'âge (Enfant 0-5 ans gratuit)</div>
-  <div class="section">
-    <h2>🧒 Produits du menu enfant</h2>
-    <div id="enfantMenuList"></div>
-  </div>
-  <div class="section" style="margin-top:14px">
-    <h2>➕ Ajouter un produit au menu enfant</h2>
-    <div class="form-row">
-      <div class="form-group" style="flex:1;min-width:80px"><label>Emoji</label><input type="text" id="emEmoji" placeholder="🍗" maxlength="4"></div>
-      <div class="form-group" style="flex:2"><label>Nom *</label><input type="text" id="emNom" placeholder="Ex: Nuggets & frites"></div>
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label>Description</label><input type="text" id="emDesc" placeholder="Ex: 5 nuggets maison + frites"></div>
-    </div>
-    <button class="btn-add-prod" onclick="ajouterEnfantMenu()">✅ Ajouter au menu enfant</button>
-  </div>
-  <div style="background:#2A2A2A;border-radius:10px;padding:12px;margin-top:14px;font-size:12px;color:#888;line-height:1.7">
-    💡 Ces produits apparaissent dans le popup <strong style="color:#D4AF37">Menu Enfant</strong> quand le client confirme un enfant de 0-5 ans.<br>
-    C'est gratuit — inclus dans l'offre enfant.
-  </div>
-</div>
-
-<!-- RÉGLAGES -->
-<div id="navReglages" class="content" style="display:none">
-  <div class="status-bar"><div class="dot"></div>Réglages globaux de l'application client</div>
-
-  <div class="section">
-    <h2>🔢 Compteur +/- sur la carte</h2>
-    <div class="item-row" style="border-bottom:none">
-      <div class="item-info" style="cursor:default">
-        <div class="item-nom">Afficher un compteur +/- sur tous les produits</div>
-        <div class="item-detail">Si désactivé : simple bouton "+" sans quantité visible</div>
-      </div>
-      <label class="toggle"><input type="checkbox" id="compteurToggle" onchange="toggleCompteurGlobal(this.checked)"><span class="toggle-slider"></span></label>
-    </div>
-  </div>
-
-  <div class="section" style="margin-top:14px">
-    <h2>🥂 Regroupement Apéro / Boisson</h2>
-    <div class="item-row" style="border-bottom:none">
-      <div class="item-info" style="cursor:default">
-        <div class="item-nom">Activer le regroupement en une seule tuile</div>
-        <div class="item-detail">Évite d'avoir plusieurs tuiles boissons éparpillées si vous réorganisez l'ordre des catégories</div>
-      </div>
-      <label class="toggle"><input type="checkbox" id="groupeAperoToggle" onchange="toggleGroupeApero(this.checked)"><span class="toggle-slider"></span></label>
-    </div>
-    <div style="color:#888;font-size:12px;margin:12px 0 8px">Choisissez quelles catégories font partie du groupe :</div>
-    <div id="composantsGroupeAperoList"></div>
-  </div>
-
-  <div class="section" style="margin-top:14px">
-    <h2>↕️ Ordre des catégories sur l'accueil</h2>
-    <div style="color:#888;font-size:12px;margin-bottom:10px">Réorganisez l'ordre d'affichage des tuiles côté client</div>
-    <div id="ordreCategoriesList"></div>
-  </div>
-
-  <div class="section" style="margin-top:14px">
-    <h2>👁️ Catégories visibles sur la carte</h2>
-    <div style="color:#888;font-size:12px;margin-bottom:10px">Désactivez une catégorie entière pour la masquer côté client (ex: pas de cocktails cette saison)</div>
-    <div id="categoriesReglagesList"></div>
-  </div>
-
-  <div class="section" style="margin-top:14px">
-    <h2>🚫 Catégories en consultation seule</h2>
-    <div style="color:#888;font-size:12px;margin-bottom:10px">Visible dans la carte mais sans bouton d'ajout (ex: Sauces — choisies uniquement via le popup formule)</div>
-    <div id="consultationReglagesList"></div>
-  </div>
-
-  <div class="section" style="margin-top:14px">
-    <h2>🪑 Capacité de la salle (unités de table 90×90)</h2>
-    <div style="color:#888;font-size:12px;margin-bottom:12px">Utilisé pour le compteur d'occupation en temps réel dans la caisse.</div>
-    <div class="form-group" style="margin-bottom:12px">
-      <label style="font-size:11px;color:#888;font-weight:bold;display:block;margin-bottom:4px">Salle intérieure — nombre d'unités</label>
-      <input type="number" id="capaciteSalle" min="0" placeholder="Ex: 40" style="width:100%;background:#2A2A2A;border:1px solid #D4AF37;border-radius:8px;color:#fff;padding:10px;font-size:13px" onchange="majCapacite()">
-    </div>
-    <div class="form-group" style="margin-bottom:12px">
-      <label style="font-size:11px;color:#888;font-weight:bold;display:block;margin-bottom:4px">Terrasse — nombre d'unités</label>
-      <input type="number" id="capaciteTerrasse" min="0" placeholder="Ex: 30" style="width:100%;background:#2A2A2A;border:1px solid #D4AF37;border-radius:8px;color:#fff;padding:10px;font-size:13px" onchange="majCapacite()">
-    </div>
-    <div class="item-row">
-      <div class="item-info" style="cursor:default"><div class="item-nom">Terrasse ouverte aujourd'hui</div></div>
-      <label class="toggle"><input type="checkbox" id="terrasseOuverteToggle" onchange="majCapacite()"><span class="toggle-slider"></span></label>
-    </div>
-  </div>
-
-  <div class="section" style="margin-top:14px">
-    <h2>🍽️ Consignes de service (ticket cuisine)</h2>
-    <div style="color:#888;font-size:12px;margin-bottom:10px">Ex: "Apporter une marmite" pour les moules, "Apporter une assiette" pour les calamars/nuggets. Laissez vide si rien à ajouter. Imprimé automatiquement sous le plat sur le ticket cuisine.</div>
-    <div id="consignesServiceList"></div>
-  </div>
-
-  <div class="section" style="margin-top:14px">
-    <h2>🍮 Popup avant addition (dessert/café)</h2>
-    <div style="color:#888;font-size:12px;margin-bottom:10px">Familles entières affichées en tuile (ex: "Desserts") — le client clique sur la tuile puis choisit dedans</div>
-    <div id="famillesSuggestionAdditionList"></div>
-    <div style="color:#888;font-size:12px;margin:14px 0 10px">Ou produits individuels précis à proposer</div>
-    <div id="suggestionAdditionList"></div>
-  </div>
-
-  <div class="section" style="margin-top:14px">
-    <h2>🧒 Menu Ado (6-17 ans)</h2>
-    <div style="color:#888;font-size:12px;margin-bottom:10px">Choisissez les formules proposées quand un client ajoute le menu Enfant/Ado</div>
-    <div id="menuAdoOptionsList"></div>
-  </div>
-
-  <div class="section" style="margin-top:14px">
-    <h2>🔗 Correspondance Hiboutik</h2>
-    <div style="color:#888;font-size:12px;margin-bottom:10px">Associe chaque produit de la carte <u>et chaque option (sauce, croquant, coulis...)</u> à son ID Hiboutik (visible dans l'URL de sa fiche produit). Vide = non transmis à Hiboutik lors de l'encaissement.</div>
-
-    <div style="background:#1A1A2E;border:1px solid #444;border-radius:10px;padding:14px;margin-bottom:14px;font-size:12px;color:#ccc;line-height:1.7">
-      <strong style="color:#D4AF37">📋 Marche à suivre pour un nouveau produit ou une nouvelle sauce :</strong><br><br>
-      <strong>1. Crée-le dans ta carte</strong> (Excel réimporté, ou réglages admin habituels) — il aura un nouvel ID (ex: b36, s8...).<br>
-      <strong>2. Crée le même produit dans Hiboutik</strong> — même nom exact, même prix (0€ pour une sauce/option gratuite), bonne TVA (10% nourriture/soft, 20% alcool). Note son ID Hiboutik (visible dans l'URL de sa fiche produit).<br>
-      <strong>3. Renseigne la correspondance ici</strong> — le nouveau produit apparaît automatiquement dans la liste ci-dessous (champ vide). Tape son ID Hiboutik à côté. Sauvegarde automatique, rien d'autre à faire.<br>
-      <strong>4. Teste</strong> — commande avec ce produit, encaisse, vérifie qu'il apparaît bien dans Hiboutik avec le bon prix.<br><br>
-      <strong style="color:#D4AF37">⚠️ Pour une sauce/option (famille "Sauce")</strong> : le rapprochement se fait sur le <u>nom exact</u> (insensible à la casse) entre le choix du client et le nom du produit Hiboutik — pas besoin de toucher au code tant que les noms correspondent mot pour mot.
-    </div>
-
-    <div id="mappingHiboutikList"></div>
-    <div style="background:#1A2A1A;border:1px dashed #2ab54a;border-radius:10px;padding:10px 14px;margin-top:10px">
-      <div style="color:#888;font-size:11px;margin-bottom:6px">Entrée technique "SUPPLEMENT" (produit générique +0,50€ pour les suppléments payants) :</div>
-      <input type="number" id="mappingSupplementInput" placeholder="ID Hiboutik du produit Supplément" style="width:100%;background:#111;border:1px solid #4ABA80;border-radius:8px;color:#4ABA80;padding:8px 10px;font-size:13px" onchange="majMappingSupplement(this.value)">
-    </div>
-  </div>
-
-  <div class="section" style="margin-top:14px">
-    <h2>📥 Exporter la carte</h2>
-    <div style="color:#aaa;font-size:12px;margin-bottom:12px">Télécharge la carte actuelle en Excel pour la modifier localement, puis réimporte-la.</div>
-    <button class="btn-vert btn-full" onclick="exporterCarteEnExcel()">📥 Télécharger MouleSmile_Carte_Admin.xlsx</button>
-  </div>
-
-<!-- AJOUTER -->
-<div id="navAjouter" class="content" style="display:none">
+<!-- ONGLET AJOUTER -->
+<div id="ajouter" class="content">
   <div class="add-form">
     <h3>➕ Ajouter un produit</h3>
     <div class="form-row">
       <div class="form-group" style="flex:2"><label>Catégorie *</label><select id="newCat"></select></div>
-      <div class="form-group" style="flex:1;min-width:80px"><label>Emoji</label><input type="text" id="newEmoji" placeholder="🍺" maxlength="4"></div>
+      <div class="form-group" style="flex:1"><label>Emoji</label><input type="text" id="newEmoji" placeholder="🍺" maxlength="4"></div>
     </div>
     <div class="form-row">
-      <div class="form-group" style="flex:2"><label>Nom du produit *</label><input type="text" id="newNom" placeholder="Ex: Kronenbourg 1664"></div>
-      <div class="form-group" style="flex:1;min-width:90px"><label>Prix (€)</label><input type="number" id="newPrix" placeholder="4.50" step="0.10" min="0"></div>
+      <div class="form-group" style="flex:2"><label>Nom *</label><input type="text" id="newNom" placeholder="Ex: Coca-Cola"></div>
+      <div class="form-group" style="flex:1"><label>Prix (€)</label><input type="number" id="newPrix" placeholder="3.50" step="0.10" min="0"></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Description (optionnel)</label><input type="text" id="newDesc" placeholder="Ex: 33cl — Bière blonde"></div>
+      <div class="form-group"><label>Description</label><input type="text" id="newDesc" placeholder="Ex: 33cl"></div>
     </div>
-    <button class="btn-add-prod" onclick="ajouterProduit()">✅ Ajouter à la carte maintenant</button>
+    <button class="btn-add" onclick="ajouterProduit()">✅ Ajouter</button>
   </div>
+</div>
+
+<!-- ONGLET EXCEL -->
+<div id="excel" class="content">
   <div class="section">
-    <h2>💡 Conseils</h2>
-    <div style="color:#aaa;font-size:13px;line-height:1.8">
-      • Le produit apparaît <strong style="color:#4ABA80">immédiatement</strong> sur les téléphones clients<br>
-      • Prix 0 € = produit inclus (ex: sauces)<br>
-      • Pour ajouter plusieurs produits → onglet Excel<br>
-      • Pour masquer temporairement → onglet Carte → toggle OFF
+    <h2>📥 Importer Excel</h2>
+    <div class="import-zone" id="importZone" ondrop="handleDrop(event)" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')">
+      <div style="font-size:36px">📄</div>
+      <h3>Déposer fichier Excel ici</h3>
+      <p>ou cliquez pour sélectionner<br>Formats : .xlsx · .xls</p>
+      <input type="file" id="importInput" class="import-input" accept=".xlsx,.xls" onchange="handleFile(this.files[0])">
+      <button class="btn-add" onclick="document.getElementById('importInput').click()">Sélectionner fichier</button>
+    </div>
+    <div id="importPreview" style="display:none">
+      <button class="btn-confirm" onclick="confirmerImport()">✅ Confirmer et publier</button>
+      <button class="btn-cancel" onclick="annulerImport()">✕ Annuler</button>
     </div>
   </div>
 </div>
 
-<!-- IMPORTER EXCEL -->
-<div id="navImporter" class="content" style="display:none">
-  <div class="excel-format">
-    <strong>Format attendu — colonnes dans l'ordre :</strong><br>
-    A: ID · B: Catégorie · C: Nom · D: Description · E: Emoji · F: Prix EUR · G: Actif (OUI/NON)<br><br>
-    <strong>Catégories valides :</strong> formules · sauces · softs · bieres · vins_blancs · vins_roses · vins_rouges · cocktails · sangria · desserts · digestifs · chauds<br><br>
-    ⚠️ <strong style="color:#C0392B">L'import remplace toute la carte.</strong> Utilisez MouleSmile_Carte_Admin.xlsx comme base.
-  </div>
-  <div class="import-zone" id="importZone" onclick="document.getElementById('importInput').click()"
-    ondragover="event.preventDefault();this.classList.add('dragover')"
-    ondragleave="this.classList.remove('dragover')"
-    ondrop="handleDrop(event)">
-    <div class="ez">📥</div>
-    <h3>Glissez votre fichier ici</h3>
-    <p>ou cliquez pour sélectionner<br>Formats acceptés : .xlsx · .xls · .csv</p>
-    <button class="import-btn" onclick="event.stopPropagation();document.getElementById('importInput').click()">Choisir le fichier</button>
-    <input type="file" id="importInput" class="import-input" accept=".xlsx,.xls,.csv" onchange="handleFile(this.files[0])">
-  </div>
-  <div class="import-preview" id="importPreview">
-    <h3>👀 Aperçu — <span id="previewCount">0</span> produits détectés</h3>
-    <div id="previewList"></div>
-    <button class="btn-confirm" onclick="confirmerImport()">✅ Confirmer et publier sur la carte</button>
-    <button class="btn-cancel" onclick="annulerImport()">✕ Annuler</button>
-  </div>
-</div>
-
-<!-- ACTIONS -->
-<div id="navActions" class="content" style="display:none">
+<!-- ONGLET ACTIONS -->
+<div id="actions" class="content">
   <div class="section">
     <h2>⚡ Actions rapides</h2>
-    <div class="actions-grid">
-      <button class="btn-vert" onclick="toutActiver()">✅ Tout activer</button>
-      <button class="btn-rouge" onclick="toutDesactiver('sauces')">❌ Désactiver sauces</button>
-      <button class="btn-vert" onclick="activerCat('sauces')">🥘 Activer sauces</button>
-      <button class="btn-vert" onclick="activerCat('desserts')">🍮 Activer desserts</button>
-      <button class="btn-rouge btn-full" onclick="resetJour()">🗑️ Réinitialiser commandes du jour</button>
-    </div>
+    <button class="btn-add" style="margin-bottom:8px" onclick="toutActiver()">✅ Tout activer</button>
+    <button class="btn-add" style="background:#C0392B;margin-bottom:8px" onclick="resetJour()">🗑️ Réinitialiser du jour</button>
+    <button class="btn-add" style="background:#D4AF37;color:#1A1A1A;margin-bottom:8px" onclick="sauvegarder()">💾 Publier</button>
   </div>
-  <div class="section" style="margin-top:14px">
-    <h2>📊 CA du jour</h2>
-    <div id="statsJour" style="color:#aaa;font-size:13px;margin-top:8px">Chargement...</div>
-  </div>
-  <div class="section" style="margin-top:14px">
-    <h2>🎫 Sécurité — Jetons de table</h2>
-    <div style="color:#aaa;font-size:12px;margin-bottom:12px;line-height:1.6">
-      L'accès à la commande client est désormais protégé par des jetons physiques réutilisables (un par table), plutôt que par un token global.<br><br>
-      • Générez vos jetons (une fois) depuis <strong>qrcodes.html</strong><br>
-      • Activez un jeton sur une table depuis l'onglet <strong>🎫 Jetons</strong> de la caisse<br>
-      • Il se libère automatiquement à l'encaissement
-    </div>
-    <a href="qrcodes.html" target="_blank" class="lien-card">🎫 Générer les jetons QR</a>
-  </div>
+  <div class="section" id="statsDiv"></div>
+</div>
 
-  <div class="section" style="margin-top:14px">
-    <h2>🔗 Liens</h2>
-    <a href="index.html" target="_blank" class="lien-card">🐚 App client</a>
-    <a href="caisse.html" target="_blank" class="lien-card">💰 Écran caisse</a>
-    <a href="qrcodes.html" target="_blank" class="lien-card">📱 QR codes tables</a>
+<!-- ONGLET RÉGLAGES -->
+<div id="reglages" class="content">
+  <div class="section">
+    <h2>⚙️ Réglages</h2>
+    <p style="color:#aaa;font-size:12px">Les fonctionnalités avancées seront ajoutées prochainement.</p>
   </div>
 </div>
 
-<div class="version">v.12/08/2026 14:00 — Moule & Smile Admin</div>
+<div class="toast" id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+
 <script>
-const firebaseConfig={apiKey:"AIzaSyDUb3LtVsMAq986DgtHwkMBeQFr8A8A2nU",authDomain:"commandemoulesmile.firebaseapp.com",projectId:"commandemoulesmile",storageBucket:"commandemoulesmile.firebasestorage.app",messagingSenderId:"303564394584",appId:"1:303564394584:web:cbde6960f99cac83517a2d"};
+// ============================================================
+// FIREBASE CONFIG
+// ============================================================
+const firebaseConfig={apiKey:"AIzaSyAkhH8s6TBz_2aLPVQnCEfwPm3DNKX2OGQ",projectId:"commandemoulesmile",authDomain:"commandemoulesmile.firebaseapp.com",databaseURL:"https://commandemoulesmile.firebaseio.com",storageBucket:"commandemoulesmile.appspot.com",messagingSenderId:"1007929131430"};
+
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 
-// ===== BUILD TIMESTAMP (v.JJ/MM/AAAA HH:MM) =====
-function afficherBuildTimestamp(){
+// ============================================================
+// STATE GLOBAL
+// ============================================================
+let carte=null;
+let catActive=null;
+let importedData=null;
+
+// ============================================================
+// INITIALISATION
+// ============================================================
+async function init(){
+  console.log('🔄 Démarrage initialisation...');
+  
+  // Afficher timestamp
   const now=new Date();
-  const jour=String(now.getDate()).padStart(2,'0');
-  const mois=String(now.getMonth()+1).padStart(2,'0');
-  const annee=now.getFullYear();
-  const heure=String(now.getHours()).padStart(2,'0');
-  const minute=String(now.getMinutes()).padStart(2,'0');
-  document.getElementById('buildTimestamp').textContent=`${jour}/${mois}/${annee} ${heure}:${minute}`;
-}
-afficherBuildTimestamp();
-
-// ===== AUTHENTIFICATION ADMIN (non-bloquante) - Sept 2026 =====
-let userAuth = null;
-const adminEmail = 'admin@commandemoulesmile.fr';
-const adminPin = '[METS TON PIN ADMIN ICI]'; // Remplace par ton PIN à toi (6 chiffres)
-
-async function loginAdmin() {
-  const pin = prompt('🔐 Tape le PIN admin (6 chiffres) :\n\n');
+  document.getElementById('timestamp').textContent=`${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   
-  if (pin === null) return; // Annuler ne rebloque rien
-  
-  if (pin === adminPin) {
-    try {
-      const userCredential = await firebase.auth().signInWithEmailAndPassword(adminEmail, adminPin);
-      userAuth = userCredential.user;
-      console.log('✅ Admin connecté:', userAuth.email);
-      localStorage.setItem('adminConnected', 'true');
-    } catch (error) {
-      console.error('❌ Erreur login admin:', error.message);
-      alert('❌ PIN incorrect ou erreur de connexion !');
-      loginAdmin();
+  // Charger carte_v2
+  try{
+    const doc=await db.collection('config').doc('carte_v2').get();
+    if(doc.exists){
+      carte=doc.data();
+      console.log('✅ Carte chargée:', carte.categories?.length, 'catégories');
+    } else {
+      console.error('Pas de carte_v2');
+      showToast('⚠️ Pas de carte trouvée');
+      return;
     }
-  } else {
-    alert('❌ PIN incorrect !');
-    loginAdmin();
-  }
-}
-
-// Au démarrage : essayer de se reconnecter si déjà connectée
-if (localStorage.getItem('adminConnected') === 'true' && firebase.auth().currentUser) {
-  userAuth = firebase.auth().currentUser;
-  console.log('✅ Admin reconnecté automatiquement');
-} else if (firebase.auth().currentUser) {
-  userAuth = firebase.auth().currentUser;
-  console.log('✅ Admin reconnecté via session Firebase');
-  localStorage.setItem('adminConnected', 'true');
-} else {
-  loginAdmin();
-}
-
-// ===== FONCTION CHANGEMENT PIN CAISSE =====
-async function changerPinCaisse() {
-  const newPin = document.getElementById('newCaissePin').value.trim();
-  
-  if (!newPin) {
-    alert('⚠️ Tape le nouveau PIN !');
+  }catch(e){
+    console.error('Erreur chargement:', e);
+    showToast('❌ Erreur Firebase');
     return;
   }
   
-  if (newPin.length !== 6 || !/^\d+$/.test(newPin)) {
-    alert('⚠️ Le PIN doit avoir exactement 6 chiffres !');
-    return;
+  // Afficher la carte
+  if(carte && carte.categories && carte.categories.length){
+    catActive=carte.categories[0].id;
+    render();
+    remplirSelectCategories();
   }
   
-  if (!confirm(`✅ Confirmer le changement du PIN caisse à "${newPin}" ?\n\nLa caisse devra utiliser ce nouveau PIN au prochain démarrage.`)) {
-    return;
-  }
-  
-  try {
-    await db.collection('config').doc('caissePin').set({
-      pin: newPin,
-      changedBy: userAuth.email,
-      changedAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    
-    alert('✅ PIN caisse changé avec succès !\n\nLa caisse devra utiliser le nouveau PIN au prochain démarrage.');
-    document.getElementById('newCaissePin').value = '';
-    showToast('✅ PIN caisse mis à jour');
-    
-  } catch (error) {
-    console.error('Erreur:', error);
-    alert('❌ Erreur : ' + error.message);
-  }
-}
-let carte=null,catActive=null,importedData=null;
-let carteFamillesOptions={};
-let carteOptionsProduits={};
-let mappingHiboutik={}; // Hiboutik product mapping
-
-const CATS=[
-  {id:"formules",nom:"🐚 Formules"},{id:"sauces",nom:"🌿 Sauces"},{id:"softs",nom:"🥤 Softs"},
-  {id:"bieres",nom:"🍺 Bières"},{id:"vins",nom:"🍷 Vins"},{id:"cocktails",nom:"🍹 Cocktails & Sangria"},
-  {id:"desserts",nom:"🍮 Desserts"},{id:"digestifs",nom:"✨ Digestifs"},{id:"chauds",nom:"☕ Chauds"},
-];
-
-// Remplir select catégorie — sera appelé après le chargement du DOM
-function remplirSelectCategories(){
-  const sel=document.getElementById('newCat');
-  if(!sel)return;
-  sel.innerHTML='';
-  if(!carte || !carte.categories)return;
-  carte.categories.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.nom;sel.appendChild(o);});
+  console.log('✅ Initialisation complète');
 }
 
-const boissonsMenuDefaut = [
-  {id:"bm1", nom:"Coca-Cola", desc:"33cl", emoji:"🥤", actif:true},
-  {id:"bm2", nom:"Orangina", desc:"33cl", emoji:"🍊", actif:true},
-  {id:"bm3", nom:"Limonade", desc:"33cl", emoji:"🍋", actif:true},
-  {id:"bm4", nom:"Eau plate", desc:"50cl", emoji:"💧", actif:true},
-  {id:"bm5", nom:"Eau gazeuse", desc:"50cl", emoji:"💧", actif:true},
-  {id:"bm6", nom:"Jus de fruits", desc:"25cl", emoji:"🍹", actif:true},
-  {id:"bm7", nom:"Bière pression", desc:"25cl", emoji:"🍺", actif:true},
-  {id:"bm9", nom:"Verre de vin rosé", desc:"Codet 25cl — Corbières Rosé AOP", emoji:"🍷", actif:true},
-  {id:"bm10", nom:"Verre de vin blanc", desc:"Codet 25cl — Picpoul de Pinet AOP", emoji:"🥂", actif:true},
-];
-
-const enfantMenuDefaut = [
-  {id:"me1", nom:"Mini moules-frites", desc:"Portion enfant adaptée + frites", emoji:"🐚", actif:true},
-  {id:"me2", nom:"Nuggets & frites", desc:"5 nuggets maison + frites", emoji:"🍗", actif:true},
-  {id:"me3", nom:"Steak haché & frites", desc:"Steak haché + frites fraîches", emoji:"🍔", actif:true},
-  {id:"me4", nom:"Glace enfant", desc:"1 boule au choix", emoji:"🍦", actif:true},
-  {id:"me5", nom:"Sirop à l'eau", desc:"Fraise, menthe ou grenadine", emoji:"🧃", actif:true},
-];
-
-db.collection('config').doc('carte_v2').onSnapshot(doc=>{
-  if(doc.exists&&doc.data().categories){
-    carte=doc.data();
-    if(!carte.boissonsMenu) carte.boissonsMenu = boissonsMenuDefaut;
-    if(!carte.enfantMenu) carte.enfantMenu = enfantMenuDefaut;
-    if(!catActive)catActive=carte.categories[0]?.id;
-    render();loadStats();chargerMappingHiboutik();
-  }
-});
-
-function switchNav(tab,el){
-  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
-  if(el) el.classList.add('active');
-  else {
-    // Si pas d'élément, cherche le bouton correspondant
-    const btn=document.querySelector(`[onclick*="switchNav('${tab}'"]`);
-    if(btn) btn.classList.add('active');
-  }
-  ['navCarte','navBoissonMenu','navEnfantMenu','navReglages','navAjouter','navImporter','navActions'].forEach(id=>{
-    const elem=document.getElementById(id);
-    if(elem) elem.style.display='none';
-  });
-  const content=document.getElementById('nav'+tab);
-  if(content) content.style.display='block';
-  if(tab==='BoissonMenu') renderBoissonMenu();
-  if(tab==='EnfantMenu') renderEnfantMenu();
-  if(tab==='Reglages') renderReglages();
-  if(tab==='Actions') loadStats();
-}
-
-function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
-
+// ============================================================
+// AFFICHAGE
+// ============================================================
 function render(){
-  console.log('%c🟠 [RENDER] Appel render(), carte:','color:orange;font-size:12px', carte ? {nbCat: carte.categories?.length} : 'NULL');
-  if(!carte){
-    console.warn('%c🟠 [RENDER] ⚠️ Carte est NULL/undefined — render() stoppé','color:orange;font-weight:bold');
-    return;
-  }
-  document.getElementById('catTabs').innerHTML=carte.categories.map(c=>`<div class="cat-tab ${c.id===catActive?'active':''}" onclick="selectCat('${c.id}')">${c.nom}</div>`).join('');
+  if(!carte || !carte.categories)return;
+  
+  // Tabs catégories
+  const tabs=carte.categories.map(c=>`<div class="cat-tab ${c.id===catActive?'active':''}" onclick="selectCat('${c.id}')">${c.nom}</div>`).join('');
+  document.getElementById('catTabs').innerHTML=tabs;
+  
+  // Produits
   const cat=carte.categories.find(c=>c.id===catActive);
   if(!cat)return;
-  const nb=(cat.produits||[]).filter(p=>p.actif).length;
-  const nbTotal=(cat.produits||[]).length;
-  document.getElementById('catContent').innerHTML=`<div class="section"><h2>${cat.nom} <span class="badge">${nb} actifs</span></h2>${(cat.produits||[]).map((p,idx)=>`
-    <div class="item-row" draggable="true" data-idx="${idx}"
-      ondragstart="dragStart(event,${idx})" ondragover="dragOver(event)"
-      ondragleave="dragLeave(event)" ondrop="dragDrop(event,${idx})" ondragend="dragEnd(event)">
-      <div class="reorder-btns">
-        <button class="reorder-btn" onclick="deplacerProduit('${catActive}',${idx},-1)" ${idx===0?'disabled':''} title="Monter">▲</button>
-        <button class="reorder-btn" onclick="deplacerProduit('${catActive}',${idx},1)" ${idx===nbTotal-1?'disabled':''} title="Descendre">▼</button>
+  
+  let html=`<div class="section"><h2>${cat.nom} <span class="badge">${(cat.produits||[]).filter(p=>p.actif!==false).length} actifs</span></h2>`;
+  (cat.produits||[]).forEach(p=>{
+    html+=`<div class="item-row">
+      <div><div class="item-nom">${p.nom} <span style="color:#888;font-size:10px">(${p.id})</span></div><div style="color:#888;font-size:11px">${p.desc||''}</div></div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <span style="font-weight:bold;color:#D4AF37">${p.prix||0}€</span>
+        <label class="toggle"><input type="checkbox" ${p.actif!==false?'checked':''} onchange="modifierActif('${catActive}','${p.id}',this.checked)"><span class="toggle-slider"></span></label>
       </div>
-      <div class="item-info" onclick="ouvrirModalEdition('${catActive}',${idx})"><div class="item-nom">${p.emoji||''} ${p.nom}</div><div class="item-detail">${p.desc||''}${p.subcat?' · '+p.subcat:''}</div></div>
-      <div style="display:flex;align-items:center;gap:4px">
-        ${p.prix>0?`<input type="number" class="prix-input" value="${p.prix}" step="0.10" onchange="updatePrix('${catActive}',${idx},this.value)"> €`:'<span style="color:#1A7A50;font-size:10px;font-weight:bold">Inclus</span>'}
-        <label class="toggle"><input type="checkbox" ${p.actif?'checked':''} onchange="toggleItem('${catActive}',${idx},this.checked)"><span class="toggle-slider"></span></label>
-        <button class="del-prod-btn" onclick="supprimerProduit('${catActive}',${idx})">🗑</button>
-      </div>
-    </div>`).join('')}</div>`;
+    </div>`;
+  });
+  html+=`</div>`;
+  document.getElementById('carteContent').innerHTML=html;
 }
 
-// Réordonner via boutons ▲▼ — fonctionne sur mobile ET desktop (contrairement au glisser-déposer)
-function deplacerProduit(catId,idx,direction){
-  const cat=carte.categories.find(c=>c.id===catId);
-  if(!cat)return;
-  const nouvelIdx=idx+direction;
-  if(nouvelIdx<0||nouvelIdx>=cat.produits.length)return;
-  [cat.produits[idx],cat.produits[nouvelIdx]]=[cat.produits[nouvelIdx],cat.produits[idx]];
-  sauvegarder();render();
+function selectCat(id){
+  catActive=id;
+  render();
 }
 
-// ============================================================
-// GLISSER-DÉPOSER PRODUITS (réordonner dans une catégorie)
-// ============================================================
-let dragSrcIdx=null;
-
-function dragStart(e,idx){
-  dragSrcIdx=idx;
-  e.currentTarget.classList.add('dragging');
-  e.dataTransfer.effectAllowed='move';
-}
-function dragOver(e){
-  e.preventDefault();
-  e.currentTarget.classList.add('drag-over');
-}
-function dragLeave(e){
-  e.currentTarget.classList.remove('drag-over');
-}
-function dragEnd(e){
-  e.currentTarget.classList.remove('dragging');
-  document.querySelectorAll('.item-row.drag-over').forEach(el=>el.classList.remove('drag-over'));
-}
-function dragDrop(e,targetIdx){
-  e.preventDefault();
-  e.currentTarget.classList.remove('drag-over');
-  if(dragSrcIdx===null||dragSrcIdx===targetIdx)return;
-  const cat=carte.categories.find(c=>c.id===catActive);
-  if(!cat)return;
-  const [moved]=cat.produits.splice(dragSrcIdx,1);
-  cat.produits.splice(targetIdx,0,moved);
-  dragSrcIdx=null;
-  sauvegarder();render();
-  showToast('✅ Ordre mis à jour');
+function remplirSelectCategories(){
+  if(!carte || !carte.categories)return;
+  const sel=document.getElementById('newCat');
+  sel.innerHTML='';
+  carte.categories.forEach(c=>{
+    const opt=document.createElement('option');
+    opt.value=c.id;
+    opt.textContent=c.nom;
+    sel.appendChild(opt);
+  });
 }
 
 // ============================================================
-// ÉDITION D'UN PRODUIT (clic sur son nom)
+// FONCTIONS
 // ============================================================
-let editionCatId=null,editionIdx=null,editionSource='carte'; // 'carte' = catégorie normale, 'enfantMenu' = liste spéciale
-
-// Renvoie le tableau de produits ciblé selon la source d'édition
-function getListeEdition(source,catId){
-  if(source==='enfantMenu') return carte.enfantMenu;
-  const cat=carte.categories.find(c=>c.id===catId);
-  return cat?cat.produits:null;
+function switchTab(tabId,el){
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.content').forEach(c=>c.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
 }
 
-function ouvrirModalEdition(catId,idx,source='carte'){
-  const liste=getListeEdition(source,catId);
-  if(!liste)return;
-  const p=liste[idx];
-  if(!p)return;
-  editionCatId=catId;editionIdx=idx;editionSource=source;
-  document.getElementById('editEmoji').value=p.emoji||'';
-  document.getElementById('editNom').value=p.nom||'';
-  document.getElementById('editDesc').value=p.desc||'';
-  document.getElementById('editPrix').value=p.prix||0;
-  document.getElementById('editSubcat').value=p.subcat||'';
-  // Les listes spéciales (menu enfant) n'ont pas de sous-catégorie ni de gestion de prix pertinente pour ce contexte
-  document.getElementById('editSubcat').closest('.form-group').style.display=(source==='carte')?'flex':'none';
-  document.getElementById('modalEdition').classList.add('visible');
-}
-
-function fermerModalEdition(){
-  document.getElementById('modalEdition').classList.remove('visible');
-  editionCatId=null;editionIdx=null;editionSource='carte';
-}
-
-function validerEdition(){
-  if(editionCatId===null||editionIdx===null)return;
-  const liste=getListeEdition(editionSource,editionCatId);
-  if(!liste)return;
-  const p=liste[editionIdx];
-  if(!p)return;
-  const nom=document.getElementById('editNom').value.trim();
-  if(!nom){showToast('⚠️ Nom obligatoire');return;}
-  p.nom=nom;
-  p.emoji=document.getElementById('editEmoji').value.trim();
-  p.desc=document.getElementById('editDesc').value.trim();
-  if(editionSource==='carte'){
-    p.prix=parseFloat(document.getElementById('editPrix').value)||0;
-    const subcat=document.getElementById('editSubcat').value.trim();
-    if(subcat) p.subcat=subcat; else delete p.subcat;
-  }
-  sauvegarder();
-  if(editionSource==='enfantMenu') renderEnfantMenu(); else render();
-  fermerModalEdition();
-  showToast(`✅ "${nom}" modifié !`);
-}
-
-function selectCat(id){catActive=id;render();}
-function toggleItem(catId,idx,val){const cat=carte.categories.find(c=>c.id===catId);if(!cat)return;cat.produits[idx].actif=val;showToast(`${cat.produits[idx].nom} ${val?'✅ activé':'❌ désactivé'}`);sauvegarder();}
-function updatePrix(catId,idx,val){const cat=carte.categories.find(c=>c.id===catId);if(!cat)return;cat.produits[idx].prix=parseFloat(val)||0;sauvegarder();}
-function supprimerProduit(catId,idx){
-  const cat=carte.categories.find(c=>c.id===catId);if(!cat)return;
-  const nom=cat.produits[idx].nom;
-  if(!confirm(`Supprimer "${nom}" ?`))return;
-  cat.produits.splice(idx,1);sauvegarder();render();showToast(`🗑️ ${nom} supprimé`);
-}
-
-function ajouterProduit(){
-  const catId=document.getElementById('newCat').value;
+async function ajouterProduit(){
   const nom=document.getElementById('newNom').value.trim();
+  const catId=document.getElementById('newCat').value;
   const prix=parseFloat(document.getElementById('newPrix').value)||0;
   const desc=document.getElementById('newDesc').value.trim();
-  const emoji=document.getElementById('newEmoji').value.trim();
-  if(!nom){showToast('⚠️ Nom obligatoire');return;}
-  if(!carte){showToast('⚠️ Carte non chargée');return;}
+  const emoji=document.getElementById('newEmoji').value.trim()||'📦';
+  
+  if(!nom){showToast('⚠️ Nom requis');return;}
+  
   const cat=carte.categories.find(c=>c.id===catId);
-  if(!cat){showToast('⚠️ Catégorie introuvable');return;}
-  cat.produits=cat.produits||[];
-  cat.produits.push({id:catId+'_'+Date.now(),nom,desc,emoji,prix,actif:true});
-  document.getElementById('newNom').value='';document.getElementById('newPrix').value='';
-  document.getElementById('newDesc').value='';document.getElementById('newEmoji').value='';
-  sauvegarder();catActive=catId;render();
-  showToast(`✅ "${nom}" ajouté !`);
+  if(!cat){showToast('⚠️ Catégorie invalide');return;}
+  
+  const id='p'+(Date.now()%10000);
+  cat.produits.push({id,nom,prix,desc,emoji,actif:true});
+  
+  document.getElementById('newNom').value='';
+  document.getElementById('newPrix').value='';
+  document.getElementById('newDesc').value='';
+  document.getElementById('newEmoji').value='';
+  
+  await sauvegarder();
+  render();
+  showToast('✅ Produit ajouté');
 }
 
-function handleDrop(e){e.preventDefault();document.getElementById('importZone').classList.remove('dragover');const f=e.dataTransfer.files[0];if(f)handleFile(f);}
-
-function handleFile(file){
-  if(!file)return;
-  const ext=file.name.split('.').pop().toLowerCase();
-  if(ext==='csv'){const r=new FileReader();r.onload=e=>parseRows(csvToRows(e.target.result));r.readAsText(file,'UTF-8');}
-  else if(['xlsx','xls'].includes(ext)){
-    const r=new FileReader();
-    r.onload=e=>{
-      try{
-        const wb=XLSX.read(e.target.result,{type:'array'});
-        const ONGLETS_SPECIAUX=['INSTRUCTIONS','Export Firebase','Boissons Menu','Desserts Menu','Menu Enfant','Familles Options','Options Produits'];
-        // Parcourir tous les onglets produits — exclut les onglets non-produits (instructions, menus spéciaux, familles d'options)
-        let allRows=[];
-        wb.SheetNames.filter(n=>!ONGLETS_SPECIAUX.includes(n)).forEach(n=>{
-          const ws=wb.Sheets[n];
-          const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-          // Chercher la ligne header
-          let start=0;
-          for(let i=0;i<Math.min(rows.length,10);i++){
-            if(rows[i].map(c=>String(c).toLowerCase()).some(c=>c.includes('nom'))){start=i+1;break;}
-          }
-          allRows=allRows.concat(rows.slice(start));
-        });
-
-        // Lecture séparée des Familles d'Options et de leur assignation aux produits
-        importedFamillesOptions=lireFamillesOptions(wb);
-        importedOptionsProduits=lireOptionsProduits(wb);
-
-        parseRows(allRows);
-      }catch(err){showToast('❌ Erreur lecture Excel');console.error(err);}
-    };
-    r.readAsArrayBuffer(file);
-  }else{showToast('⚠️ Format non supporté');}
-}
-
-function csvToRows(text){return text.split('\n').filter(l=>l.trim()).map(l=>l.split(',').map(c=>c.replace(/^"|"$/g,'').trim()));}
-
-// ============================================================
-// LECTURE ONGLET "Familles Options"
-// ============================================================
-let importedFamillesOptions=null;
-function lireFamillesOptions(wb){
-  if(!wb.SheetNames.includes('Familles Options'))return null;
-  const ws=wb.Sheets['Familles Options'];
-  const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-  let start=0;
-  for(let i=0;i<Math.min(rows.length,10);i++){
-    // Cherche la ligne d'en-tête précisément (1ère cellule = "ID Famille"), pas le sous-titre explicatif
-    if(String(rows[i][0]||'').trim().toLowerCase()==='id famille'){start=i+1;break;}
-  }
-  // Regrouper par famille
-  const familles={};
-  rows.slice(start).forEach(row=>{
-    const idFamille=String(row[0]||'').trim();
-    if(!idFamille)return;
-    const nomFamille=String(row[1]||'').trim();
-    const idOption=String(row[2]||'').trim();
-    const nomOption=String(row[3]||'').trim();
-    if(!idOption||!nomOption)return;
-    const supplement=parseFloat(String(row[4]||'0').replace(',','.'))||0;
-    const actif=String(row[5]||'OUI').trim().toUpperCase()!=='NON';
-    const ordre=parseInt(row[6])||9999;
-    if(!familles[idFamille]) familles[idFamille]={id:idFamille,nom:nomFamille,options:[]};
-    familles[idFamille].options.push({id:idOption,nom:nomOption,supplement,actif,ordre});
-  });
-  Object.values(familles).forEach(f=>f.options.sort((a,b)=>a.ordre-b.ordre));
-  return familles;
-}
-
-// ============================================================
-// LECTURE ONGLET "Options Produits"
-// ============================================================
-let importedOptionsProduits=null;
-function lireOptionsProduits(wb){
-  if(!wb.SheetNames.includes('Options Produits'))return null;
-  const ws=wb.Sheets['Options Produits'];
-  const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-  let start=0;
-  for(let i=0;i<Math.min(rows.length,10);i++){
-    // Cherche la ligne d'en-tête précisément (1ère cellule = "ID Produit"), pas le sous-titre explicatif qui contient aussi ce texte
-    if(String(rows[i][0]||'').trim().toLowerCase()==='id produit'){start=i+1;break;}
-  }
-  // Regrouper par produit → liste d'étapes ordonnées
-  const parProduit={};
-  rows.slice(start).forEach(row=>{
-    const idProduit=String(row[0]||'').trim();
-    if(!idProduit)return;
-    const idFamille=String(row[2]||'').trim();
-    if(!idFamille)return;
-    const etape=parseInt(row[3])||9999;
-    const actif=String(row[4]||'OUI').trim().toUpperCase()!=='NON';
-    if(!actif)return;
-    if(!parProduit[idProduit]) parProduit[idProduit]=[];
-    parProduit[idProduit].push({idFamille,etape});
-  });
-  Object.values(parProduit).forEach(list=>list.sort((a,b)=>a.etape-b.etape));
-  return parProduit;
-}
-
-function parseRows(rows){
-  const produits=[];
-  rows.forEach((row,i)=>{
-    if(!row||!row[3]||String(row[3]).trim()==='')return;
-    const nom=String(row[3]||'').trim();
-    if(!nom||nom.toLowerCase()==='nom')return;
-    const id=String(row[0]||'').trim()||'p_'+i;
-    const cat=String(row[1]||'formules').trim().toLowerCase().replace(/\s+/g,'_').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-    const subcat=String(row[2]||'').trim();
-    const desc=String(row[4]||'').trim();
-    const emoji=String(row[5]||'').trim();
-    const prix=parseFloat(String(row[6]||'0').replace(',','.'))||0;
-    const actif=String(row[7]||'OUI').trim().toUpperCase()!=='NON';
-    const ordre=parseInt(row[8])||9999;
-    produits.push({id,cat,subcat,nom,desc,emoji,prix,actif,ordre});
-  });
-  if(!produits.length){showToast('⚠️ Aucun produit trouvé');return;}
-  importedData=produits;
-  document.getElementById('previewCount').textContent=produits.length;
-  let extraInfo='';
-  if(importedFamillesOptions){
-    const nbFamilles=Object.keys(importedFamillesOptions).length;
-    const nbOptions=Object.values(importedFamillesOptions).reduce((s,f)=>s+f.options.length,0);
-    extraInfo+=`<div style="color:#4ABA80;font-size:11px;padding:4px 0">🎛️ ${nbFamilles} famille(s) d'options détectée(s) (${nbOptions} choix)</div>`;
-  }
-  if(importedOptionsProduits){
-    const nbAssign=Object.keys(importedOptionsProduits).length;
-    extraInfo+=`<div style="color:#4ABA80;font-size:11px;padding:4px 0">🔗 ${nbAssign} produit(s) avec options assignées</div>`;
-  }
-  document.getElementById('previewList').innerHTML=extraInfo+produits.slice(0,25).map(p=>`
-    <div class="preview-item">
-      <span style="color:#888;font-size:10px">[${p.cat}${p.subcat?' / '+p.subcat:''}]</span>
-      <span style="color:#ddd;margin-left:6px">${p.emoji||''} ${p.nom}</span>
-      <span style="color:#D4AF37;font-weight:bold">${p.prix===0?'Inclus':p.prix.toFixed(2).replace('.',',')+' €'} ${p.actif?'✅':'❌'}</span>
-    </div>`).join('')+(produits.length>25?`<div style="color:#888;font-size:11px;padding:6px">...et ${produits.length-25} autres</div>`:'');
-  document.getElementById('importPreview').style.display='block';
-}
-
-function annulerImport(){importedData=null;document.getElementById('importPreview').style.display='none';document.getElementById('importInput').value='';}
-
-function confirmerImport(){
-  if(!importedData||!importedData.length)return;
-  if(!carte || !carte.categories){console.error('Pas de carte à importer');return;}
-  const newCarte={categories:[]};
-  carte.categories.forEach(catDef=>{
-    let prods=importedData.filter(p=>p.cat===catDef.id||catDef.id.includes(p.cat));
-    prods.sort((a,b)=>(a.ordre||9999)-(b.ordre||9999));
-    const mapped=prods.map(p=>{
-      const item={id:p.id,nom:p.nom,desc:p.desc,emoji:p.emoji,prix:p.prix,actif:p.actif};
-      if(p.subcat) item.subcat=p.subcat;
-      return item;
-    });
-    if(mapped.length)newCarte.categories.push({id:catDef.id,nom:catDef.nom,produits:mapped});
-  });
-  const knownIds=carte.categories.map(c=>c.id);
-  const others=importedData.filter(p=>!knownIds.includes(p.cat));
-  if(others.length){
-    others.sort((a,b)=>(a.ordre||9999)-(b.ordre||9999));
-    newCarte.categories.push({id:'autres',nom:'📦 Autres',produits:others.map(p=>({id:p.id,nom:p.nom,desc:p.desc,emoji:p.emoji,prix:p.prix,actif:p.actif}))});
-  }
-  // Conserver les réglages existants (compteur global, catégories actives, menus spéciaux) lors d'un import
-  if(carte){
-    newCarte.compteurActif=carte.compteurActif;
-    newCarte.categoriesActives=carte.categoriesActives;
-    newCarte.categoriesConsultationSeule=carte.categoriesConsultationSeule;
-    newCarte.groupeApero=carte.groupeApero;
-    newCarte.categoriesGroupeApero=carte.categoriesGroupeApero;
-    newCarte.produitsSuggestionAddition=carte.produitsSuggestionAddition;
-    newCarte.categoriesSuggestionAddition=carte.categoriesSuggestionAddition;
-    newCarte.consignesCuisine=carte.consignesCuisine;
-    newCarte.capaciteSalle=carte.capaciteSalle;
-    newCarte.menuAdoOptions=carte.menuAdoOptions;
-    newCarte.boissonsMenu=carte.boissonsMenu;
-    newCarte.enfantMenu=carte.enfantMenu;
-    newCarte.dessertsMenu=carte.dessertsMenu;
-
-    // Réappliquer l'ordre des catégories personnalisé par l'admin (sinon l'import
-    // reconstruit toujours dans l'ordre fixe de CATS et écrase le réordonnancement)
-    if(carte.categories&&carte.categories.length){
-      const ordrePrecedent=carte.categories.map(c=>c.id);
-      newCarte.categories.sort((a,b)=>{
-        let idxA=ordrePrecedent.indexOf(a.id); if(idxA===-1)idxA=9999;
-        let idxB=ordrePrecedent.indexOf(b.id); if(idxB===-1)idxB=9999;
-        return idxA-idxB;
-      });
-    }
-  } else {
-    newCarte.categoriesConsultationSeule={sauces:true};
-  }
-  // Familles d'options + assignation produits — importées si présentes dans le fichier, sinon on garde l'existant
-  newCarte.famillesOptions=importedFamillesOptions||(carte?carte.famillesOptions:null)||{};
-  newCarte.optionsProduits=importedOptionsProduits||(carte?carte.optionsProduits:null)||{};
-
-  carte=newCarte;catActive=newCarte.categories[0]?.id;
-  const nbImportes=importedData?importedData.length:0;
-  confirmerImportSauvegarde(nbImportes);
-}
-
-async function confirmerImportSauvegarde(nbImportes){
-  try{
-    await sauvegarder();
-    render();annulerImport();
-    showToast(`✅ ${nbImportes} produits importés !`);
-  }catch(e){
-    console.error('Import: échec sauvegarde', e);
-    render();annulerImport();
-    showToast('❌ Erreur import : voir console');
-  }
-  importedData=null;
-  importedFamillesOptions=null;
-  importedOptionsProduits=null;
-}
-
-// Retire récursivement les champs undefined (Firestore refuse set() si un seul
-// champ vaut undefined — contrairement à null qui est accepté).
-function nettoyerUndefined(obj){
-  if(Array.isArray(obj)) return obj.map(nettoyerUndefined);
-  if(obj&&typeof obj==='object'){
-    const out={};
-    Object.keys(obj).forEach(k=>{
-      if(obj[k]===undefined)return;
-      out[k]=nettoyerUndefined(obj[k]);
-    });
-    return out;
-  }
-  return obj;
+async function modifierActif(catId,prodId,actif){
+  const cat=carte.categories.find(c=>c.id===catId);
+  if(!cat)return;
+  const prod=cat.produits.find(p=>p.id===prodId);
+  if(prod)prod.actif=actif;
+  await sauvegarder();
 }
 
 async function sauvegarder(){
   try{
-    const carteAEnvoyer=nettoyerUndefined(carte);
-    await db.collection('config').doc('carte_v2').set(carteAEnvoyer);
-    // Vérification anti-cache : force la lecture depuis le serveur (pas le cache local)
-    // pour confirmer que famillesOptions / optionsProduits sont bien persistés côté Firestore.
-    try{
-      const check=await db.collection('config').doc('carte_v2').get({source:'server'});
-      const d=check.data()||{};
-      console.log('[sauvegarder] Vérif serveur → famillesOptions:', d.famillesOptions, '| optionsProduits:', d.optionsProduits);
-      if((!d.famillesOptions||!Object.keys(d.famillesOptions).length) && carte.famillesOptions && Object.keys(carte.famillesOptions).length){
-        console.warn('[sauvegarder] ⚠️ famillesOptions envoyé mais absent côté serveur — vérifier les règles Firestore sur config/carte_v2');
-      }
-    }catch(verifErr){
-      console.warn('[sauvegarder] Vérification serveur impossible:', verifErr);
-    }
-    showToast('✅ Publié !');
+    await db.collection('config').doc('carte_v2').set(carte);
+    showToast('✅ Carte sauvegardée');
   }catch(e){
-    console.error('[sauvegarder] Erreur écriture carte_v2:', e.code, e.message);
-    showToast('❌ Erreur');
-    throw e;
+    console.error('Erreur sauvegarde:', e);
+    showToast('❌ Erreur sauvegarde');
   }
 }
 
-function toutActiver(){if(!carte)return;carte.categories.forEach(c=>(c.produits||[]).forEach(p=>p.actif=true));sauvegarder();render();showToast('✅ Tout activé !');}
-function toutDesactiver(catId){if(!carte)return;const cat=carte.categories.find(c=>c.id===catId);if(!cat)return;(cat.produits||[]).forEach(p=>p.actif=false);sauvegarder();render();showToast('❌ Désactivé');}
-function activerCat(catId){if(!carte)return;const cat=carte.categories.find(c=>c.id===catId);if(!cat)return;(cat.produits||[]).forEach(p=>p.actif=true);sauvegarder();render();showToast('✅ Activé');}
+function handleDrop(e){
+  e.preventDefault();
+  document.getElementById('importZone').classList.remove('dragover');
+  const file=e.dataTransfer.files[0];
+  if(file)handleFile(file);
+}
+
+async function handleFile(file){
+  if(!file)return;
+  try{
+    const data=await file.arrayBuffer();
+    const wb=XLSX.read(data);
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const rows=XLSX.utils.sheet_to_json(ws);
+    importedData=rows;
+    document.getElementById('importPreview').style.display='block';
+    showToast('✅ Fichier chargé: '+rows.length+' lignes');
+  }catch(e){
+    console.error('Erreur import:', e);
+    showToast('❌ Erreur lecture Excel');
+  }
+}
+
+async function confirmerImport(){
+  if(!importedData)return;
+  // Import basique
+  importedData.forEach(row=>{
+    if(!row.cat||!row.nom)return;
+    const cat=carte.categories.find(c=>c.id===row.cat);
+    if(cat){
+      if(!cat.produits)cat.produits=[];
+      if(!cat.produits.find(p=>p.id===row.id)){
+        cat.produits.push({
+          id:row.id||'p'+(Date.now()%10000),
+          nom:row.nom,
+          prix:parseFloat(row.prix)||0,
+          desc:row.desc||'',
+          emoji:row.emoji||'📦',
+          actif:row.actif!==false
+        });
+      }
+    }
+  });
+  await sauvegarder();
+  annulerImport();
+  render();
+  showToast('✅ Import réussi');
+}
+
+function annulerImport(){
+  importedData=null;
+  document.getElementById('importPreview').style.display='none';
+  document.getElementById('importInput').value='';
+}
+
+function toutActiver(){
+  if(!carte)return;
+  carte.categories.forEach(c=>{
+    (c.produits||[]).forEach(p=>p.actif=true);
+  });
+  sauvegarder();
+  render();
+  showToast('✅ Tous les produits activés');
+}
 
 async function resetJour(){
-  if(!confirm('Supprimer toutes les commandes ? Irréversible.'))return;
-  const snap=await db.collection('commandes').get();const b=db.batch();snap.forEach(d=>b.delete(d.ref));
-  const snap2=await db.collection('additions').get();snap2.forEach(d=>b.delete(d.ref));
-  await b.commit();showToast('🗑️ Commandes supprimées');loadStats();
-}
-
-// ============================================================
-// BOISSONS MENU
-// ============================================================
-function renderBoissonMenu() {
-  if (!carte) return;
-  const bm = carte.boissonsMenu || [];
-  const container = document.getElementById('boissonMenuList');
-  if (!bm.length) {
-    container.innerHTML = '<div style="color:#888;text-align:center;padding:20px">Aucune boisson configurée</div>';
-    return;
-  }
-  container.innerHTML = bm.map((b, idx) => `
-    <div class="item-row">
-      <div class="item-info">
-        <div class="item-nom">${b.emoji||'🥤'} ${b.nom}</div>
-        <div class="item-detail">${b.desc||''}</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px">
-        <label class="toggle">
-          <input type="checkbox" ${b.actif?'checked':''} onchange="toggleBoissonMenu(${idx},this.checked)">
-          <span class="toggle-slider"></span>
-        </label>
-        <button class="del-prod-btn" onclick="supprimerBoissonMenu(${idx})">🗑</button>
-      </div>
-    </div>
-  `).join('');
-}
-
-function toggleBoissonMenu(idx, val) {
-  if (!carte.boissonsMenu) return;
-  carte.boissonsMenu[idx].actif = val;
-  showToast(`${carte.boissonsMenu[idx].nom} ${val?'✅ activée':'❌ désactivée'} du menu`);
-  sauvegarder();
-}
-
-function supprimerBoissonMenu(idx) {
-  if (!carte.boissonsMenu) return;
-  const nom = carte.boissonsMenu[idx].nom;
-  if (!confirm(`Retirer "${nom}" du menu ?`)) return;
-  carte.boissonsMenu.splice(idx, 1);
-  sauvegarder();
-  renderBoissonMenu();
-  showToast(`🗑️ ${nom} retirée du menu`);
-}
-
-function ajouterBoissonMenu() {
-  const nom = document.getElementById('bmNom').value.trim();
-  const desc = document.getElementById('bmDesc').value.trim();
-  const emoji = document.getElementById('bmEmoji').value.trim();
-  if (!nom) { showToast('⚠️ Nom obligatoire'); return; }
-  if (!carte) { showToast('⚠️ Carte non chargée'); return; }
-  if (!carte.boissonsMenu) carte.boissonsMenu = [];
-  carte.boissonsMenu.push({
-    id: 'bm_' + Date.now(),
-    nom, desc, emoji, actif: true
-  });
-  document.getElementById('bmNom').value = '';
-  document.getElementById('bmDesc').value = '';
-  document.getElementById('bmEmoji').value = '';
-  sauvegarder();
-  renderBoissonMenu();
-  showToast(`✅ "${nom}" ajoutée au menu !`);
-}
-
-// ============================================================
-// MENU ENFANT
-// ============================================================
-function renderEnfantMenu() {
-  if (!carte) return;
-  const em = carte.enfantMenu || [];
-  const container = document.getElementById('enfantMenuList');
-  if (!em.length) {
-    container.innerHTML = '<div style="color:#888;text-align:center;padding:20px">Aucun produit configuré</div>';
-    return;
-  }
-  container.innerHTML = em.map((p, idx) => `
-    <div class="item-row" draggable="true" data-idx="${idx}"
-      ondragstart="dragStartEnfant(event,${idx})" ondragover="dragOver(event)"
-      ondragleave="dragLeave(event)" ondrop="dragDropEnfant(event,${idx})" ondragend="dragEnd(event)">
-      <div class="reorder-btns">
-        <button class="reorder-btn" onclick="deplacerEnfantMenu(${idx},-1)" ${idx===0?'disabled':''} title="Monter">▲</button>
-        <button class="reorder-btn" onclick="deplacerEnfantMenu(${idx},1)" ${idx===em.length-1?'disabled':''} title="Descendre">▼</button>
-      </div>
-      <div class="item-info" onclick="ouvrirModalEdition(null,${idx},'enfantMenu')">
-        <div class="item-nom">${p.emoji||'🧒'} ${p.nom}</div>
-        <div class="item-detail">${p.desc||''}</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px">
-        <label class="toggle">
-          <input type="checkbox" ${p.actif?'checked':''} onchange="toggleEnfantMenu(${idx},this.checked)">
-          <span class="toggle-slider"></span>
-        </label>
-        <button class="del-prod-btn" onclick="supprimerEnfantMenu(${idx})">🗑</button>
-      </div>
-    </div>
-  `).join('');
-}
-
-function deplacerEnfantMenu(idx,direction){
-  if(!carte.enfantMenu)return;
-  const nouvelIdx=idx+direction;
-  if(nouvelIdx<0||nouvelIdx>=carte.enfantMenu.length)return;
-  [carte.enfantMenu[idx],carte.enfantMenu[nouvelIdx]]=[carte.enfantMenu[nouvelIdx],carte.enfantMenu[idx]];
-  sauvegarder();renderEnfantMenu();
-}
-
-// Glisser-déposer dédié au menu enfant (liste plate, pas de catégorie)
-let dragSrcIdxEnfant=null;
-function dragStartEnfant(e,idx){
-  dragSrcIdxEnfant=idx;
-  e.currentTarget.classList.add('dragging');
-  e.dataTransfer.effectAllowed='move';
-}
-function dragDropEnfant(e,targetIdx){
-  e.preventDefault();
-  e.currentTarget.classList.remove('drag-over');
-  if(dragSrcIdxEnfant===null||dragSrcIdxEnfant===targetIdx)return;
-  const [moved]=carte.enfantMenu.splice(dragSrcIdxEnfant,1);
-  carte.enfantMenu.splice(targetIdx,0,moved);
-  dragSrcIdxEnfant=null;
-  sauvegarder();renderEnfantMenu();
-  showToast('✅ Ordre mis à jour');
-}
-
-function toggleEnfantMenu(idx, val) {
-  if (!carte.enfantMenu) return;
-  carte.enfantMenu[idx].actif = val;
-  showToast(`${carte.enfantMenu[idx].nom} ${val?'✅ activé':'❌ désactivé'} du menu enfant`);
-  sauvegarder();
-}
-
-function supprimerEnfantMenu(idx) {
-  if (!carte.enfantMenu) return;
-  const nom = carte.enfantMenu[idx].nom;
-  if (!confirm(`Retirer "${nom}" du menu enfant ?`)) return;
-  carte.enfantMenu.splice(idx, 1);
-  sauvegarder();
-  renderEnfantMenu();
-  showToast(`🗑️ ${nom} retiré du menu enfant`);
-}
-
-function ajouterEnfantMenu() {
-  const nom = document.getElementById('emNom').value.trim();
-  const desc = document.getElementById('emDesc').value.trim();
-  const emoji = document.getElementById('emEmoji').value.trim();
-  if (!nom) { showToast('⚠️ Nom obligatoire'); return; }
-  if (!carte) { showToast('⚠️ Carte non chargée'); return; }
-  if (!carte.enfantMenu) carte.enfantMenu = [];
-  carte.enfantMenu.push({
-    id: 'me_' + Date.now(),
-    nom, desc, emoji, actif: true
-  });
-  document.getElementById('emNom').value = '';
-  document.getElementById('emDesc').value = '';
-  document.getElementById('emEmoji').value = '';
-  sauvegarder();
-  renderEnfantMenu();
-  showToast(`✅ "${nom}" ajouté au menu enfant !`);
-}
-
-// ============================================================
-// RÉGLAGES GLOBAUX
-// ============================================================
-function renderReglages(){
-  if(!carte)return;
-  document.getElementById('compteurToggle').checked=carte.compteurActif!==false;
-  document.getElementById('groupeAperoToggle').checked=carte.groupeApero!==false;
-
-  if(!carte.capaciteSalle) carte.capaciteSalle={salle:40,terrasse:30,terrasseOuverte:false};
-  document.getElementById('capaciteSalle').value=carte.capaciteSalle.salle||'';
-  document.getElementById('capaciteTerrasse').value=carte.capaciteSalle.terrasse||'';
-  document.getElementById('terrasseOuverteToggle').checked=carte.capaciteSalle.terrasseOuverte===true;
-
-  renderOrdreCategories();
-  renderComposantsGroupeApero();
-
-  if(!carte.categoriesActives) carte.categoriesActives={};
-  document.getElementById('categoriesReglagesList').innerHTML=carte.categories.map(c=>{
-    const active=carte.categoriesActives[c.id]!==false;
-    return `<div class="item-row">
-      <div class="item-info" style="cursor:default"><div class="item-nom">${c.nom}</div></div>
-      <label class="toggle"><input type="checkbox" ${active?'checked':''} onchange="toggleCategorieActive('${c.id}',this.checked)"><span class="toggle-slider"></span></label>
-    </div>`;
-  }).join('');
-
-  if(!carte.categoriesConsultationSeule) carte.categoriesConsultationSeule={};
-  document.getElementById('consultationReglagesList').innerHTML=carte.categories.map(c=>{
-    const consultationSeule=carte.categoriesConsultationSeule[c.id]===true;
-    return `<div class="item-row">
-      <div class="item-info" style="cursor:default"><div class="item-nom">${c.nom}</div></div>
-      <label class="toggle"><input type="checkbox" ${consultationSeule?'checked':''} onchange="toggleConsultationSeule('${c.id}',this.checked)"><span class="toggle-slider"></span></label>
-    </div>`;
-  }).join('');
-
-  renderConsignesService();
-  renderFamillesSuggestionAddition();
-  renderSuggestionAddition();
-  renderMenuAdoOptions();
-  renderMappingHiboutik();
-}
-
-function renderOrdreCategories(){
-  if(!carte)return;
-  const nbCat=carte.categories.length;
-  document.getElementById('ordreCategoriesList').innerHTML=carte.categories.map((c,idx)=>`
-    <div class="item-row">
-      <div class="reorder-btns">
-        <button class="reorder-btn" onclick="deplacerCategorie(${idx},-1)" ${idx===0?'disabled':''} title="Monter">▲</button>
-        <button class="reorder-btn" onclick="deplacerCategorie(${idx},1)" ${idx===nbCat-1?'disabled':''} title="Descendre">▼</button>
-      </div>
-      <div class="item-info" style="cursor:default"><div class="item-nom">${c.nom}</div></div>
-    </div>`).join('');
-}
-
-function deplacerCategorie(idx,direction){
-  if(!carte)return;
-  const nouvelIdx=idx+direction;
-  if(nouvelIdx<0||nouvelIdx>=carte.categories.length)return;
-  [carte.categories[idx],carte.categories[nouvelIdx]]=[carte.categories[nouvelIdx],carte.categories[idx]];
-  sauvegarder();
-  renderOrdreCategories();
-  showToast('✅ Ordre des catégories mis à jour');
-}
-
-function toggleCompteurGlobal(val){
-  if(!carte)return;
-  carte.compteurActif=val;
-  sauvegarder();
-  showToast(val?'✅ Compteur +/- activé partout':'✅ Compteur +/- désactivé — simple bouton +');
-}
-
-function toggleGroupeApero(val){
-  if(!carte)return;
-  carte.groupeApero=val;
-  sauvegarder();
-  showToast(val?'✅ Boissons regroupées en une seule tuile':'✅ Boissons affichées séparément');
-}
-
-// Liste par défaut si l'admin n'a jamais personnalisé la composition du groupe
-const GROUPE_APERO_IDS_DEFAUT=['softs','bieres','vins','vins_blancs','vins_roses','vins_rouges','cocktails','sangria','chauds'];
-
-// Correspondance Hiboutik — stockée séparément (config/hiboutikMapping), pas dans carte_v2
-// car lue directement par la Cloud Function côté serveur
-const MAPPING_HIBOUTIK_INITIAL={
-  "b0": 71, "b1": 39, "b10": 45, "b11": 46, "b12": 47, "b13": 48, "b14": 49,
-  "b15": 50, "b16": 51, "b17": 52, "b18": 53, "b19": 54, "b2": 40, "b20": 55,
-  "b21": 56, "b22": 57, "b23": 58, "b24": 59, "b25": 60, "b26": 61, "b27": 62,
-  "b28": 63, "b29": 64, "b3": 36, "b30": 65, "b31": 66, "b32": 67, "b33": 68,
-  "b34": 69, "b35": 41, "b4": 37, "b5": 70, "b6": 38, "b7": 42, "b8": 43,
-  "b9": 44, "ca1": 32, "d4": 72, "d5": 73, "d6": 74, "dg1": 75, "dg2": 76,
-  "dg3": 77, "en1": 78, "en2": 35, "fc1": 33, "fc2": 34, "p1": 31,
-  "SUPPLEMENT": 79
-};
-
-function renderComposantsGroupeApero(){
-  if(!carte)return;
-  if(!carte.categoriesGroupeApero){
-    // Initialise depuis la liste par défaut, pour que les cases reflètent l'état réellement appliqué
-    carte.categoriesGroupeApero={};
-    carte.categories.forEach(c=>{
-      carte.categoriesGroupeApero[c.id]=GROUPE_APERO_IDS_DEFAUT.includes(c.id);
-    });
-  }
-  document.getElementById('composantsGroupeAperoList').innerHTML=carte.categories.map(c=>{
-    const dansGroupe=carte.categoriesGroupeApero[c.id]===true;
-    return `<div class="item-row">
-      <div class="item-info" style="cursor:default"><div class="item-nom">${c.nom}</div></div>
-      <label class="toggle"><input type="checkbox" ${dansGroupe?'checked':''} onchange="toggleComposantGroupeApero('${c.id}',this.checked)"><span class="toggle-slider"></span></label>
-    </div>`;
-  }).join('');
-}
-
-function toggleComposantGroupeApero(catId,val){
-  if(!carte)return;
-  if(!carte.categoriesGroupeApero) carte.categoriesGroupeApero={};
-  carte.categoriesGroupeApero[catId]=val;
-  sauvegarder();
-  const cat=carte.categories.find(c=>c.id===catId);
-  showToast(`${cat?cat.nom:catId} ${val?'✅ ajoutée au groupe Apéro/Boisson':'❌ retirée du groupe'}`);
-}
-
-function toggleCategorieActive(catId,val){
-  if(!carte)return;
-  if(!carte.categoriesActives) carte.categoriesActives={};
-  carte.categoriesActives[catId]=val;
-  sauvegarder();
-  const cat=carte.categories.find(c=>c.id===catId);
-  showToast(`${cat?cat.nom:catId} ${val?'✅ visible':'❌ masquée'} côté client`);
-}
-
-function toggleConsultationSeule(catId,val){
-  if(!carte)return;
-  if(!carte.categoriesConsultationSeule) carte.categoriesConsultationSeule={};
-  carte.categoriesConsultationSeule[catId]=val;
-  sauvegarder();
-  const cat=carte.categories.find(c=>c.id===catId);
-  showToast(`${cat?cat.nom:catId} ${val?'🚫 consultation seule (pas d\'ajout)':'✅ ajout normal réactivé'}`);
-}
-
-// ============================================================
-// POPUP AVANT ADDITION (dessert/café) — sélection libre de produits
-// ============================================================
-// Liste par défaut si l'admin n'a jamais personnalisé : desserts + chauds (comportement historique)
-function getDefautSuggestionAddition(){
-  const ids=[];
-  carte.categories.forEach(cat=>{
-    if(cat.id==='desserts'||cat.id==='chauds'){
-      (cat.produits||[]).forEach(p=>ids.push(p.id));
-    }
-  });
-  return ids;
-}
-
-// Familles entières affichées en tuile (ex: "Desserts") dans le popup avant addition.
-// Le client clique la tuile → voit les produits de la catégorie → choisit dedans.
-// Consignes de service (ticket cuisine) — un texte libre par produit, ex: "Apporter une marmite"
-function renderConsignesService(){
-  if(!carte)return;
-  if(!carte.consignesCuisine) carte.consignesCuisine={};
-  const consignes=carte.consignesCuisine;
-  let html='';
-  carte.categories.forEach(cat=>{
-    (cat.produits||[]).forEach(p=>{
-      const val=consignes[p.id]||'';
-      html+=`<div class="item-row">
-        <div class="item-info" style="cursor:default;flex:0 0 auto;min-width:140px"><div class="item-nom">${p.nom}</div></div>
-        <input type="text" value="${val.replace(/"/g,'&quot;')}" placeholder="Ex: Apporter une marmite" style="flex:1;background:#2A2A2A;border:1px solid #444;border-radius:8px;color:#fff;padding:8px 10px;font-size:12px;margin-left:8px"
-          onchange="majConsigneService('${p.id}',this.value)">
-      </div>`;
-    });
-  });
-  document.getElementById('consignesServiceList').innerHTML=html;
-}
-
-function majCapacite(){
-  if(!carte)return;
-  carte.capaciteSalle={
-    salle: parseInt(document.getElementById('capaciteSalle').value)||0,
-    terrasse: parseInt(document.getElementById('capaciteTerrasse').value)||0,
-    terrasseOuverte: document.getElementById('terrasseOuverteToggle').checked
-  };
-  sauvegarder();
-  showToast('✅ Capacité mise à jour');
-}
-
-function majConsigneService(prodId,texte){
-  if(!carte)return;
-  if(!carte.consignesCuisine) carte.consignesCuisine={};
-  const val=texte.trim();
-  if(val) carte.consignesCuisine[prodId]=val;
-  else delete carte.consignesCuisine[prodId];
-  sauvegarder();
-  showToast(val?'✅ Consigne enregistrée':'✅ Consigne supprimée');
-}
-
-function renderFamillesSuggestionAddition(){
-  if(!carte)return;
-  if(!carte.categoriesSuggestionAddition) carte.categoriesSuggestionAddition=[];
-  const selectionnees=carte.categoriesSuggestionAddition;
-  document.getElementById('famillesSuggestionAdditionList').innerHTML=carte.categories.map(cat=>{
-    if(!(cat.produits||[]).length)return '';
-    const coche=selectionnees.includes(cat.id);
-    return `<div class="item-row">
-      <div class="item-info" style="cursor:default"><div class="item-nom">${cat.nom}</div></div>
-      <label class="toggle"><input type="checkbox" ${coche?'checked':''} onchange="toggleFamilleSuggestionAddition('${cat.id}',this.checked)"><span class="toggle-slider"></span></label>
-    </div>`;
-  }).join('');
-}
-
-function toggleFamilleSuggestionAddition(catId,val){
-  if(!carte)return;
-  if(!carte.categoriesSuggestionAddition) carte.categoriesSuggestionAddition=[];
-  if(val){
-    if(!carte.categoriesSuggestionAddition.includes(catId)) carte.categoriesSuggestionAddition.push(catId);
-  } else {
-    carte.categoriesSuggestionAddition=carte.categoriesSuggestionAddition.filter(id=>id!==catId);
-  }
-  sauvegarder();
-  showToast(val?'✅ Famille ajoutée en tuile':'❌ Famille retirée');
-}
-
-function renderSuggestionAddition(){
-  if(!carte)return;
-  if(!carte.produitsSuggestionAddition){
-    carte.produitsSuggestionAddition=getDefautSuggestionAddition();
-  }
-  const selectionnes=carte.produitsSuggestionAddition;
-  let html='';
-  carte.categories.forEach(cat=>{
-    if(!(cat.produits||[]).length)return;
-    html+=`<div class="mini-cat-titre">${cat.nom}</div>`;
-    cat.produits.forEach(p=>{
-      const coche=selectionnes.includes(p.id);
-      html+=`<div class="item-row">
-        <div class="item-info" style="cursor:default"><div class="item-nom">${p.emoji||''} ${p.nom}</div></div>
-        <label class="toggle"><input type="checkbox" ${coche?'checked':''} onchange="toggleSuggestionAddition('${p.id}',this.checked)"><span class="toggle-slider"></span></label>
-      </div>`;
-    });
-  });
-  document.getElementById('suggestionAdditionList').innerHTML=html;
-}
-
-function toggleSuggestionAddition(prodId,val){
-  if(!carte)return;
-  if(!carte.produitsSuggestionAddition) carte.produitsSuggestionAddition=getDefautSuggestionAddition();
-  if(val){
-    if(!carte.produitsSuggestionAddition.includes(prodId)) carte.produitsSuggestionAddition.push(prodId);
-  } else {
-    carte.produitsSuggestionAddition=carte.produitsSuggestionAddition.filter(id=>id!==prodId);
-  }
-  sauvegarder();
-  showToast(val?'✅ Ajouté au popup avant addition':'❌ Retiré du popup avant addition');
-}
-
-// ============================================================
-// MENU ADO (6-17 ans) — sélection libre de produits (typiquement des formules)
-// ============================================================
-function getDefautMenuAdo(){
-  const ids=[];
-  carte.categories.forEach(cat=>{
-    if(cat.id==='formules'){
-      (cat.produits||[]).forEach(p=>{
-        if(p.id==='p1'||p.id==='ca1') ids.push(p.id); // moules + calamars, comportement historique
-      });
-    }
-  });
-  return ids;
-}
-
-function renderMenuAdoOptions(){
-  if(!carte)return;
-  if(!carte.menuAdoOptions){
-    carte.menuAdoOptions=getDefautMenuAdo();
-  }
-  const selectionnes=carte.menuAdoOptions;
-  let html='';
-  carte.categories.forEach(cat=>{
-    if(!(cat.produits||[]).length)return;
-    html+=`<div class="mini-cat-titre">${cat.nom}</div>`;
-    cat.produits.forEach(p=>{
-      const coche=selectionnes.includes(p.id);
-      html+=`<div class="item-row">
-        <div class="item-info" style="cursor:default"><div class="item-nom">${p.emoji||''} ${p.nom}</div></div>
-        <label class="toggle"><input type="checkbox" ${coche?'checked':''} onchange="toggleMenuAdoOption('${p.id}',this.checked)"><span class="toggle-slider"></span></label>
-      </div>`;
-    });
-  });
-  document.getElementById('menuAdoOptionsList').innerHTML=html;
-}
-
-function toggleMenuAdoOption(prodId,val){
-  if(!carte)return;
-  if(!carte.menuAdoOptions) carte.menuAdoOptions=getDefautMenuAdo();
-  if(val){
-    if(!carte.menuAdoOptions.includes(prodId)) carte.menuAdoOptions.push(prodId);
-  } else {
-    carte.menuAdoOptions=carte.menuAdoOptions.filter(id=>id!==prodId);
-  }
-  sauvegarder();
-  showToast(val?'✅ Ajouté au menu Ado':'❌ Retiré du menu Ado');
-}
-
-// ============================================================
-
-async function loadStats(){
-  try{
-    const snap=await db.collection('commandes').get();
-    let total=0,nb=0;snap.forEach(d=>{const x=d.data();total+=x.total||0;nb++;});
-    document.getElementById('statsJour').innerHTML=`
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
-        <div style="text-align:center"><div style="font-size:22px;font-weight:bold;color:#D4AF37">${nb}</div><div style="font-size:10px;color:#888">Commandes</div></div>
-        <div style="text-align:center"><div style="font-size:22px;font-weight:bold;color:#D4AF37">${total.toFixed(0)} €</div><div style="font-size:10px;color:#888">CA</div></div>
-        <div style="text-align:center"><div style="font-size:22px;font-weight:bold;color:#D4AF37">${nb?(total/nb).toFixed(0):0} €</div><div style="font-size:10px;color:#888">Ticket moy.</div></div>
-      </div>`;
-  }catch(e){document.getElementById('statsJour').textContent='Erreur chargement stats';}
-}
-
-// ============================================================
-// HIBOUTIK MAPPING
-// ============================================================
-
-async function chargerMappingHiboutik(){
-  try{
-    const doc=await db.collection('config').doc('hiboutikMapping').get();
-    if(doc.exists && doc.data().mapping && Object.keys(doc.data().mapping).length){
-      mappingHiboutik=doc.data().mapping;
-    } else {
-      // Document absent/vide : première ouverture depuis la migration — on l'initialise automatiquement
-      mappingHiboutik={...MAPPING_HIBOUTIK_INITIAL};
-      await db.collection('config').doc('hiboutikMapping').set({mapping:mappingHiboutik});
-      showToast('✅ Correspondance Hiboutik initialisée automatiquement');
-    }
-  }catch(e){console.error('Erreur chargement correspondance Hiboutik',e);mappingHiboutik={};}
-  renderMappingHiboutik();
-}
-
-function renderMappingHiboutik(){
-  if(!carte || !carte.categories){
-    console.warn('%c⚠️ [renderMappingHiboutik] Carte ou categories undefined','color:orange;font-weight:bold');
-    return;
-  }
-  let html='';
-
-  // Produits de la carte (Formules, Boissons, Desserts...)
-  carte.categories.forEach(cat=>{
-    (cat.produits||[]).forEach(p=>{
-      const val=mappingHiboutik[p.id]||'';
-      html+=`<div class="item-row">
-        <div class="item-info" style="cursor:default;flex:0 0 auto;min-width:140px"><div class="item-nom">${p.nom} <span style="color:#666;font-size:10px">(${p.id})</span></div></div>
-        <input type="number" value="${val}" placeholder="ID Hiboutik" style="width:140px;background:#2A2A2A;border:1px solid #444;border-radius:8px;color:#fff;padding:8px 10px;font-size:12px;margin-left:8px"
-          onchange="majMappingHiboutik('${p.id}',this.value)">
-      </div>`;
-    });
-  });
-
-  // Options de toutes les familles (Sauce, Croquant, Coulis...) — transmissibles à Hiboutik
-  const famillesOptions=carte.famillesOptions||{};
-  Object.values(famillesOptions).forEach(famille=>{
-    if(!famille.options||!famille.options.length)return;
-    html+=`<div style="color:#D4AF37;font-size:12px;font-weight:bold;margin:12px 0 4px">— ${famille.nom||'Options'} —</div>`;
-    famille.options.forEach(o=>{
-      const val=mappingHiboutik[o.id]||'';
-      html+=`<div class="item-row">
-        <div class="item-info" style="cursor:default;flex:0 0 auto;min-width:140px"><div class="item-nom">${o.nom} <span style="color:#666;font-size:10px">(${o.id})</span></div></div>
-        <input type="number" value="${val}" placeholder="ID Hiboutik" style="width:140px;background:#2A2A2A;border:1px solid #444;border-radius:8px;color:#fff;padding:8px 10px;font-size:12px;margin-left:8px"
-          onchange="majMappingHiboutik('${o.id}',this.value)">
-      </div>`;
-    });
-  });
-
-  document.getElementById('mappingHiboutikList').innerHTML=html;
-  document.getElementById('mappingSupplementInput').value=mappingHiboutik['SUPPLEMENT']||'';
-}
-
-async function majMappingHiboutik(prodId,valeur){
-  const id=parseInt(valeur);
-  if(id) mappingHiboutik[prodId]=id;
-  else delete mappingHiboutik[prodId];
-  await sauvegarderMappingHiboutik();
-}
-
-async function majMappingSupplement(valeur){
-  const id=parseInt(valeur);
-  if(id) mappingHiboutik['SUPPLEMENT']=id;
-  else delete mappingHiboutik['SUPPLEMENT'];
-  await sauvegarderMappingHiboutik();
-}
-
-async function sauvegarderMappingHiboutik(){
-  try{
-    await db.collection('config').doc('hiboutikMapping').set({mapping:mappingHiboutik},{merge:false});
-    showToast('✅ Correspondance Hiboutik enregistrée');
-  }catch(e){console.error(e);showToast('❌ Erreur sauvegarde correspondance');}
-}
-
-// ============================================================
-// EXPORT EXCEL
-// ============================================================
-function exporterCarteEnExcel(){
-  if(!carte){showToast('⚠️ Aucune carte à exporter');return;}
-  
-  // Onglet Boissons, Desserts, etc. — produits
-  const wb=XLSX.utils.book_new();
-  
-  // Créer onglet par catégorie avec tous les produits
-  carte.categories.forEach(cat=>{
-    const data=[];
-    data.push(['ID','Catégorie','Sous-catégorie','Nom','Description','Emoji','Prix EUR','Actif (OUI/NON)','Ordre']);
-    (cat.produits||[]).forEach((p,idx)=>{
-      data.push([
-        p.id,
-        cat.id,
-        p.subcat||'',
-        p.nom,
-        p.desc||'',
-        p.emoji||'',
-        p.prix||0,
-        p.actif!==false?'OUI':'NON',
-        idx+1
-      ]);
-    });
-    const ws=XLSX.utils.aoa_to_sheet(data);
-    ws['!cols']=[{wch:12},{wch:14},{wch:14},{wch:20},{wch:25},{wch:6},{wch:10},{wch:12},{wch:8}];
-    XLSX.utils.book_append_sheet(wb,ws,cat.nom.substring(0,20));
-  });
-  
-  // Onglet Familles Options
-  if(carte.famillesOptions&&Object.keys(carte.famillesOptions).length){
-    const famData=[['ID Famille','Nom Famille','ID Option','Nom Option','Supplément €','Actif (OUI/NON)','Ordre']];
-    Object.values(carte.famillesOptions).forEach(fam=>{
-      (fam.options||[]).forEach(opt=>{
-        famData.push([
-          fam.id,
-          fam.nom,
-          opt.id,
-          opt.nom,
-          opt.supplement||0,
-          opt.actif!==false?'OUI':'NON',
-          opt.ordre||9999
-        ]);
-      });
-    });
-    const ws=XLSX.utils.aoa_to_sheet(famData);
-    ws['!cols']=[{wch:14},{wch:14},{wch:14},{wch:20},{wch:12},{wch:12},{wch:8}];
-    XLSX.utils.book_append_sheet(wb,ws,'Familles Options');
-  }
-  
-  // Onglet Options Produits
-  if(carte.optionsProduits&&Object.keys(carte.optionsProduits).length){
-    const optData=[['ID Produit','','ID Famille','Étape','Actif (OUI/NON)']];
-    Object.entries(carte.optionsProduits).forEach(([idProd,famillesEtapes])=>{
-      famillesEtapes.forEach(fe=>{
-        optData.push([
-          idProd,
-          '',
-          fe.idFamille,
-          fe.etape,
-          'OUI'
-        ]);
-      });
-    });
-    const ws=XLSX.utils.aoa_to_sheet(optData);
-    ws['!cols']=[{wch:14},{wch:2},{wch:14},{wch:8},{wch:12}];
-    XLSX.utils.book_append_sheet(wb,ws,'Options Produits');
-  }
-  
-  // Télécharger
-  XLSX.writeFile(wb,'MouleSmile_Carte_Admin.xlsx');
-  showToast('✅ Carte téléchargée ! Modifie et réimporte-la.');
-}
-
-// ============================================================
-// INITIALISATION AU CHARGEMENT
-// ============================================================
-async function initAdmin(){
-  console.log('%c🔴 [INIT] Démarrage initAdmin...','color:red;font-weight:bold;font-size:14px');
-  
-  // Charger la carte depuis Firestore
-  try{
-    console.log('%c🔴 [INIT] Lecture de config/carte_v2 depuis Firestore...','color:red;font-size:12px');
-    const doc=await db.collection('config').doc('carte_v2').get();
-    console.log('%c🔴 [INIT] Réponse Firestore:','color:red;font-size:12px', doc.exists ? '✅ EXISTS' : '❌ PAS TROUVÉ');
-    
-    if(doc.exists){
-      let carteData=doc.data();
-      console.log('%c🔴 [INIT] ⭐⭐⭐ CARTE BRUTE REÇUE DE FIRESTORE ⭐⭐⭐','color:red;font-weight:bold;font-size:13px');
-      console.log('%c🔴 [INIT] Contenu complet:','color:red;font-size:12px', carteData);
-      console.log('%c🔴 [INIT] Clés de carte:','color:red;font-size:12px', Object.keys(carteData));
-      
-      // ⚠️ CONVERSION: Si ancienne structure (boissons, paliers, sauces au lieu de categories)
-      if(!carteData.categories && (carteData.boissons || carteData.paliers || carteData.sauces)){
-        console.warn('%c🔴 [INIT] ⚠️ ANCIENNE STRUCTURE DÉTECTÉE! Conversion en cours...','color:red;font-weight:bold;font-size:13px');
-        
-        // Mapper l'ancienne structure vers la nouvelle
-        carte={
-          categories:[
-            {id:'formules',nom:'🍽️ Formules',produits: carteData.formules || []},
-            {id:'paliers',nom:'📊 Paliers',produits: carteData.paliers || []},
-            {id:'boissons',nom:'🍺 Boissons',produits: carteData.boissons || []},
-            {id:'sauces',nom:'🥘 Sauces',produits: carteData.sauces || []},
-            {id:'softs',nom:'🧃 Softs',produits: carteData.softs || []},
-            {id:'vins_blancs',nom:'🍷 Vins blancs',produits: carteData.vins_blancs || []},
-            {id:'vins_roses',nom:'🍷 Vins rosés',produits: carteData.vins_roses || []},
-            {id:'vins_rouges',nom:'🍷 Vins rouges',produits: carteData.vins_rouges || []},
-            {id:'cocktails',nom:'🍹 Cocktails',produits: carteData.cocktails || []},
-            {id:'sangria',nom:'🍷 Sangria',produits: carteData.sangria || []},
-            {id:'desserts',nom:'🍮 Desserts',produits: carteData.desserts || []},
-            {id:'digestifs',nom:'🥃 Digestifs',produits: carteData.digestifs || []},
-            {id:'chauds',nom:'☕ Chauds',produits: carteData.chauds || []}
-          ],
-          famillesOptions: carteData.famillesOptions || {},
-          optionsProduits: carteData.optionsProduits || {},
-          boissonMenu: carteData.boissonMenu || undefined,
-          enfantMenu: carteData.enfantMenu || undefined
-        };
-        
-        console.log('%c✅ [INIT] Conversion terminée — structure nouvelle:','color:green;font-weight:bold', carte);
-        
-        // Resauvegarder dans Firestore avec la nouvelle structure
-        try{
-          await db.collection('config').doc('carte_v2').set(carte);
-          console.log('%c✅ [INIT] Carte CONVERTIE et sauvegardée dans Firestore','color:green;font-weight:bold;font-size:13px');
-        }catch(e){
-          console.error('%c❌ [INIT] Erreur sauvegarde carte convertie:','color:red', e);
-        }
-      } else {
-        // Nouvelle structure — utiliser telle quelle
-        carte=carteData;
-        console.log('%c🔴 [INIT] Nouvelle structure détectée','color:red;font-size:12px');
-      }
-      
-      console.log('%c🔴 [INIT] carte.categories:','color:red;font-size:12px', carte.categories);
-      console.log('%c🔴 [INIT] Nombre de catégories:','color:red;font-size:12px', carte.categories?.length || 'undefined/null');
-      
-      // ⚠️ CORRECTION: Si categories est TOUJOURS manquante, la recréer!
-      if(!carte.categories || !Array.isArray(carte.categories) || carte.categories.length === 0){
-        console.error('%c🔴 ❌ [INIT] CARTE CORROMPUE! categories est undefined/null/vide — RECRÉATION','color:red;font-weight:bold;font-size:13px');
-        carte.categories=[
-          {id:'formules',nom:'🍽️ Formules',produits:[]},
-          {id:'paliers',nom:'📊 Paliers',produits:[]},
-          {id:'boissons',nom:'🍺 Boissons',produits:[]},
-          {id:'sauces',nom:'🥘 Sauces',produits:[]},
-          {id:'softs',nom:'🧃 Softs',produits:[]},
-          {id:'vins_blancs',nom:'🍷 Vins blancs',produits:[]},
-          {id:'vins_roses',nom:'🍷 Vins rosés',produits:[]},
-          {id:'vins_rouges',nom:'🍷 Vins rouges',produits:[]},
-          {id:'cocktails',nom:'🍹 Cocktails',produits:[]},
-          {id:'sangria',nom:'🍷 Sangria',produits:[]},
-          {id:'desserts',nom:'🍮 Desserts',produits:[]},
-          {id:'digestifs',nom:'🥃 Digestifs',produits:[]},
-          {id:'chauds',nom:'☕ Chauds',produits:[]}
-        ];
-        if(!carte.famillesOptions) carte.famillesOptions={};
-        if(!carte.optionsProduits) carte.optionsProduits={};
-        // Resauvegarder dans Firestore
-        try{
-          await db.collection('config').doc('carte_v2').set(carte);
-          console.log('%c✅ [INIT] Carte RÉPARÉE et sauvegardée dans Firestore','color:green;font-weight:bold');
-        }catch(e){
-          console.error('%c❌ [INIT] Erreur sauvegarde carte réparée:','color:red', e);
-        }
-      }
-      
-      if(carte && carte.categories && carte.categories.length){
-        catActive=carte.categories[0].id;
-        console.log('%c🔴 [INIT] catActive:','color:red;font-size:12px', catActive);
-      } else {
-        console.warn('%c⚠️ [INIT] carte.categories est TOUJOURS vide/undefined! Problème grave.','color:orange;font-weight:bold;font-size:12px');
-      }
-    } else {
-      console.warn('%c🔴 [INIT] Pas de carte trouvée — création vide','color:red;font-weight:bold;font-size:12px');
-      // Créer une carte vide par défaut avec les catégories standard
-      carte={
-        categories:[
-          {id:'formules',nom:'🍽️ Formules',produits:[]},
-          {id:'sauces',nom:'🥘 Sauces',produits:[]},
-          {id:'softs',nom:'🧃 Softs',produits:[]},
-          {id:'bieres',nom:'🍺 Bières',produits:[]},
-          {id:'vins_blancs',nom:'🍷 Vins blancs',produits:[]},
-          {id:'vins_roses',nom:'🍷 Vins rosés',produits:[]},
-          {id:'vins_rouges',nom:'🍷 Vins rouges',produits:[]},
-          {id:'cocktails',nom:'🍹 Cocktails',produits:[]},
-          {id:'sangria',nom:'🍷 Sangria',produits:[]},
-          {id:'desserts',nom:'🍮 Desserts',produits:[]},
-          {id:'digestifs',nom:'🥃 Digestifs',produits:[]},
-          {id:'chauds',nom:'☕ Chauds',produits:[]}
-        ],
-        famillesOptions:{},
-        optionsProduits:{}
-      };
-      catActive='formules';
-      await db.collection('config').doc('carte_v2').set(carte);
-      console.log('✅ Carte vide créée dans Firestore');
-    }
-  }catch(e){
-    console.error('❌ Erreur chargement/création carte:',e);
-    // Créer une carte vide localement en cas d'erreur
-    carte={
-      categories:[
-        {id:'formules',nom:'🍽️ Formules',produits:[]},
-        {id:'sauces',nom:'🥘 Sauces',produits:[]},
-        {id:'softs',nom:'🧃 Softs',produits:[]},
-        {id:'bieres',nom:'🍺 Bières',produits:[]},
-        {id:'vins_blancs',nom:'🍷 Vins blancs',produits:[]},
-        {id:'vins_roses',nom:'🍷 Vins rosés',produits:[]},
-        {id:'vins_rouges',nom:'🍷 Vins rouges',produits:[]},
-        {id:'cocktails',nom:'🍹 Cocktails',produits:[]},
-        {id:'sangria',nom:'🍷 Sangria',produits:[]},
-        {id:'desserts',nom:'🍮 Desserts',produits:[]},
-        {id:'digestifs',nom:'🥃 Digestifs',produits:[]},
-        {id:'chauds',nom:'☕ Chauds',produits:[]}
-      ],
-      famillesOptions:{},
-      optionsProduits:{}
-    };
-    catActive='formules';
-    console.log('⚠️ Carte vide créée localement (Firestore indisponible)');
-  }
-  
-  // Charger les familles d'options
-  try{
-    const doc=await db.collection('config').doc('famillesOptions').get();
-    if(doc.exists){
-      carteFamillesOptions=doc.data().famillesOptions||{};
-      console.log('✅ Familles options chargées');
-    }
-  }catch(e){
-    console.error('❌ Erreur familles:',e);
-  }
-  
-  // Charger les options produits
-  try{
-    const doc=await db.collection('config').doc('optionsProduits').get();
-    if(doc.exists){
-      carteOptionsProduits=doc.data().optionsProduits||{};
-      console.log('✅ Options produits chargées');
-    }
-  }catch(e){
-    console.error('❌ Erreur options produits:',e);
-  }
-  
-  // Afficher l'onglet Carte par défaut
-  console.log('%c🔴 [INIT] Appel switchNav(Carte)...','color:red;font-size:12px');
-  switchNav('Carte');
-  console.log('%c🔴 [INIT] switchNav terminé','color:red;font-size:12px');
-  
-  // Afficher la carte si elle existe
-  console.log('%c🔴 [INIT] Vérification affichage:','color:red;font-size:12px', {carte_ok: !!carte, nbCat: carte?.categories?.length});
-  if(carte && carte.categories && carte.categories.length){
-    console.log('%c🔴 [INIT] Appel render()...','color:red;font-size:12px');
-    render();
-    console.log('%c🔴 [INIT] render() terminé','color:red;font-size:12px');
-  } else {
-    console.log('%c🔴 [INIT] Carte vide — affichage message','color:red;font-size:12px');
-    // Afficher un message "Aucune carte"
-    const catContent=document.getElementById('catContent');
-    if(catContent) {
-      catContent.innerHTML='<div style="color:#888;text-align:center;padding:40px">📭 Aucun produit — Importe une carte (onglet 📥 Excel) ou ajoute des produits manuellement (onglet ➕)</div>';
-      console.log('%c🔴 [INIT] Message affiché','color:red;font-size:12px');
-    } else {
-      console.error('%c🔴 [INIT] ⚠️⚠️⚠️ catContent NOT FOUND!!!','color:red;font-weight:bold;font-size:14px');
+  if(confirm('Réinitialiser les stats du jour?')){
+    try{
+      await db.collection('config').doc('statsParams').set({lastReset:new Date()});
+      showToast('✅ Stats réinitialisées');
+    }catch(e){
+      showToast('❌ Erreur reset');
     }
   }
-  
-  // Remplir les selects et autres UI dépendantes du DOM
-  console.log('%c🔴 [INIT] Appel remplirSelectCategories()...','color:red;font-size:12px');
-  remplirSelectCategories();
-  console.log('%c🔴 [INIT] remplirSelectCategories terminé','color:red;font-size:12px');
-  
-  // Charger stats, mapping, autres
-  try{
-    console.log('%c🔴 [INIT] Appel loadStats()...','color:red;font-size:12px');
-    loadStats();
-    console.log('%c🔴 [INIT] loadStats terminé','color:red;font-size:12px');
-  }catch(e){console.error('%c🔴 [INIT] Erreur stats:','color:red', e);}
-  
-  try{
-    console.log('%c🔴 [INIT] Appel chargerMappingHiboutik()...','color:red;font-size:12px');
-    chargerMappingHiboutik();
-    console.log('%c🔴 [INIT] chargerMappingHiboutik terminé','color:red;font-size:12px');
-  }catch(e){console.error('%c🔴 [INIT] Erreur mapping:','color:red', e);}
-  
-  console.log('%c✅ ✅ ✅ [INIT] Admin.html COMPLÈTEMENT initialisé !','color:green;font-weight:bold;font-size:16px');
 }
 
-// Démarrer l'initialisation avec un délai pour laisser Firebase se charger
-console.log('🔄 Démarrage de l\'initialisation dans 1 seconde...');
-setTimeout(initAdmin, 1000);
-console.log('✅ Script admin.html chargé — en attente de l\'initialisation');
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ============================================================
+// DÉMARRAGE
+// ============================================================
+window.addEventListener('load',init);
 </script>
+
 </body>
 </html>
