@@ -1469,7 +1469,10 @@ async function chargerMappingHiboutik(){
 }
 
 function renderMappingHiboutik(){
-  if(!carte)return;
+  if(!carte || !carte.categories){
+    console.warn('%c⚠️ [renderMappingHiboutik] Carte ou categories undefined','color:orange;font-weight:bold');
+    return;
+  }
   let html='';
 
   // Produits de la carte (Formules, Boissons, Desserts...)
@@ -1614,10 +1617,18 @@ async function initAdmin(){
     
     if(doc.exists){
       carte=doc.data();
-      console.log('%c🔴 [INIT] Carte chargée:','color:red;font-size:12px', {nbCategories: carte.categories?.length || 0});
+      console.log('%c🔴 [INIT] ⭐⭐⭐ CARTE BRUTE REÇUE DE FIRESTORE ⭐⭐⭐','color:red;font-weight:bold;font-size:13px');
+      console.log('%c🔴 [INIT] Contenu complet:','color:red;font-size:12px', carte);
+      console.log('%c🔴 [INIT] Clés de carte:','color:red;font-size:12px', Object.keys(carte));
+      console.log('%c🔴 [INIT] carte.categories:','color:red;font-size:12px', carte.categories);
+      console.log('%c🔴 [INIT] carte.categories est un Array?','color:red;font-size:12px', Array.isArray(carte.categories));
+      console.log('%c🔴 [INIT] Nombre de catégories:','color:red;font-size:12px', carte.categories?.length || 'undefined/null');
+      
       if(carte && carte.categories && carte.categories.length){
         catActive=carte.categories[0].id;
         console.log('%c🔴 [INIT] catActive:','color:red;font-size:12px', catActive);
+      } else {
+        console.warn('%c⚠️ [INIT] carte.categories est vide ou undefined!','color:orange;font-weight:bold;font-size:12px');
       }
     } else {
       console.warn('%c🔴 [INIT] Pas de carte trouvée — création vide','color:red;font-weight:bold;font-size:12px');
