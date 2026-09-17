@@ -1611,24 +1611,95 @@ async function initAdmin(){
   
   // Charger la carte depuis Firestore
   try{
-    console.log('%c🔴 [INIT] Lecture de config/carte depuis Firestore...','color:red;font-size:12px');
-    const doc=await db.collection('config').doc('carte').get();
+    console.log('%c🔴 [INIT] Lecture de config/carte_v2 depuis Firestore...','color:red;font-size:12px');
+    const doc=await db.collection('config').doc('carte_v2').get();
     console.log('%c🔴 [INIT] Réponse Firestore:','color:red;font-size:12px', doc.exists ? '✅ EXISTS' : '❌ PAS TROUVÉ');
     
     if(doc.exists){
-      carte=doc.data();
+      let carteData=doc.data();
       console.log('%c🔴 [INIT] ⭐⭐⭐ CARTE BRUTE REÇUE DE FIRESTORE ⭐⭐⭐','color:red;font-weight:bold;font-size:13px');
-      console.log('%c🔴 [INIT] Contenu complet:','color:red;font-size:12px', carte);
-      console.log('%c🔴 [INIT] Clés de carte:','color:red;font-size:12px', Object.keys(carte));
+      console.log('%c🔴 [INIT] Contenu complet:','color:red;font-size:12px', carteData);
+      console.log('%c🔴 [INIT] Clés de carte:','color:red;font-size:12px', Object.keys(carteData));
+      
+      // ⚠️ CONVERSION: Si ancienne structure (boissons, paliers, sauces au lieu de categories)
+      if(!carteData.categories && (carteData.boissons || carteData.paliers || carteData.sauces)){
+        console.warn('%c🔴 [INIT] ⚠️ ANCIENNE STRUCTURE DÉTECTÉE! Conversion en cours...','color:red;font-weight:bold;font-size:13px');
+        
+        // Mapper l'ancienne structure vers la nouvelle
+        carte={
+          categories:[
+            {id:'formules',nom:'🍽️ Formules',produits: carteData.formules || []},
+            {id:'paliers',nom:'📊 Paliers',produits: carteData.paliers || []},
+            {id:'boissons',nom:'🍺 Boissons',produits: carteData.boissons || []},
+            {id:'sauces',nom:'🥘 Sauces',produits: carteData.sauces || []},
+            {id:'softs',nom:'🧃 Softs',produits: carteData.softs || []},
+            {id:'vins_blancs',nom:'🍷 Vins blancs',produits: carteData.vins_blancs || []},
+            {id:'vins_roses',nom:'🍷 Vins rosés',produits: carteData.vins_roses || []},
+            {id:'vins_rouges',nom:'🍷 Vins rouges',produits: carteData.vins_rouges || []},
+            {id:'cocktails',nom:'🍹 Cocktails',produits: carteData.cocktails || []},
+            {id:'sangria',nom:'🍷 Sangria',produits: carteData.sangria || []},
+            {id:'desserts',nom:'🍮 Desserts',produits: carteData.desserts || []},
+            {id:'digestifs',nom:'🥃 Digestifs',produits: carteData.digestifs || []},
+            {id:'chauds',nom:'☕ Chauds',produits: carteData.chauds || []}
+          ],
+          famillesOptions: carteData.famillesOptions || {},
+          optionsProduits: carteData.optionsProduits || {},
+          boissonMenu: carteData.boissonMenu || undefined,
+          enfantMenu: carteData.enfantMenu || undefined
+        };
+        
+        console.log('%c✅ [INIT] Conversion terminée — structure nouvelle:','color:green;font-weight:bold', carte);
+        
+        // Resauvegarder dans Firestore avec la nouvelle structure
+        try{
+          await db.collection('config').doc('carte_v2').set(carte);
+          console.log('%c✅ [INIT] Carte CONVERTIE et sauvegardée dans Firestore','color:green;font-weight:bold;font-size:13px');
+        }catch(e){
+          console.error('%c❌ [INIT] Erreur sauvegarde carte convertie:','color:red', e);
+        }
+      } else {
+        // Nouvelle structure — utiliser telle quelle
+        carte=carteData;
+        console.log('%c🔴 [INIT] Nouvelle structure détectée','color:red;font-size:12px');
+      }
+      
       console.log('%c🔴 [INIT] carte.categories:','color:red;font-size:12px', carte.categories);
-      console.log('%c🔴 [INIT] carte.categories est un Array?','color:red;font-size:12px', Array.isArray(carte.categories));
       console.log('%c🔴 [INIT] Nombre de catégories:','color:red;font-size:12px', carte.categories?.length || 'undefined/null');
+      
+      // ⚠️ CORRECTION: Si categories est TOUJOURS manquante, la recréer!
+      if(!carte.categories || !Array.isArray(carte.categories) || carte.categories.length === 0){
+        console.error('%c🔴 ❌ [INIT] CARTE CORROMPUE! categories est undefined/null/vide — RECRÉATION','color:red;font-weight:bold;font-size:13px');
+        carte.categories=[
+          {id:'formules',nom:'🍽️ Formules',produits:[]},
+          {id:'paliers',nom:'📊 Paliers',produits:[]},
+          {id:'boissons',nom:'🍺 Boissons',produits:[]},
+          {id:'sauces',nom:'🥘 Sauces',produits:[]},
+          {id:'softs',nom:'🧃 Softs',produits:[]},
+          {id:'vins_blancs',nom:'🍷 Vins blancs',produits:[]},
+          {id:'vins_roses',nom:'🍷 Vins rosés',produits:[]},
+          {id:'vins_rouges',nom:'🍷 Vins rouges',produits:[]},
+          {id:'cocktails',nom:'🍹 Cocktails',produits:[]},
+          {id:'sangria',nom:'🍷 Sangria',produits:[]},
+          {id:'desserts',nom:'🍮 Desserts',produits:[]},
+          {id:'digestifs',nom:'🥃 Digestifs',produits:[]},
+          {id:'chauds',nom:'☕ Chauds',produits:[]}
+        ];
+        if(!carte.famillesOptions) carte.famillesOptions={};
+        if(!carte.optionsProduits) carte.optionsProduits={};
+        // Resauvegarder dans Firestore
+        try{
+          await db.collection('config').doc('carte_v2').set(carte);
+          console.log('%c✅ [INIT] Carte RÉPARÉE et sauvegardée dans Firestore','color:green;font-weight:bold');
+        }catch(e){
+          console.error('%c❌ [INIT] Erreur sauvegarde carte réparée:','color:red', e);
+        }
+      }
       
       if(carte && carte.categories && carte.categories.length){
         catActive=carte.categories[0].id;
         console.log('%c🔴 [INIT] catActive:','color:red;font-size:12px', catActive);
       } else {
-        console.warn('%c⚠️ [INIT] carte.categories est vide ou undefined!','color:orange;font-weight:bold;font-size:12px');
+        console.warn('%c⚠️ [INIT] carte.categories est TOUJOURS vide/undefined! Problème grave.','color:orange;font-weight:bold;font-size:12px');
       }
     } else {
       console.warn('%c🔴 [INIT] Pas de carte trouvée — création vide','color:red;font-weight:bold;font-size:12px');
@@ -1652,7 +1723,7 @@ async function initAdmin(){
         optionsProduits:{}
       };
       catActive='formules';
-      await db.collection('config').doc('carte').set(carte);
+      await db.collection('config').doc('carte_v2').set(carte);
       console.log('✅ Carte vide créée dans Firestore');
     }
   }catch(e){
