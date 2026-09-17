@@ -96,7 +96,10 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 </head>
 <body>
 <div class="header">
-  <h1>⚙️ Admin — Moule & Smile</h1>
+  <div>
+    <h1>⚙️ Admin — Moule & Smile</h1>
+    <div style="font-size:10px;color:#888;margin-top:2px">v.<span id="buildTimestamp"></span></div>
+  </div>
   <button class="save-btn" onclick="sauvegarder()">💾 Publier</button>
 </div>
 <div class="nav-tabs" style="overflow-x:auto;display:flex">
@@ -290,6 +293,12 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
     </div>
   </div>
 
+  <div class="section" style="margin-top:14px">
+    <h2>📥 Exporter la carte</h2>
+    <div style="color:#aaa;font-size:12px;margin-bottom:12px">Télécharge la carte actuelle en Excel pour la modifier localement, puis réimporte-la.</div>
+    <button class="btn-vert btn-full" onclick="exporterCarteEnExcel()">📥 Télécharger MouleSmile_Carte_Admin.xlsx</button>
+  </div>
+
 <!-- AJOUTER -->
 <div id="navAjouter" class="content" style="display:none">
   <div class="add-form">
@@ -390,6 +399,18 @@ const firebaseConfig={apiKey:"AIzaSyDUb3LtVsMAq986DgtHwkMBeQFr8A8A2nU",authDomai
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 
+// ===== BUILD TIMESTAMP (v.JJ/MM/AAAA HH:MM) =====
+function afficherBuildTimestamp(){
+  const now=new Date();
+  const jour=String(now.getDate()).padStart(2,'0');
+  const mois=String(now.getMonth()+1).padStart(2,'0');
+  const annee=now.getFullYear();
+  const heure=String(now.getHours()).padStart(2,'0');
+  const minute=String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('buildTimestamp').textContent=`${jour}/${mois}/${annee} ${heure}:${minute}`;
+}
+afficherBuildTimestamp();
+
 // ===== AUTHENTIFICATION ADMIN (non-bloquante) - Sept 2026 =====
 let userAuth = null;
 const adminEmail = 'admin@commandemoulesmile.fr';
@@ -464,6 +485,8 @@ async function changerPinCaisse() {
   }
 }
 let carte=null,catActive=null,importedData=null;
+let carteFamillesOptions={};
+let carteOptionsProduits={};
 let mappingHiboutik={}; // Hiboutik product mapping
 
 const CATS=[
@@ -472,9 +495,13 @@ const CATS=[
   {id:"desserts",nom:"🍮 Desserts"},{id:"digestifs",nom:"✨ Digestifs"},{id:"chauds",nom:"☕ Chauds"},
 ];
 
-// Remplir select catégorie
-const sel=document.getElementById('newCat');
-CATS.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.nom;sel.appendChild(o);});
+// Remplir select catégorie — sera appelé après le chargement du DOM
+function remplirSelectCategories(){
+  const sel=document.getElementById('newCat');
+  if(!sel)return;
+  sel.innerHTML='';
+  CATS.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.nom;sel.appendChild(o);});
+}
 
 const boissonsMenuDefaut = [
   {id:"bm1", nom:"Coca-Cola", desc:"33cl", emoji:"🥤", actif:true},
@@ -508,18 +535,32 @@ db.collection('config').doc('carte_v2').onSnapshot(doc=>{
 
 function switchNav(tab,el){
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  ['navCarte','navBoissonMenu','navEnfantMenu','navReglages','navAjouter','navImporter','navActions'].forEach(id=>document.getElementById(id).style.display='none');
-  document.getElementById('nav'+tab).style.display='block';
+  if(el) el.classList.add('active');
+  else {
+    // Si pas d'élément, cherche le bouton correspondant
+    const btn=document.querySelector(`[onclick*="switchNav('${tab}'"]`);
+    if(btn) btn.classList.add('active');
+  }
+  ['navCarte','navBoissonMenu','navEnfantMenu','navReglages','navAjouter','navImporter','navActions'].forEach(id=>{
+    const elem=document.getElementById(id);
+    if(elem) elem.style.display='none';
+  });
+  const content=document.getElementById('nav'+tab);
+  if(content) content.style.display='block';
   if(tab==='BoissonMenu') renderBoissonMenu();
   if(tab==='EnfantMenu') renderEnfantMenu();
   if(tab==='Reglages') renderReglages();
+  if(tab==='Actions') loadStats();
 }
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
 function render(){
-  if(!carte)return;
+  console.log('%c🟠 [RENDER] Appel render(), carte:','color:orange;font-size:12px', carte ? {nbCat: carte.categories?.length} : 'NULL');
+  if(!carte){
+    console.warn('%c🟠 [RENDER] ⚠️ Carte est NULL/undefined — render() stoppé','color:orange;font-weight:bold');
+    return;
+  }
   document.getElementById('catTabs').innerHTML=carte.categories.map(c=>`<div class="cat-tab ${c.id===catActive?'active':''}" onclick="selectCat('${c.id}')">${c.nom}</div>`).join('');
   const cat=carte.categories.find(c=>c.id===catActive);
   if(!cat)return;
@@ -1482,6 +1523,222 @@ async function sauvegarderMappingHiboutik(){
     showToast('✅ Correspondance Hiboutik enregistrée');
   }catch(e){console.error(e);showToast('❌ Erreur sauvegarde correspondance');}
 }
+
+// ============================================================
+// EXPORT EXCEL
+// ============================================================
+function exporterCarteEnExcel(){
+  if(!carte){showToast('⚠️ Aucune carte à exporter');return;}
+  
+  // Onglet Boissons, Desserts, etc. — produits
+  const wb=XLSX.utils.book_new();
+  
+  // Créer onglet par catégorie avec tous les produits
+  carte.categories.forEach(cat=>{
+    const data=[];
+    data.push(['ID','Catégorie','Sous-catégorie','Nom','Description','Emoji','Prix EUR','Actif (OUI/NON)','Ordre']);
+    (cat.produits||[]).forEach((p,idx)=>{
+      data.push([
+        p.id,
+        cat.id,
+        p.subcat||'',
+        p.nom,
+        p.desc||'',
+        p.emoji||'',
+        p.prix||0,
+        p.actif!==false?'OUI':'NON',
+        idx+1
+      ]);
+    });
+    const ws=XLSX.utils.aoa_to_sheet(data);
+    ws['!cols']=[{wch:12},{wch:14},{wch:14},{wch:20},{wch:25},{wch:6},{wch:10},{wch:12},{wch:8}];
+    XLSX.utils.book_append_sheet(wb,ws,cat.nom.substring(0,20));
+  });
+  
+  // Onglet Familles Options
+  if(carte.famillesOptions&&Object.keys(carte.famillesOptions).length){
+    const famData=[['ID Famille','Nom Famille','ID Option','Nom Option','Supplément €','Actif (OUI/NON)','Ordre']];
+    Object.values(carte.famillesOptions).forEach(fam=>{
+      (fam.options||[]).forEach(opt=>{
+        famData.push([
+          fam.id,
+          fam.nom,
+          opt.id,
+          opt.nom,
+          opt.supplement||0,
+          opt.actif!==false?'OUI':'NON',
+          opt.ordre||9999
+        ]);
+      });
+    });
+    const ws=XLSX.utils.aoa_to_sheet(famData);
+    ws['!cols']=[{wch:14},{wch:14},{wch:14},{wch:20},{wch:12},{wch:12},{wch:8}];
+    XLSX.utils.book_append_sheet(wb,ws,'Familles Options');
+  }
+  
+  // Onglet Options Produits
+  if(carte.optionsProduits&&Object.keys(carte.optionsProduits).length){
+    const optData=[['ID Produit','','ID Famille','Étape','Actif (OUI/NON)']];
+    Object.entries(carte.optionsProduits).forEach(([idProd,famillesEtapes])=>{
+      famillesEtapes.forEach(fe=>{
+        optData.push([
+          idProd,
+          '',
+          fe.idFamille,
+          fe.etape,
+          'OUI'
+        ]);
+      });
+    });
+    const ws=XLSX.utils.aoa_to_sheet(optData);
+    ws['!cols']=[{wch:14},{wch:2},{wch:14},{wch:8},{wch:12}];
+    XLSX.utils.book_append_sheet(wb,ws,'Options Produits');
+  }
+  
+  // Télécharger
+  XLSX.writeFile(wb,'MouleSmile_Carte_Admin.xlsx');
+  showToast('✅ Carte téléchargée ! Modifie et réimporte-la.');
+}
+
+// ============================================================
+// INITIALISATION AU CHARGEMENT
+// ============================================================
+async function initAdmin(){
+  console.log('%c🔴 [INIT] Démarrage initAdmin...','color:red;font-weight:bold;font-size:14px');
+  
+  // Charger la carte depuis Firestore
+  try{
+    console.log('%c🔴 [INIT] Lecture de config/carte depuis Firestore...','color:red;font-size:12px');
+    const doc=await db.collection('config').doc('carte').get();
+    console.log('%c🔴 [INIT] Réponse Firestore:','color:red;font-size:12px', doc.exists ? '✅ EXISTS' : '❌ PAS TROUVÉ');
+    
+    if(doc.exists){
+      carte=doc.data();
+      console.log('%c🔴 [INIT] Carte chargée:','color:red;font-size:12px', {nbCategories: carte.categories?.length || 0});
+      if(carte && carte.categories && carte.categories.length){
+        catActive=carte.categories[0].id;
+        console.log('%c🔴 [INIT] catActive:','color:red;font-size:12px', catActive);
+      }
+    } else {
+      console.warn('%c🔴 [INIT] Pas de carte trouvée — création vide','color:red;font-weight:bold;font-size:12px');
+      // Créer une carte vide par défaut avec les catégories standard
+      carte={
+        categories:[
+          {id:'formules',nom:'🍽️ Formules',produits:[]},
+          {id:'sauces',nom:'🥘 Sauces',produits:[]},
+          {id:'softs',nom:'🧃 Softs',produits:[]},
+          {id:'bieres',nom:'🍺 Bières',produits:[]},
+          {id:'vins_blancs',nom:'🍷 Vins blancs',produits:[]},
+          {id:'vins_roses',nom:'🍷 Vins rosés',produits:[]},
+          {id:'vins_rouges',nom:'🍷 Vins rouges',produits:[]},
+          {id:'cocktails',nom:'🍹 Cocktails',produits:[]},
+          {id:'sangria',nom:'🍷 Sangria',produits:[]},
+          {id:'desserts',nom:'🍮 Desserts',produits:[]},
+          {id:'digestifs',nom:'🥃 Digestifs',produits:[]},
+          {id:'chauds',nom:'☕ Chauds',produits:[]}
+        ],
+        famillesOptions:{},
+        optionsProduits:{}
+      };
+      catActive='formules';
+      await db.collection('config').doc('carte').set(carte);
+      console.log('✅ Carte vide créée dans Firestore');
+    }
+  }catch(e){
+    console.error('❌ Erreur chargement/création carte:',e);
+    // Créer une carte vide localement en cas d'erreur
+    carte={
+      categories:[
+        {id:'formules',nom:'🍽️ Formules',produits:[]},
+        {id:'sauces',nom:'🥘 Sauces',produits:[]},
+        {id:'softs',nom:'🧃 Softs',produits:[]},
+        {id:'bieres',nom:'🍺 Bières',produits:[]},
+        {id:'vins_blancs',nom:'🍷 Vins blancs',produits:[]},
+        {id:'vins_roses',nom:'🍷 Vins rosés',produits:[]},
+        {id:'vins_rouges',nom:'🍷 Vins rouges',produits:[]},
+        {id:'cocktails',nom:'🍹 Cocktails',produits:[]},
+        {id:'sangria',nom:'🍷 Sangria',produits:[]},
+        {id:'desserts',nom:'🍮 Desserts',produits:[]},
+        {id:'digestifs',nom:'🥃 Digestifs',produits:[]},
+        {id:'chauds',nom:'☕ Chauds',produits:[]}
+      ],
+      famillesOptions:{},
+      optionsProduits:{}
+    };
+    catActive='formules';
+    console.log('⚠️ Carte vide créée localement (Firestore indisponible)');
+  }
+  
+  // Charger les familles d'options
+  try{
+    const doc=await db.collection('config').doc('famillesOptions').get();
+    if(doc.exists){
+      carteFamillesOptions=doc.data().famillesOptions||{};
+      console.log('✅ Familles options chargées');
+    }
+  }catch(e){
+    console.error('❌ Erreur familles:',e);
+  }
+  
+  // Charger les options produits
+  try{
+    const doc=await db.collection('config').doc('optionsProduits').get();
+    if(doc.exists){
+      carteOptionsProduits=doc.data().optionsProduits||{};
+      console.log('✅ Options produits chargées');
+    }
+  }catch(e){
+    console.error('❌ Erreur options produits:',e);
+  }
+  
+  // Afficher l'onglet Carte par défaut
+  console.log('%c🔴 [INIT] Appel switchNav(Carte)...','color:red;font-size:12px');
+  switchNav('Carte');
+  console.log('%c🔴 [INIT] switchNav terminé','color:red;font-size:12px');
+  
+  // Afficher la carte si elle existe
+  console.log('%c🔴 [INIT] Vérification affichage:','color:red;font-size:12px', {carte_ok: !!carte, nbCat: carte?.categories?.length});
+  if(carte && carte.categories && carte.categories.length){
+    console.log('%c🔴 [INIT] Appel render()...','color:red;font-size:12px');
+    render();
+    console.log('%c🔴 [INIT] render() terminé','color:red;font-size:12px');
+  } else {
+    console.log('%c🔴 [INIT] Carte vide — affichage message','color:red;font-size:12px');
+    // Afficher un message "Aucune carte"
+    const catContent=document.getElementById('catContent');
+    if(catContent) {
+      catContent.innerHTML='<div style="color:#888;text-align:center;padding:40px">📭 Aucun produit — Importe une carte (onglet 📥 Excel) ou ajoute des produits manuellement (onglet ➕)</div>';
+      console.log('%c🔴 [INIT] Message affiché','color:red;font-size:12px');
+    } else {
+      console.error('%c🔴 [INIT] ⚠️⚠️⚠️ catContent NOT FOUND!!!','color:red;font-weight:bold;font-size:14px');
+    }
+  }
+  
+  // Remplir les selects et autres UI dépendantes du DOM
+  console.log('%c🔴 [INIT] Appel remplirSelectCategories()...','color:red;font-size:12px');
+  remplirSelectCategories();
+  console.log('%c🔴 [INIT] remplirSelectCategories terminé','color:red;font-size:12px');
+  
+  // Charger stats, mapping, autres
+  try{
+    console.log('%c🔴 [INIT] Appel loadStats()...','color:red;font-size:12px');
+    loadStats();
+    console.log('%c🔴 [INIT] loadStats terminé','color:red;font-size:12px');
+  }catch(e){console.error('%c🔴 [INIT] Erreur stats:','color:red', e);}
+  
+  try{
+    console.log('%c🔴 [INIT] Appel chargerMappingHiboutik()...','color:red;font-size:12px');
+    chargerMappingHiboutik();
+    console.log('%c🔴 [INIT] chargerMappingHiboutik terminé','color:red;font-size:12px');
+  }catch(e){console.error('%c🔴 [INIT] Erreur mapping:','color:red', e);}
+  
+  console.log('%c✅ ✅ ✅ [INIT] Admin.html COMPLÈTEMENT initialisé !','color:green;font-weight:bold;font-size:16px');
+}
+
+// Démarrer l'initialisation avec un délai pour laisser Firebase se charger
+console.log('🔄 Démarrage de l\'initialisation dans 1 seconde...');
+setTimeout(initAdmin, 1000);
+console.log('✅ Script admin.html chargé — en attente de l\'initialisation');
 </script>
 </body>
 </html>
