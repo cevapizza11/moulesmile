@@ -54,9 +54,6 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
 .jeton-pastille:active{transform:scale(.95)}
 .jeton-pastille.libre{border-color:#555}
 .jeton-pastille.actif{background:#1E3A2E;border-color:#4ABA80}
-.jeton-pastille.en-attente{background:#3A2E1A;border-color:#D4941E}
-.jeton-pastille.en-attente .jp-num{color:#D4941E}
-.jeton-pastille.en-attente .jp-sub{color:#D4941E}
 .jeton-pastille .jp-num{font-weight:bold;font-size:15px;color:#ddd}
 .jeton-pastille.actif .jp-num{color:#4ABA80}
 .jeton-pastille .jp-sub{font-size:10px;color:#888;margin-top:3px}
@@ -185,8 +182,6 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
   <div class="nav-tab" id="tab-btn-historique" onclick="switchTab('historique')">📚 Historique</div>
   <div class="nav-tab" id="tab-btn-ca" onclick="switchTab('ca')">💰 CA</div>
   <div class="nav-tab" id="tab-btn-jetons" onclick="switchTab('jetons')">🎫 Jetons</div>
-  <div class="nav-tab" id="tab-btn-recharges" onclick="switchTab('recharges')">🔄 Recharges</div>
-  <div class="nav-tab" id="tab-btn-stats" onclick="switchTab('stats')">📊 Stats</div>
 </div>
 
 <div class="bandeau-retard" id="bandeauRetard"></div>
@@ -291,9 +286,7 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
 <!-- ===== ONGLET JETONS ===== -->
 <div class="tab-content" id="tab-jetons">
   <div class="status-bar"><div class="dot"></div>Imprimez un jeton jetable au moment de placer une table — il s'active tout seul, se libère automatiquement à l'encaissement.</div>
-  <div id="occupationCounter" style="background:#1A2A1A;border:1px solid #2ab54a;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#8aff9d;font-weight:bold;text-align:center"></div>
-  <button class="btn-encaisser" style="width:100%;font-size:15px;padding:14px;margin-bottom:8px" onclick="ouvrirModalNouvelleTable()">🖨️ Nouvelle table — imprimer un jeton</button>
-  <button class="btn-encaisser" style="width:100%;font-size:15px;padding:14px;margin-bottom:14px;background:#2A6FB5" onclick="imprimerJetonAvance()">🖨️ Imprimer à l'avance (sans table — à attribuer ensuite)</button>
+  <button class="btn-encaisser" style="width:100%;font-size:15px;padding:14px;margin-bottom:14px" onclick="nouvelleTableAvecJeton()">🖨️ Nouvelle table — imprimer un jeton</button>
   <div class="recherche-bar">
     <input type="number" id="rechercheJeton" class="recherche-input" placeholder="🔍 Rechercher par n° de jeton OU n° de table..." inputmode="numeric" oninput="filtrerJetons()">
     <button class="btn-sm" onclick="document.getElementById('rechercheJeton').value='';filtrerJetons()" id="btnViderRechercheJeton" style="display:none">✕ Effacer</button>
@@ -308,56 +301,12 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
   </div>
 </div>
 
-<!-- ===== ONGLET RECHARGES (moules à volonté) ===== -->
-<div class="tab-content" id="tab-recharges">
-  <div class="status-bar"><div class="dot"></div>Enregistrez une recharge de marmite — alimente les statistiques (recharges/table pour les achats).</div>
-  <div class="recherche-bar">
-    <input type="number" id="rechercheTableRecharge" class="recherche-input" placeholder="🔍 N° de table..." inputmode="numeric" oninput="filtrerTablesRecharge()">
-  </div>
-  <div id="tablesRechargeGrid" class="jetons-grid"></div>
-  <div style="margin-top:20px">
-    <h3 style="color:#D4AF37;font-size:14px;margin-bottom:10px">📋 Recharges du service en cours</h3>
-    <div id="rechargesRecentes"></div>
-  </div>
-</div>
-
-<!-- MODAL RECHARGE -->
-<div class="modal-overlay" id="modalRecharge">
-  <div class="modal-box" style="text-align:center">
-    <h3 id="rechargeModalTitre">🔄 Recharge — Table ?</h3>
-    <div class="modal-sub" id="rechargeModalSub">Quel plat rechargez-vous ?</div>
-    <div id="rechargeContenuList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px"></div>
-    <div class="modal-actions">
-      <button class="btn-annuler-modal" onclick="fermerModalRecharge()">Annuler</button>
-    </div>
-  </div>
-</div>
-
-<!-- ===== ONGLET STATS ===== -->
-<div class="tab-content" id="tab-stats">
-  <div class="status-bar"><div class="dot"></div>Durée moyenne par table et recharges — basé sur les visites enregistrées.</div>
-  <div class="filtre-bar">
-    <button class="btn-filtre actif" id="filtreStats7" onclick="setFiltreStats(7,this)">7 derniers jours</button>
-    <button class="btn-filtre" id="filtreStats30" onclick="setFiltreStats(30,this)">30 derniers jours</button>
-    <button class="btn-filtre" id="filtreStatsTout" onclick="setFiltreStats(9999,this)">Tout</button>
-  </div>
-  <button class="btn-sm" style="width:100%;margin-top:10px;background:#3A1E1E;color:#E88;border:1px solid #C0392B;padding:10px" onclick="reinitialiserStats()">🗑️ Réinitialiser toutes les statistiques</button>
-  <div id="statsContent" style="margin-top:14px"></div>
-</div>
-
 <!-- MODAL ACTIVATION JETON -->
 <div class="modal-overlay" id="modalActiverJeton">
   <div class="modal-box" style="text-align:center">
     <h3 id="jetonModalTitre">🎫 Jeton n°?</h3>
     <div class="modal-sub">Quelle table pour ce jeton ?</div>
     <input type="number" class="pwd-input" id="jetonTableInput" inputmode="numeric" placeholder="N° de table" min="1" max="150">
-
-    <div style="text-align:left;font-size:11px;color:#D4AF37;font-weight:bold;margin:10px 0 4px">🪑 Nombre de tables 90×90 assemblées (pour la capacité)</div>
-    <input type="number" class="pwd-input" id="jetonUnitesInput" inputmode="numeric" placeholder="Ex: 2" min="1" max="15" style="font-size:16px;letter-spacing:normal">
-
-    <div style="text-align:left;font-size:11px;color:#D4AF37;font-weight:bold;margin:10px 0 4px">👥 Nombre de couverts (personnes)</div>
-    <input type="number" class="pwd-input" id="jetonCouvertsInput" inputmode="numeric" placeholder="Ex: 4" min="1" max="30" style="font-size:16px;letter-spacing:normal">
-
     <div class="modal-actions">
       <button class="btn-annuler-modal" onclick="fermerModalJeton()">Annuler</button>
       <button class="btn-valider-modal" onclick="validerActivationJeton()">✅ Activer</button>
@@ -369,33 +318,10 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
   </div>
 </div>
 
-<div class="modal-overlay" id="modalNouvelleTable">
-  <div class="modal-box" style="text-align:center">
-    <h3>🖨️ Nouvelle table</h3>
-    <div class="modal-sub">Renseigne les informations pour imprimer le jeton</div>
-
-    <div style="text-align:left;font-size:11px;color:#D4AF37;font-weight:bold;margin:10px 0 4px">N° de table</div>
-    <input type="number" class="pwd-input" id="ntTableInput" inputmode="numeric" placeholder="Ex: 12" min="1" max="150" style="font-size:16px;letter-spacing:normal">
-
-    <div style="text-align:left;font-size:11px;color:#D4AF37;font-weight:bold;margin:10px 0 4px">🪑 Nombre de tables 90×90 assemblées (pour la capacité)</div>
-    <input type="number" class="pwd-input" id="ntUnitesInput" inputmode="numeric" placeholder="1 par défaut" min="1" max="15" style="font-size:16px;letter-spacing:normal">
-
-    <div style="text-align:left;font-size:11px;color:#D4AF37;font-weight:bold;margin:10px 0 4px">👥 Nombre de couverts (personnes)</div>
-    <input type="number" class="pwd-input" id="ntCouvertsInput" inputmode="numeric" placeholder="Ex: 4" min="1" max="30" style="font-size:16px;letter-spacing:normal">
-
-    <div class="modal-actions">
-      <button class="btn-annuler-modal" onclick="fermerModalNouvelleTable()">Annuler</button>
-      <button class="btn-valider-modal" onclick="validerNouvelleTable()">🖨️ Créer et imprimer</button>
-    </div>
-  </div>
-</div>
-
 <div class="version">v.12/08/2026 14:00 — Moule & Smile Caisse</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-functions-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script>
 // ============================================================
 // FIREBASE
@@ -410,65 +336,14 @@ const firebaseConfig={
 };
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
-const fonctions=firebase.app().functions('europe-west3');
-
-// ===== AUTHENTIFICATION CAISSE (non-bloquante) - Sept 2026 =====
-let userAuth = null;
-const caisseEmail = 'caisse@commandemoulesmile.fr';
-const caissePin = '123456';
-
-async function loginCaisse() {
-  const pin = prompt('🔐 Tape le PIN caisse (6 chiffres) :\n\n');
-  
-  if (pin === null) return; // Annuler ne rebloque rien
-  
-  if (pin === caissePin) {
-    try {
-      const userCredential = await firebase.auth().signInWithEmailAndPassword(caisseEmail, caissePin);
-      userAuth = userCredential.user;
-      console.log('✅ Caisse connectée:', userAuth.email);
-      localStorage.setItem('caisseConnected', 'true');
-      demarrerEcoutesFirestore(); // Lancer les listeners APRÈS la connexion
-    } catch (error) {
-      console.error('❌ Erreur login caisse:', error.message);
-      alert('❌ PIN incorrect !');
-      loginCaisse();
-    }
-  } else {
-    alert('❌ PIN incorrect !');
-    loginCaisse();
-  }
-}
-
-// Au démarrage : essayer de se reconnecter si déjà connectée
-if (localStorage.getItem('caisseConnected') === 'true' && firebase.auth().currentUser) {
-  userAuth = firebase.auth().currentUser;
-  console.log('✅ Caisse reconnectée automatiquement');
-  demarrerEcoutesFirestore(); // Lancer les listeners APRÈS reconnexion
-} else if (firebase.auth().currentUser) {
-  userAuth = firebase.auth().currentUser;
-  console.log('✅ Caisse reconnectée via session Firebase');
-  localStorage.setItem('caisseConnected', 'true');
-  demarrerEcoutesFirestore(); // Lancer les listeners APRÈS reconnexion
-} else {
-  loginCaisse();
-}
 // ⚠️ Adaptez cette URL à celle de votre app si elle change un jour (utilisée pour impression + copie de lien)
 const BASE_URL_APP='https://cevapizza11.github.io/moulesmile/index.html';
 
 // Lecture seule de la carte — uniquement pour connaître les consignes de service par produit
 // (ex: "Apporter une marmite"). Ne JAMAIS écrire dans ce document depuis caisse.html.
 let carteConsignes={};
-let carteSauces=[]; // options de la famille "sauce" (pour la recharge rapide de marmite)
-let carteFamillesOptions={}; // TOUTES les familles d'options (sauce, croquant, coulis, nappage...) — transmission Hiboutik générique
-let carteCapacite={salle:0,terrasse:0,terrasseOuverte:false};
 db.collection('config').doc('carte_v2').onSnapshot(doc=>{
   carteConsignes=(doc.exists && doc.data().consignesCuisine)||{};
-  const famillesOptions=(doc.exists && doc.data().famillesOptions)||{};
-  carteSauces=(famillesOptions.sauce&&famillesOptions.sauce.options||[]).filter(o=>o.actif);
-  carteFamillesOptions=famillesOptions;
-  carteCapacite=(doc.exists && doc.data().capaciteSalle)||{salle:0,terrasse:0,terrasseOuverte:false};
-  updateOccupationCounter();
 });
 
 // ============================================================
@@ -521,7 +396,6 @@ function switchTab(nom){
   if(nom==='historique') chargerHistorique();
   if(nom==='deux') renderCommandesDeux();
   if(nom==='additions') filtrerAdditions();
-  if(nom==='stats') chargerStats(filtreStatsJours);
 }
 
 // ============================================================
@@ -586,95 +460,59 @@ demarrerEcouteCommandes();
 })();
 
 // ============================================================
-// VARIABLES JETONS
+// ÉCOUTE FIRESTORE — ADDITIONS
+// ============================================================
+db.collection('additions').onSnapshot(snap=>{
+  let hasNew=false;
+  snap.docChanges().forEach(change=>{
+    const data=change.doc.data();
+    if(change.type==='added' && !allAdditions[change.doc.id] && data.statut==='demandee') hasNew=true;
+    if(change.type==='removed'){
+      delete allAdditions[change.doc.id];
+    } else {
+      allAdditions[change.doc.id]={id:change.doc.id,...change.doc.data()};
+    }
+  });
+  if(hasNew) playBeep(2);
+  renderAdditions();
+  updateStats();
+}, err=>{console.error('Additions listener error:',err);});
+
+// ============================================================
+// ÉCOUTE FIRESTORE — ALERTES
+// ============================================================
+db.collection('alertes').onSnapshot(snap=>{
+  let hasNew=false;
+  snap.docChanges().forEach(change=>{
+    if(change.type==='added' && !allAlertes[change.doc.id]) hasNew=true;
+    if(change.type==='removed'){
+      delete allAlertes[change.doc.id];
+    } else {
+      allAlertes[change.doc.id]={id:change.doc.id,...change.doc.data()};
+    }
+  });
+  if(hasNew) playBeep(3);
+  renderAlertes();
+  updateStats();
+}, err=>{console.error('Alertes listener error:',err);});
+
+// ============================================================
+// ÉCOUTE FIRESTORE — JETONS
 // ============================================================
 let allJetons={};
 let filtreJetonsCourant='tous';
 let jetonEnCoursActivation=null;
 
-// ============================================================
-// DÉMARRAGE DES LISTENERS APRÈS AUTHENTIFICATION
-// ============================================================
-let unsubscribeAdditions=null;
-let unsubscribeAlertes=null;
-let unsubscribeJetons=null;
-let unsubscribeStatsParams=null;
-let unsubscribeRecharges=null;
-
-function demarrerEcoutesFirestore(){
-  // Arrêter les anciens listeners s'ils existent
-  if(unsubscribeAdditions) unsubscribeAdditions();
-  if(unsubscribeAlertes) unsubscribeAlertes();
-  if(unsubscribeJetons) unsubscribeJetons();
-  if(unsubscribeStatsParams) unsubscribeStatsParams();
-  if(unsubscribeRecharges) unsubscribeRecharges();
-
-  // ÉCOUTE FIRESTORE — ADDITIONS
-  unsubscribeAdditions=db.collection('additions').onSnapshot(snap=>{
-    let hasNew=false;
-    snap.docChanges().forEach(change=>{
-      const data=change.doc.data();
-      if(change.type==='added' && !allAdditions[change.doc.id] && data.statut==='demandee') hasNew=true;
-      if(change.type==='removed'){
-        delete allAdditions[change.doc.id];
-      } else {
-        allAdditions[change.doc.id]={id:change.doc.id,...change.doc.data()};
-      }
-    });
-    if(hasNew) playBeep(2);
-    renderAdditions();
-    updateStats();
-  }, err=>{console.error('Additions listener error:',err);});
-
-  // ÉCOUTE FIRESTORE — ALERTES
-  unsubscribeAlertes=db.collection('alertes').onSnapshot(snap=>{
-    let hasNew=false;
-    snap.docChanges().forEach(change=>{
-      if(change.type==='added' && !allAlertes[change.doc.id]) hasNew=true;
-      if(change.type==='removed'){
-        delete allAlertes[change.doc.id];
-      } else {
-        allAlertes[change.doc.id]={id:change.doc.id,...change.doc.data()};
-      }
-    });
-    if(hasNew) playBeep(3);
-    renderAlertes();
-    updateStats();
-  }, err=>{console.error('Alertes listener error:',err);});
-
-  // ÉCOUTE FIRESTORE — JETONS
-  unsubscribeJetons=db.collection('jetons').orderBy('numero').onSnapshot(snap=>{
-    snap.docChanges().forEach(change=>{
-      if(change.type==='removed'){
-        delete allJetons[change.doc.id];
-      } else {
-        allJetons[change.doc.id]={id:change.doc.id,...change.doc.data()};
-      }
-    });
-    renderJetons();
-  }, err=>{console.error('Jetons listener error:',err);});
-
-  // ÉCOUTE FIRESTORE — STATS PARAMS
-  unsubscribeStatsParams=db.collection('config').doc('statsParams').onSnapshot(doc=>{
-    const data=doc.exists?doc.data():{};
-    if(data.kgParMarmite && !data.platsAVolonte){
-      platsAVolonte=[{nom:'Moules-frites à volonté',quantite:data.kgParMarmite,unite:'kg',sauce:true}];
+db.collection('jetons').orderBy('numero').onSnapshot(snap=>{
+  snap.docChanges().forEach(change=>{
+    if(change.type==='removed'){
+      delete allJetons[change.doc.id];
     } else {
-      platsAVolonte=data.platsAVolonte||[];
+      allJetons[change.doc.id]={id:change.doc.id,...change.doc.data()};
     }
-    platsQuantiteFixe=data.platsQuantiteFixe||[];
-    if(document.getElementById('tab-stats')?.classList.contains('actif')) chargerStats(filtreStatsJours);
-  }, err=>console.error('statsParams listener error:',err));
-
-  // ÉCOUTE FIRESTORE — RECHARGES
-  unsubscribeRecharges=db.collection('recharges').orderBy('timestamp','desc').limit(100).onSnapshot(snap=>{
-    snap.docChanges().forEach(change=>{
-      if(change.type==='removed') delete allRecharges[change.doc.id];
-      else allRecharges[change.doc.id]={id:change.doc.id,...change.doc.data()};
-    });
-    renderRechargesRecentes();
-  }, err=>console.error('Recharges listener error:',err));
-}
+  });
+  renderJetons();
+}, err=>{console.error('Jetons listener error:',err);});
 
 function setFiltreJetons(mode,el){
   filtreJetonsCourant=mode;
@@ -689,8 +527,6 @@ function filtrerJetons(){
 }
 
 function renderJetons(){
-  updateOccupationCounter();
-  renderTablesRecharge();
   const grid=document.getElementById('jetonsGrid');
   const recherche=document.getElementById('rechercheJeton').value.trim();
   let jetons=Object.values(allJetons);
@@ -708,529 +544,22 @@ function renderJetons(){
 
   grid.innerHTML=jetons.map(j=>{
     const actif=j.statut==='actif';
-    const enAttente=j.statut==='en_attente';
-    const classe=actif?'actif':(enAttente?'en-attente':'libre');
-    const sousLibelle=actif?'Table '+j.table+(j.couverts?' ('+j.couverts+'p)':''):(enAttente?'⏳ À attribuer':'Libre');
-    return `<div class="jeton-pastille ${classe}" style="position:relative">
+    return `<div class="jeton-pastille ${actif?'actif':'libre'}" style="position:relative">
       <div onclick="ouvrirModalJeton('${j.id}',${j.numero})">
         <div class="jp-num">🎫 ${j.numero}</div>
-        <div class="jp-sub">${sousLibelle}</div>
+        <div class="jp-sub">${actif?'Table '+j.table:'Libre'}</div>
       </div>
       ${actif?`<button class="jp-print" onclick="event.stopPropagation();imprimerTicketJeton(${j.numero},'${j.token}',${j.table});showToast('🖨️ Réimpression jeton n°${j.numero} — Table ${j.table}')" title="Réimprimer">🖨️</button>`:''}
-      ${enAttente?`<button class="jp-print" onclick="event.stopPropagation();imprimerTicketJeton(${j.numero},'${j.token}',null);showToast('🖨️ Réimpression jeton n°${j.numero}')" title="Réimprimer">🖨️</button>`:''}
     </div>`;
   }).join('');
-}
-
-function updateOccupationCounter(){
-  const el=document.getElementById('occupationCounter');
-  if(!el)return;
-  const actifs=Object.values(allJetons).filter(j=>j.statut==='actif');
-  const unitesOccupees=actifs.reduce((s,j)=>s+(j.unites||1),0);
-  const totalCouverts=actifs.reduce((s,j)=>s+(j.couverts||0),0);
-  const nb2=actifs.filter(j=>j.couverts===2).length;
-
-  const capaciteTotale=(carteCapacite.salle||0)+(carteCapacite.terrasseOuverte?(carteCapacite.terrasse||0):0);
-
-  if(capaciteTotale>0){
-    const pct=Math.round((unitesOccupees/capaciteTotale)*100);
-    el.textContent=`🪑 ${unitesOccupees}/${capaciteTotale} unités occupées (${pct}%)${totalCouverts?` — ${totalCouverts} couvert(s)`:''}${nb2?` — dont ${nb2} table(s) de 2`:''}`;
-  } else {
-    el.textContent=`🪑 ${actifs.length} table(s) occupée(s)${totalCouverts?` — ${totalCouverts} couvert(s)`:''}${nb2?` — dont ${nb2} table(s) de 2`:''} — configurez la capacité dans Réglages`;
-  }
-}
-
-// ============================================================
-// RECHARGES DE PLATS À VOLONTÉ (moules, calamars, etc.)
-// ============================================================
-let tableRechargeEnCours=null;
-let platRechargeEnCours=null;
-let allRecharges={};
-
-// Liste des plats à volonté configurables — chargée/éditée depuis l'onglet Stats.
-// Format : [{nom:'Moules-frites à volonté', quantite:1.5, unite:'kg', sauce:true}, ...]
-let platsAVolonte=[];
-let platsQuantiteFixe=[]; // portions fixes : [{nom:'Fish and Chips', quantite:0.3, unite:'kg'}]
-
-// Les listeners statsParams et recharges sont maintenant dans demarrerEcoutesFirestore()
-// qui est appelée APRÈS l'authentification
-
-function filtrerTablesRecharge(){
-  renderTablesRecharge();
-}
-
-function renderTablesRecharge(){
-  const grid=document.getElementById('tablesRechargeGrid');
-  if(!grid)return;
-  const recherche=(document.getElementById('rechercheTableRecharge')?.value||'').trim();
-  let actifs=Object.values(allJetons).filter(j=>j.statut==='actif');
-  if(recherche) actifs=actifs.filter(j=>String(j.table).includes(recherche));
-  actifs.sort((a,b)=>(a.table||0)-(b.table||0));
-
-  if(!actifs.length){
-    grid.innerHTML='<div class="empty"><div class="em">🪑</div><p>Aucune table active</p></div>';
-    return;
-  }
-
-  grid.innerHTML=actifs.map(j=>`
-    <div class="jeton-pastille actif" onclick="ouvrirModalRecharge(${j.table})">
-      <div class="jp-num">🪑 ${j.table}</div>
-      <div class="jp-sub">🔄 Recharger</div>
-    </div>`).join('');
-}
-
-function ouvrirModalRecharge(tableNum){
-  tableRechargeEnCours=tableNum;
-  platRechargeEnCours=null;
-  document.getElementById('rechargeModalTitre').textContent=`🔄 Recharge — Table ${tableNum}`;
-  document.getElementById('rechargeModalSub').textContent='Quel plat rechargez-vous ?';
-  const list=document.getElementById('rechargeContenuList');
-
-  if(!platsAVolonte.length){
-    list.innerHTML=`<div style="color:#888;font-size:12px">Aucun plat à volonté configuré — ajoutez-en dans l'onglet 📊 Stats</div>`;
-  } else {
-    list.innerHTML=platsAVolonte.map((p,i)=>`
-      <button class="btn-valider-modal" style="width:100%" onclick="choisirPlatRecharge(${i})">${p.nom}</button>
-    `).join('');
-  }
-  document.getElementById('modalRecharge').classList.add('visible');
-}
-
-function choisirPlatRecharge(index){
-  platRechargeEnCours=platsAVolonte[index];
-  if(!platRechargeEnCours)return;
-
-  if(platRechargeEnCours.sauce && carteSauces.length){
-    document.getElementById('rechargeModalSub').textContent=`${platRechargeEnCours.nom} — quelle sauce ?`;
-    const list=document.getElementById('rechargeContenuList');
-    list.innerHTML=carteSauces.map(s=>`
-      <button class="btn-valider-modal" style="width:100%" onclick="validerRecharge('${s.nom.replace(/'/g,"\\'")}')">${s.nom}</button>
-    `).join('');
-  } else {
-    validerRecharge(null);
-  }
-}
-
-function fermerModalRecharge(){
-  tableRechargeEnCours=null;
-  platRechargeEnCours=null;
-  document.getElementById('modalRecharge').classList.remove('visible');
-}
-
-async function validerRecharge(sauceNom){
-  if(!tableRechargeEnCours||!platRechargeEnCours)return;
-  const tableNum=tableRechargeEnCours;
-  const platNom=platRechargeEnCours.nom;
-  try{
-    await db.collection('recharges').add({
-      table:tableNum,
-      plat:platNom,
-      sauce:sauceNom||null,
-      timestamp:firebase.firestore.FieldValue.serverTimestamp()
-    });
-    showToast(`✅ Recharge enregistrée — Table ${tableNum} (${platNom})`);
-  }catch(e){console.error(e);showToast('❌ Erreur recharge');}
-  fermerModalRecharge();
-}
-
-function renderRechargesRecentes(){
-  const el=document.getElementById('rechargesRecentes');
-  if(!el)return;
-  const recharges=Object.values(allRecharges).sort((a,b)=>{
-    const ta=a.timestamp?.toMillis?a.timestamp.toMillis():0;
-    const tb=b.timestamp?.toMillis?b.timestamp.toMillis():0;
-    return tb-ta;
-  });
-  if(!recharges.length){
-    el.innerHTML='<div class="empty"><div class="em">🔄</div><p>Aucune recharge enregistrée</p></div>';
-    return;
-  }
-  el.innerHTML=recharges.slice(0,30).map(r=>{
-    const heure=r.timestamp?.toDate?r.timestamp.toDate().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'--:--';
-    return `<div class="cmd-item-row"><span>🪑 Table ${r.table}${r.sauce?' — '+r.sauce:''}</span><span style="color:#888;font-size:11px">${heure}</span></div>`;
-  }).join('');
-}
-
-// ============================================================
-// STATS — durée par table, recharges
-// ============================================================
-let filtreStatsJours=7;
-
-function setFiltreStats(jours,el){
-  filtreStatsJours=jours;
-  document.querySelectorAll('#tab-stats .btn-filtre').forEach(b=>b.classList.remove('actif'));
-  el.classList.add('actif');
-  chargerStats(jours);
-}
-
-async function reinitialiserStats(){
-  if(!confirm('⚠️ Réinitialiser TOUTES les statistiques (durées, recharges, sauces) ?\n\nCeci supprime définitivement les données "Visites" et "Recharges". Les réglages (plats, quantités, conditionnements) sont conservés.\n\nCette action est irréversible.')) return;
-
-  try{
-    const container=document.getElementById('statsContent');
-    container.innerHTML='<div class="empty"><div class="em">⏳</div><p>Réinitialisation en cours...</p></div>';
-
-    // Suppression par lots de 400 (limite Firestore = 500 par batch)
-    async function viderCollection(nomCollection){
-      let snap=await db.collection(nomCollection).limit(400).get();
-      while(!snap.empty){
-        const b=db.batch();
-        snap.forEach(d=>b.delete(d.ref));
-        await b.commit();
-        snap=await db.collection(nomCollection).limit(400).get();
-      }
-    }
-
-    await viderCollection('visites');
-    await viderCollection('recharges');
-
-    showToast('✅ Statistiques réinitialisées');
-    chargerStats(filtreStatsJours);
-  }catch(e){
-    console.error('Erreur réinitialisation stats',e);
-    showToast('❌ Erreur réinitialisation');
-  }
-}
-
-async function chargerStats(jours){
-  const container=document.getElementById('statsContent');
-  container.innerHTML='<div class="empty"><div class="em">⏳</div><p>Chargement...</p></div>';
-
-  try{
-    let query=db.collection('visites').orderBy('heureDepart','desc').limit(1000);
-    const snap=await query.get();
-    const maintenant=Date.now();
-    const limiteMs=jours>=9999?Infinity:jours*24*60*60*1000;
-
-    let visites=snap.docs.map(d=>d.data()).filter(v=>{
-      if(limiteMs===Infinity)return true;
-      const t=v.heureDepart?.toMillis?v.heureDepart.toMillis():0;
-      return (maintenant-t)<=limiteMs;
-    });
-
-    // Regroupement : d'abord "Boisson seule" (peu importe le nombre de couverts, table sans plat commandé),
-    // puis par taille de table pour les visites "repas" uniquement.
-    const buckets={'🍹 Boisson seule':[],'2 pers.':[],'3-4 pers.':[],'5-8 pers.':[],'9+ pers.':[],'Inconnu':[]};
-    visites.forEach(v=>{
-      if(v.type==='boisson'){ buckets['🍹 Boisson seule'].push(v); return; }
-      const c=v.couverts;
-      if(!c) buckets['Inconnu'].push(v);
-      else if(c===2) buckets['2 pers.'].push(v);
-      else if(c<=4) buckets['3-4 pers.'].push(v);
-      else if(c<=8) buckets['5-8 pers.'].push(v);
-      else buckets['9+ pers.'].push(v);
-    });
-
-    const moyenne=arr=>arr.length?Math.round(arr.reduce((s,v)=>s+(v.dureeMinutes||0),0)/arr.length):null;
-    const dureeGlobale=moyenne(visites);
-
-    // Recharges sur la même période
-    let rechargesSnap;
-    try{
-      rechargesSnap=await db.collection('recharges').orderBy('timestamp','desc').limit(2000).get();
-    }catch(e){rechargesSnap={docs:[]};}
-    const recharges=rechargesSnap.docs.map(d=>d.data()).filter(r=>{
-      if(limiteMs===Infinity)return true;
-      const t=r.timestamp?.toMillis?r.timestamp.toMillis():0;
-      return (maintenant-t)<=limiteMs;
-    });
-    const rechargesParTable=visites.length?(recharges.length/visites.length).toFixed(1):'0';
-
-    // Historique des commandes initiales, sur la même période
-    let historiqueSnap;
-    try{
-      historiqueSnap=await db.collection('historique').orderBy('timestamp','desc').limit(1000).get();
-    }catch(e){historiqueSnap={docs:[]};}
-    const historiqueFiltre=historiqueSnap.docs.map(d=>d.data()).filter(data=>{
-      const t=data.timestamp?.toMillis?data.timestamp.toMillis():0;
-      return limiteMs===Infinity || (maintenant-t)<=limiteMs;
-    });
-
-    function jourStr(timestamp){
-      const d=timestamp?.toDate?timestamp.toDate():(timestamp?new Date(timestamp):new Date());
-      return d.toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'2-digit'});
-    }
-    function jourKey(timestamp){
-      const d=timestamp?.toDate?timestamp.toDate():(timestamp?new Date(timestamp):new Date());
-      return d.toISOString().slice(0,10);
-    }
-
-    function compterCommandesInitiales(nomPlat){
-      let n=0;
-      historiqueFiltre.forEach(data=>{
-        (data.commandes||[]).forEach(cmd=>{
-          (cmd.items||[]).forEach(item=>{
-            if((item.nom||'').trim().toLowerCase()===nomPlat.trim().toLowerCase()) n++;
-          });
-        });
-      });
-      return n;
-    }
-
-    // Détail jour par jour pour un plat : {clé date: {label, nbInitial, nbRecharges}}
-    function detailParJour(nomPlat,inclureRecharges){
-      const parJour={};
-      historiqueFiltre.forEach(data=>{
-        const key=jourKey(data.timestamp);
-        (data.commandes||[]).forEach(cmd=>{
-          (cmd.items||[]).forEach(item=>{
-            if((item.nom||'').trim().toLowerCase()===nomPlat.trim().toLowerCase()){
-              if(!parJour[key]) parJour[key]={label:jourStr(data.timestamp),nbInitial:0,nbRecharges:0};
-              parJour[key].nbInitial++;
-            }
-          });
-        });
-      });
-      if(inclureRecharges){
-        recharges.filter(r=>r.plat===nomPlat).forEach(r=>{
-          const key=jourKey(r.timestamp);
-          if(!parJour[key]) parJour[key]={label:jourStr(r.timestamp),nbInitial:0,nbRecharges:0};
-          parJour[key].nbRecharges++;
-        });
-      }
-      return Object.entries(parJour).sort((a,b)=>b[0].localeCompare(a[0]));
-    }
-
-    function conditionnementHtml(totalQte,plat){
-      if(!plat.condTaille||plat.condTaille<=0)return '';
-      const nb=Math.ceil(totalQte/plat.condTaille);
-      return `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed #444;font-size:13px;color:#8aff9d">📦 ≈ <b>${nb}</b> ${plat.condLabel||'conditionnement(s)'} (de ${plat.condTaille} ${plat.unite})</div>`;
-    }
-
-    let html='';
-
-    if(!visites.length){
-      html+='<div class="empty"><div class="em">📊</div><p>Aucune visite enregistrée sur cette période</p></div>';
-    } else {
-      html+=`
-        <div class="ca-box" style="margin-bottom:14px">
-          <div class="ca-num">${visites.length}</div>
-          <div class="ca-lbl">table(s) sur la période</div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
-          <div class="ca-box"><div class="ca-num">${dureeGlobale!==null?dureeGlobale+' min':'—'}</div><div class="ca-lbl">Durée moyenne globale</div></div>
-          <div class="ca-box"><div class="ca-num">${rechargesParTable}</div><div class="ca-lbl">Recharges / table</div></div>
-        </div>
-        <h3 style="color:#D4AF37;font-size:14px;margin-bottom:10px">⏱️ Durée moyenne par taille de table</h3>
-      `;
-      Object.entries(buckets).forEach(([label,arr])=>{
-        if(!arr.length)return;
-        const m=moyenne(arr);
-        html+=`<div class="cmd-item-row"><span>${label}</span><span style="color:#D4AF37;font-weight:bold">${m} min <span style="color:#888;font-weight:normal;font-size:11px">(${arr.length} table${arr.length>1?'s':''})</span></span></div>`;
-      });
-    }
-
-    // ===== PLATS À VOLONTÉ (avec recharge) =====
-    html+=`<h3 style="color:#D4AF37;font-size:14px;margin:20px 0 10px">🐚 Plats à volonté (avec recharges)</h3>`;
-
-    platsAVolonte.forEach((plat,i)=>{
-      const nbInitial=compterCommandesInitiales(plat.nom);
-      const rechargesPlat=recharges.filter(r=>r.plat===plat.nom);
-      const total=nbInitial+rechargesPlat.length;
-      const qte=total*(plat.quantite||0);
-      const detailJour=detailParJour(plat.nom,true);
-
-      html+=`
-        <div style="background:#242424;border:1px solid #444;border-radius:10px;padding:14px;margin-bottom:10px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-            <span style="font-weight:bold;color:#fff;font-size:15px">${plat.nom}</span>
-            <button class="btn-sm" style="background:#3A1E1E;color:#E88;border:1px solid #C0392B;padding:4px 10px;font-size:11px" onclick="supprimerPlatAVolonte(${i})">🗑️</button>
-          </div>
-
-          <div style="text-align:center;background:#111;border-radius:10px;padding:14px;margin-bottom:10px">
-            <div style="font-size:32px;font-weight:900;color:#D4AF37">${qte.toFixed(1)} ${plat.unite}</div>
-            <div style="font-size:11px;color:#888;margin-top:2px">Total période — ${nbInitial} servies + ${rechargesPlat.length} recharge(s)</div>
-            ${conditionnementHtml(qte,plat)}
-          </div>
-
-          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
-            <div><span style="color:#888;font-size:11px;display:block">Qté/portion</span><input type="number" value="${plat.quantite}" step="0.1" min="0" style="width:65px;background:#111;border:1px solid #D4AF37;border-radius:6px;color:#D4AF37;font-weight:bold;padding:6px;font-size:13px;text-align:center" onchange="majPlatAVolonte(${i},'quantite',this.value)"></div>
-            <div><span style="color:#888;font-size:11px;display:block">Taille cond.</span><input type="number" value="${plat.condTaille||''}" step="0.1" min="0" placeholder="Ex: 5" style="width:65px;background:#111;border:1px solid #4ABA80;border-radius:6px;color:#4ABA80;font-weight:bold;padding:6px;font-size:13px;text-align:center" onchange="majPlatAVolonte(${i},'condTaille',this.value)"></div>
-            <div><span style="color:#888;font-size:11px;display:block">Nom conditionnement</span><input type="text" value="${plat.condLabel||''}" placeholder="Ex: sacs" style="width:90px;background:#111;border:1px solid #4ABA80;border-radius:6px;color:#4ABA80;padding:6px;font-size:12px" onchange="majPlatAVolonte(${i},'condLabel',this.value)"></div>
-            <label style="display:flex;align-items:center;gap:4px;color:#888;font-size:12px;margin-left:auto">
-              <input type="checkbox" ${plat.sauce?'checked':''} onchange="majPlatAVolonte(${i},'sauce',this.checked)"> sauce
-            </label>
-          </div>
-
-          <div class="jour-detail-toggle" style="cursor:pointer;color:#D4AF37;font-size:12px;margin-top:8px" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">📅 Détail par jour (${detailJour.length} jour${detailJour.length>1?'s':''}) ▾</div>
-          <div style="display:none;margin-top:8px">
-            ${detailJour.map(([key,d])=>{
-              const t=d.nbInitial+d.nbRecharges;
-              const q=(t*(plat.quantite||0)).toFixed(1);
-              return `<div class="cmd-item-row" style="font-size:12px"><span>${d.label}</span><span style="color:#D4AF37">${d.nbInitial} servies + ${d.nbRecharges} rech. = <b>${q} ${plat.unite}</b></span></div>`;
-            }).join('')||'<div style="color:#666;font-size:12px">Aucune donnée</div>'}
-          </div>
-        </div>`;
-
-      if(plat.sauce){
-        const sauceCounts={};
-        rechargesPlat.forEach(r=>{
-          const s=r.sauce||'Non précisé';
-          sauceCounts[s]=(sauceCounts[s]||0)+1;
-        });
-        const sauceEntries=Object.entries(sauceCounts).sort((a,b)=>b[1]-a[1]);
-        if(sauceEntries.length){
-          html+=`<div style="margin:0 0 14px 14px">`;
-          sauceEntries.forEach(([sauce,count])=>{
-            html+=`<div class="cmd-item-row" style="font-size:12px"><span>🧂 ${sauce}</span><span style="color:#D4AF37;font-weight:bold">${count}</span></div>`;
-          });
-          html+=`</div>`;
-        }
-      }
-    });
-
-    html+=`
-      <div style="background:#1A2A1A;border:1px dashed #2ab54a;border-radius:10px;padding:10px 14px;margin-bottom:20px">
-        <input type="text" id="nouveauPlatVolonteNom" placeholder="Nom exact du plat (ex: Calamars à volonté)" style="width:100%;background:#111;border:1px solid #444;border-radius:6px;color:#fff;padding:8px;font-size:12px;margin-bottom:6px">
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <input type="number" id="nouveauPlatVolonteQte" placeholder="Qté/portion" step="0.1" min="0" style="width:80px;background:#111;border:1px solid #444;border-radius:6px;color:#fff;padding:8px;font-size:12px">
-          <select id="nouveauPlatVolonteUnite" style="background:#111;border:1px solid #444;border-radius:6px;color:#fff;padding:8px;font-size:12px">
-            <option value="kg">kg</option>
-            <option value="pièces">pièces</option>
-            <option value="portions">portions</option>
-          </select>
-          <label style="display:flex;align-items:center;gap:4px;color:#888;font-size:11px"><input type="checkbox" id="nouveauPlatVolonteSauce"> sauce</label>
-        </div>
-        <div style="display:flex;gap:6px;margin-top:6px">
-          <input type="number" id="nouveauPlatVolonteCondTaille" placeholder="Taille conditionnement (ex: 5)" step="0.1" min="0" style="width:130px;background:#111;border:1px solid #4ABA80;border-radius:6px;color:#4ABA80;padding:8px;font-size:12px">
-          <input type="text" id="nouveauPlatVolonteCondLabel" placeholder="Nom (ex: sacs, cartons)" style="flex:1;background:#111;border:1px solid #4ABA80;border-radius:6px;color:#4ABA80;padding:8px;font-size:12px">
-        </div>
-        <button class="btn-valider-modal" style="width:100%;margin-top:6px;padding:8px" onclick="ajouterPlatAVolonte()">+ Ajouter</button>
-      </div>
-    `;
-
-    // ===== PLATS À QUANTITÉ FIXE (sans recharge) =====
-    html+=`<h3 style="color:#D4AF37;font-size:14px;margin:20px 0 10px">🍽️ Plats à portion fixe</h3>`;
-
-    platsQuantiteFixe.forEach((plat,i)=>{
-      const nb=compterCommandesInitiales(plat.nom);
-      const qte=nb*(plat.quantite||0);
-      const detailJour=detailParJour(plat.nom,false);
-
-      html+=`
-        <div style="background:#242424;border:1px solid #444;border-radius:10px;padding:14px;margin-bottom:10px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-            <span style="font-weight:bold;color:#fff;font-size:15px">${plat.nom}</span>
-            <button class="btn-sm" style="background:#3A1E1E;color:#E88;border:1px solid #C0392B;padding:4px 10px;font-size:11px" onclick="supprimerPlatQuantiteFixe(${i})">🗑️</button>
-          </div>
-
-          <div style="text-align:center;background:#111;border-radius:10px;padding:14px;margin-bottom:10px">
-            <div style="font-size:32px;font-weight:900;color:#D4AF37">${qte.toFixed(1)} ${plat.unite}</div>
-            <div style="font-size:11px;color:#888;margin-top:2px">Total période — ${nb} commandée(s)</div>
-            ${conditionnementHtml(qte,plat)}
-          </div>
-
-          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
-            <div><span style="color:#888;font-size:11px;display:block">Qté/portion</span><input type="number" value="${plat.quantite}" step="0.1" min="0" style="width:65px;background:#111;border:1px solid #D4AF37;border-radius:6px;color:#D4AF37;font-weight:bold;padding:6px;font-size:13px;text-align:center" onchange="majPlatQuantiteFixe(${i},'quantite',this.value)"></div>
-            <div><span style="color:#888;font-size:11px;display:block">Taille cond.</span><input type="number" value="${plat.condTaille||''}" step="0.1" min="0" placeholder="Ex: 40" style="width:65px;background:#111;border:1px solid #4ABA80;border-radius:6px;color:#4ABA80;font-weight:bold;padding:6px;font-size:13px;text-align:center" onchange="majPlatQuantiteFixe(${i},'condTaille',this.value)"></div>
-            <div><span style="color:#888;font-size:11px;display:block">Nom conditionnement</span><input type="text" value="${plat.condLabel||''}" placeholder="Ex: cartons" style="width:90px;background:#111;border:1px solid #4ABA80;border-radius:6px;color:#4ABA80;padding:6px;font-size:12px" onchange="majPlatQuantiteFixe(${i},'condLabel',this.value)"></div>
-          </div>
-
-          <div class="jour-detail-toggle" style="cursor:pointer;color:#D4AF37;font-size:12px;margin-top:8px" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">📅 Détail par jour (${detailJour.length} jour${detailJour.length>1?'s':''}) ▾</div>
-          <div style="display:none;margin-top:8px">
-            ${detailJour.map(([key,d])=>{
-              const q=(d.nbInitial*(plat.quantite||0)).toFixed(1);
-              return `<div class="cmd-item-row" style="font-size:12px"><span>${d.label}</span><span style="color:#D4AF37">${d.nbInitial} commandée(s) = <b>${q} ${plat.unite}</b></span></div>`;
-            }).join('')||'<div style="color:#666;font-size:12px">Aucune donnée</div>'}
-          </div>
-        </div>`;
-    });
-
-    html+=`
-      <div style="background:#1A2A1A;border:1px dashed #2ab54a;border-radius:10px;padding:10px 14px;margin-bottom:10px">
-        <input type="text" id="nouveauPlatFixeNom" placeholder="Nom exact du plat (ex: Fish and Chips)" style="width:100%;background:#111;border:1px solid #444;border-radius:6px;color:#fff;padding:8px;font-size:12px;margin-bottom:6px">
-        <div style="display:flex;gap:6px">
-          <input type="number" id="nouveauPlatFixeQte" placeholder="Qté/portion" step="0.1" min="0" style="width:80px;background:#111;border:1px solid #444;border-radius:6px;color:#fff;padding:8px;font-size:12px">
-          <select id="nouveauPlatFixeUnite" style="background:#111;border:1px solid #444;border-radius:6px;color:#fff;padding:8px;font-size:12px">
-            <option value="kg">kg</option>
-            <option value="pièces">pièces</option>
-            <option value="portions">portions</option>
-          </select>
-        </div>
-        <div style="display:flex;gap:6px;margin-top:6px">
-          <input type="number" id="nouveauPlatFixeCondTaille" placeholder="Taille conditionnement (ex: 40)" step="0.1" min="0" style="width:150px;background:#111;border:1px solid #4ABA80;border-radius:6px;color:#4ABA80;padding:8px;font-size:12px">
-          <input type="text" id="nouveauPlatFixeCondLabel" placeholder="Nom (ex: cartons)" style="flex:1;background:#111;border:1px solid #4ABA80;border-radius:6px;color:#4ABA80;padding:8px;font-size:12px">
-        </div>
-        <button class="btn-valider-modal" style="width:100%;margin-top:6px;padding:8px" onclick="ajouterPlatQuantiteFixe()">+ Ajouter</button>
-      </div>
-      <div style="color:#666;font-size:11px;margin-bottom:10px">💡 Pour un plat avec des quantités variables (ex: nuggets 4pcs enfant / 6pcs ado), ajoutez deux lignes avec des noms distincts s'ils apparaissent différemment sur vos tickets, ou ajustez la quantité en pièces moyennes.</div>
-    `;
-
-    container.innerHTML=html;
-  }catch(e){
-    console.error('Erreur chargement stats',e);
-    container.innerHTML='<div class="empty"><div class="em">❌</div><p>Erreur de chargement — voir console</p></div>';
-  }
-}
-
-async function sauvegarderStatsParams(){
-  try{
-    await db.collection('config').doc('statsParams').set({platsAVolonte,platsQuantiteFixe},{merge:true});
-  }catch(e){console.error(e);showToast('❌ Erreur sauvegarde réglages');}
-}
-
-function majPlatAVolonte(index,champ,valeur){
-  if(!platsAVolonte[index])return;
-  platsAVolonte[index][champ]=(champ==='quantite'||champ==='condTaille')?(parseFloat(valeur)||0):valeur;
-  sauvegarderStatsParams();
-  showToast('✅ Réglage enregistré');
-}
-
-function supprimerPlatAVolonte(index){
-  if(!confirm(`Supprimer "${platsAVolonte[index]?.nom}" des plats à volonté ?`))return;
-  platsAVolonte.splice(index,1);
-  sauvegarderStatsParams();
-  chargerStats(filtreStatsJours);
-}
-
-function ajouterPlatAVolonte(){
-  const nom=document.getElementById('nouveauPlatVolonteNom').value.trim();
-  const quantite=parseFloat(document.getElementById('nouveauPlatVolonteQte').value)||0;
-  const unite=document.getElementById('nouveauPlatVolonteUnite').value;
-  const sauce=document.getElementById('nouveauPlatVolonteSauce').checked;
-  const condTaille=parseFloat(document.getElementById('nouveauPlatVolonteCondTaille').value)||0;
-  const condLabel=document.getElementById('nouveauPlatVolonteCondLabel').value.trim();
-  if(!nom){showToast('⚠️ Indiquez le nom exact du plat');return;}
-  platsAVolonte.push({nom,quantite,unite,sauce,condTaille,condLabel});
-  sauvegarderStatsParams();
-  chargerStats(filtreStatsJours);
-}
-
-function majPlatQuantiteFixe(index,champ,valeur){
-  if(!platsQuantiteFixe[index])return;
-  platsQuantiteFixe[index][champ]=(champ==='quantite'||champ==='condTaille')?(parseFloat(valeur)||0):valeur;
-  sauvegarderStatsParams();
-  showToast('✅ Réglage enregistré');
-}
-
-function supprimerPlatQuantiteFixe(index){
-  if(!confirm(`Supprimer "${platsQuantiteFixe[index]?.nom}" ?`))return;
-  platsQuantiteFixe.splice(index,1);
-  sauvegarderStatsParams();
-  chargerStats(filtreStatsJours);
-}
-
-function ajouterPlatQuantiteFixe(){
-  const nom=document.getElementById('nouveauPlatFixeNom').value.trim();
-  const quantite=parseFloat(document.getElementById('nouveauPlatFixeQte').value)||0;
-  const unite=document.getElementById('nouveauPlatFixeUnite').value;
-  const condTaille=parseFloat(document.getElementById('nouveauPlatFixeCondTaille').value)||0;
-  const condLabel=document.getElementById('nouveauPlatFixeCondLabel').value.trim();
-  if(!nom){showToast('⚠️ Indiquez le nom exact du plat');return;}
-  platsQuantiteFixe.push({nom,quantite,unite,condTaille,condLabel});
-  sauvegarderStatsParams();
-  chargerStats(filtreStatsJours);
 }
 
 function ouvrirModalJeton(jetonId,numero){
   const j=allJetons[jetonId];
   const estActif=j&&j.statut==='actif';
-  const enAttente=j&&j.statut==='en_attente';
   jetonEnCoursActivation=jetonId;
-  document.getElementById('jetonModalTitre').textContent=enAttente?`🎫 Jeton n°${numero} — Attribuer une table`:`🎫 Jeton n°${numero}`;
+  document.getElementById('jetonModalTitre').textContent=`🎫 Jeton n°${numero}`;
   document.getElementById('jetonTableInput').value=estActif?j.table:'';
-  document.getElementById('jetonCouvertsInput').value=(estActif&&j.couverts)?j.couverts:'';
-  document.getElementById('jetonUnitesInput').value=(estActif&&j.unites)?j.unites:'';
   document.getElementById('btnReimprimerJeton').style.display=estActif?'block':'none';
   document.getElementById('btnCopierLienJeton').style.display=estActif?'block':'none';
   document.getElementById('btnLibererJeton').style.display=estActif?'block':'none';
@@ -1286,13 +615,8 @@ async function validerActivationJeton(){
   if(!jetonEnCoursActivation) return;
   const val=parseInt(document.getElementById('jetonTableInput').value);
   if(!val||val<1||val>150){showToast('⚠️ Numéro de table invalide');return;}
-  const couverts=parseInt(document.getElementById('jetonCouvertsInput').value)||null;
-  const unites=parseInt(document.getElementById('jetonUnitesInput').value)||1;
   try{
-    await db.collection('jetons').doc(jetonEnCoursActivation).update({
-      statut:'actif', table:val, couverts, unites,
-      timestamp:firebase.firestore.FieldValue.serverTimestamp()
-    });
+    await db.collection('jetons').doc(jetonEnCoursActivation).update({statut:'actif',table:val});
     showToast(`✅ Jeton activé — Table ${val}`);
     fermerModalJeton();
   }catch(e){console.error(e);showToast('❌ Erreur activation');}
@@ -1300,7 +624,7 @@ async function validerActivationJeton(){
 
 async function libererJeton(jetonId){
   try{
-    await db.collection('jetons').doc(jetonId).update({statut:'libre',table:null,couverts:null,unites:null});
+    await db.collection('jetons').doc(jetonId).update({statut:'libre',table:null});
     showToast('✅ Jeton libéré');
   }catch(e){console.error(e);showToast('❌ Erreur libération');}
 }
@@ -1320,130 +644,29 @@ async function prochainNumeroJeton(){
   return (snap.docs[0].data().numero||0)+1;
 }
 
-function ouvrirModalNouvelleTable(){
-  document.getElementById('ntTableInput').value='';
-  document.getElementById('ntUnitesInput').value='';
-  document.getElementById('ntCouvertsInput').value='';
-  document.getElementById('modalNouvelleTable').classList.add('visible');
-}
-
-function fermerModalNouvelleTable(){
-  document.getElementById('modalNouvelleTable').classList.remove('visible');
-}
-
-async function validerNouvelleTable(){
-  const val=parseInt(document.getElementById('ntTableInput').value);
-  if(!val||val<1||val>150){showToast('⚠️ Numéro de table invalide');return;}
-  const unites=parseInt(document.getElementById('ntUnitesInput').value)||1;
-  const couverts=parseInt(document.getElementById('ntCouvertsInput').value)||null;
-
-  // La fenêtre d'impression s'ouvre ici, au clic direct sur "Créer et imprimer" — c'est le
-  // seul moment fiable pour l'ouvrir sans risquer un blocage par le navigateur, puisqu'aucune
-  // boîte de dialogue native (prompt) ne s'intercale plus avant.
-  const printWin=window.open('','_blank','width=420,height=500');
-  if(!printWin){showToast('⚠️ Fenêtre d\'impression bloquée par le navigateur — autorisez les popups pour ce site');return;}
-
-  fermerModalNouvelleTable();
+async function nouvelleTableAvecJeton(){
+  const val=parseInt(prompt('N° de table pour ce jeton :'));
+  if(!val||val<1||val>150){if(!isNaN(val))showToast('⚠️ Numéro de table invalide');return;}
 
   try{
     const numero=await prochainNumeroJeton();
     const token=genererTokenJeton();
     await db.collection('jetons').doc(token).set({
-      numero, token, statut:'actif', table:val, couverts, unites, jetable:true,
+      numero, token, statut:'actif', table:val, jetable:true,
       timestamp:firebase.firestore.FieldValue.serverTimestamp()
     });
     showToast(`✅ Jeton n°${numero} activé — Table ${val}`);
-    imprimerTicketJeton(numero, token, val, printWin);
-  }catch(e){console.error(e);showToast('❌ Erreur création jeton');if(printWin)printWin.close();}
+    imprimerTicketJeton(numero, token, val);
+  }catch(e){console.error(e);showToast('❌ Erreur création jeton');}
 }
 
-// Imprime un jeton tout de suite, SANS table assignée (statut "en_attente") — pratique pour
-// l'accueil : on donne le ticket au client en le conduisant à sa table, puis on attribue le
-// numéro de table depuis n'importe quel poste (Jetons → pastille orange → renseigner la table).
-// Le client ne peut PAS encore commander tant que la table n'est pas attribuée.
-async function imprimerJetonAvance(){
-  const nb=parseInt(prompt('Combien de jetons imprimer à l\'avance ? (1 par défaut)'))||1;
-  if(nb<1||nb>50){showToast('⚠️ Entre 1 et 50 jetons à la fois');return;}
-
-  // Ouvre la fenêtre d'impression tout de suite (au clic) pour éviter le blocage anti-popup des
-  // navigateurs — on la remplira une fois les jetons créés dans Firestore.
-  const printWin=window.open('','_blank','width=420,height=500');
-  if(!printWin){showToast('⚠️ Fenêtre d\'impression bloquée par le navigateur — autorisez les popups pour ce site');return;}
-
-  try{
-    const numeroDepart=await prochainNumeroJeton();
-    const jetons=[];
-    for(let i=0;i<nb;i++){
-      jetons.push({numero:numeroDepart+i, token:genererTokenJeton()});
-    }
-
-    const batch=db.batch();
-    jetons.forEach(j=>{
-      const ref=db.collection('jetons').doc(j.token);
-      batch.set(ref,{numero:j.numero, token:j.token, statut:'en_attente', table:null, couverts:null, unites:null, jetable:true});
-    });
-    await batch.commit();
-
-    showToast(`✅ ${nb} jeton${nb>1?'s':''} créé${nb>1?'s':''} — n°${numeroDepart}${nb>1?' à n°'+(numeroDepart+nb-1):''}`);
-    imprimerTicketsJetonAvance(jetons,printWin);
-  }catch(e){console.error(e);showToast('❌ Erreur création jeton(s)');if(printWin)printWin.close();}
-}
-
-// Imprime N jetons "en attente" en un seul job (une étiquette par jeton, saut de page entre chaque —
-// idéal pour une imprimante à étiquettes autocollantes en rouleau continu).
-function imprimerTicketsJetonAvance(jetons,printWin){
-  const baseUrl=BASE_URL_APP;
-  const win=printWin||window.open('','_blank','width=420,height=500');
-  if(!win){showToast('⚠️ Fenêtre d\'impression bloquée par le navigateur');return;}
-
-  const etiquettes=jetons.map(j=>`
-    <div class="etiquette">
-      <div class="title">🐚 MOULE & SMILE</div>
-      <div class="sub">Bienvenue ! Votre table va vous être attribuée</div>
-      <div id="qr_${j.numero}"></div>
-      <div class="footer">Jeton n°${j.numero}<br>À usage unique — ne pas transférer</div>
-    </div>`).join('');
-
-  const scriptsQr=jetons.map(j=>`
-    new QRCode(document.getElementById('qr_${j.numero}'), {
-      text: "${baseUrl}?j=${j.token}",
-      width: 160, height: 160,
-      colorDark: "#000000", colorLight: "#ffffff",
-      correctLevel: QRCode.CorrectLevel.H
-    });`).join('');
-
-  win.document.write(`<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>Jetons à l'avance</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Arial,Helvetica,sans-serif;color:#000;background:white;-webkit-print-color-adjust:exact}
-.etiquette{width:80mm;margin:0 auto;padding:8mm;text-align:center;page-break-after:always;font-weight:900}
-.etiquette:last-child{page-break-after:auto}
-.title{font-size:15px;font-weight:900;margin-bottom:4px}
-.sub{font-size:10px;font-weight:900;margin-bottom:10px;border-bottom:2px dashed black;padding-bottom:6px}
-.etiquette [id^="qr_"]{display:flex;justify-content:center;margin:10px 0}
-.footer{font-size:10px;font-weight:900;margin-top:10px;border-top:2px dashed black;padding-top:6px}
-@media print{.etiquette{width:80mm;margin:0;padding:6mm}@page{margin:0;size:80mm auto}}
-</style></head><body>
-${etiquettes}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
-<script>
-${scriptsQr}
-window.onload=function(){setTimeout(()=>{window.print();setTimeout(()=>window.close(),1500);},400);}
-<\/script>
-</body></html>`);
-  win.document.close();
-}
-
-function imprimerTicketJeton(numero, token, tableNum, printWin){
+function imprimerTicketJeton(numero, token, tableNum){
   const baseUrl=BASE_URL_APP;
   const url=`${baseUrl}?j=${token}`;
-  const aTable=tableNum!==null && tableNum!==undefined;
 
-  const win=printWin||window.open('','_blank','width=420,height=500');
-  if(!win){showToast('⚠️ Fenêtre d\'impression bloquée par le navigateur');return;}
+  const win=window.open('','_blank','width=420,height=500');
   win.document.write(`<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>${aTable?'Jeton Table '+tableNum:'Jeton n°'+numero}</title>
+<html><head><meta charset="UTF-8"><title>Jeton Table ${tableNum}</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:900;color:#000;background:white;width:80mm;margin:0 auto;padding:8mm;text-align:center;-webkit-print-color-adjust:exact}
@@ -1455,8 +678,8 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:900;color
 @media print{body{width:80mm;margin:0;padding:6mm}@page{margin:0;size:80mm auto}}
 </style></head><body>
 <div class="title">🐚 MOULE & SMILE</div>
-<div class="sub">${aTable?'Scannez pour commander depuis votre table':'Bienvenue ! Votre table va vous être attribuée'}</div>
-${aTable?`<div class="table-num">Table ${tableNum}</div>`:''}
+<div class="sub">Scannez pour commander depuis votre table</div>
+<div class="table-num">Table ${tableNum}</div>
 <div id="qr"></div>
 <div class="footer">Jeton n°${numero}<br>À usage unique — ne pas transférer</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
@@ -1798,7 +1021,7 @@ async function archiverCommande(id,tableNum){
 // ============================================================
 // MOT DE PASSE — protection avant modification d'une commande
 // ============================================================
-const CODE_MODIF='7938'; // Code à modifier selon vos besoins
+const CODE_MODIF='1234'; // Code à modifier selon vos besoins
 let actionApresPwd=null;
 
 function demanderPwdPuis(callback){
@@ -2008,80 +1231,12 @@ function renderAdditions(){
 // ============================================================
 // ENCAISSER
 // ============================================================
-// ============================================================
-// TRANSMISSION HIBOUTIK — appelle la Cloud Function au moment de l'encaissement.
-// Ne bloque jamais le flux local : une erreur ici n'empêche pas l'encaissement de se terminer.
-// ============================================================
-async function envoyerVenteVersHiboutik(tableNum, commandes, couverts){
-  try{
-    // Regroupe par (produit + prix + choix exact) : deux articles identiques au même prix
-    // ET au même choix (même sauce, même supplément) → une seule ligne avec quantity=2.
-    // Toute différence de prix OU de choix (sauce différente, supplément différent) →
-    // lignes séparées, pour ne jamais perdre le détail de ce qui a été réellement choisi.
-    const compteur={};
-    commandes.forEach(cmd=>{
-      (cmd.items||[]).forEach(item=>{
-        const idBase=(item.id||'').replace('_inclus','');
-        const prix=item.prix||0;
-        const choixTexte=item.choix||'';
-        // Extrait le total des suppléments depuis le texte du choix, ex: "(+0,50 €)"
-        const matches=[...choixTexte.matchAll(/\(\+([\d,]+)\s*€\)/g)];
-        const supplement=matches.reduce((s,m)=>s+parseFloat(m[1].replace(',','.')),0);
-
-        // Extraction GÉNÉRIQUE : le texte du choix est composé de segments "Famille : Option"
-        // séparés par " — " (ex: "Coulis : Chocolat — Croquant : Daim (+0,50 €)"). Pour chaque
-        // segment, on retrouve la famille et l'option correspondantes dans carteFamillesOptions,
-        // quelle que soit la famille (Sauce, Croquant, Coulis, Nappage, ou toute future famille)
-        // — aucun code à ajouter ici quand tu crées une nouvelle famille d'options.
-        const optionIds=[];
-        choixTexte.split('—').forEach(segment=>{
-          const m=segment.match(/^\s*(.+?)\s*:\s*([^()]+)/);
-          if(!m)return;
-          const [,nomFamilleTexte,nomOptionTexte]=m;
-          const familleTrouvee=Object.values(carteFamillesOptions).find(f=>
-            (f.nom||'').trim().toLowerCase()===nomFamilleTexte.trim().toLowerCase());
-          if(!familleTrouvee)return;
-          const optionTrouvee=(familleTrouvee.options||[]).find(o=>
-            o.nom.trim().toLowerCase()===nomOptionTexte.trim().toLowerCase());
-          if(optionTrouvee) optionIds.push(optionTrouvee.id);
-        });
-
-        const cle=idBase+'|'+prix+'|'+choixTexte;
-        if(!compteur[cle]) compteur[cle]={id:idBase, nom:item.nom, prix, quantite:0, supplement, optionIds, choix:choixTexte};
-        compteur[cle].quantite++;
-      });
-    });
-    const items=Object.values(compteur);
-    if(!items.length) return;
-
-    const appel=fonctions.httpsCallable('envoyerVenteHiboutik');
-    const result=await appel({table:tableNum, items, couverts});
-
-    if(result.data && result.data.nonMappes && result.data.nonMappes.length){
-      console.warn(`Table ${tableNum} — produits non transmis à Hiboutik :`, result.data.nonMappes);
-      showToast(`⚠️ Table ${tableNum} : ${result.data.nonMappes.length} produit(s) non transmis à Hiboutik`);
-    } else {
-      console.log(`✅ Vente table ${tableNum} transmise à Hiboutik (id ${result.data?.saleId})`);
-    }
-  }catch(e){
-    console.error(`❌ Échec transmission Hiboutik — table ${tableNum} :`, e.message);
-    showToast(`⚠️ Table ${tableNum} encaissée, mais échec transmission Hiboutik`);
-  }
-}
-
 async function encaisser(tableNum){
   if(!confirm(`Encaisser la table ${tableNum} ?`)) return;
   try{
     const addRef=db.collection('additions').doc(`table_${tableNum}`);
     const addSnap=await addRef.get();
     const addData=addSnap.exists?addSnap.data():{total:0,commandes:[]};
-
-    // Détecte si un vrai plat (formule à volonté ou portion fixe) a été commandé sur cette table,
-    // pour distinguer "repas" de "boisson seule" dans les statistiques.
-    const nomsPlatsRepas=[...platsAVolonte.map(p=>p.nom),...platsQuantiteFixe.map(p=>p.nom)].map(n=>n.trim().toLowerCase());
-    const aCommandeRepas=(addData.commandes||[]).some(cmd=>
-      (cmd.items||[]).some(item=>nomsPlatsRepas.includes((item.nom||'').trim().toLowerCase()))
-    );
 
     // Archiver dans historique
     await db.collection('historique').add({
@@ -2091,10 +1246,6 @@ async function encaisser(tableNum){
       heureReglement:new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}),
       timestamp:firebase.firestore.FieldValue.serverTimestamp()
     });
-
-    // Transmission à Hiboutik (caisse certifiée) — ne bloque JAMAIS l'encaissement local en cas d'échec.
-    const jetonActif=Object.values(allJetons).find(j=>j.statut==='actif' && j.table===tableNum);
-    envoyerVenteVersHiboutik(tableNum, addData.commandes||[], jetonActif?.couverts||null);
 
     // Marquer toutes les commandes réglées + supprimer addition + supprimer alerte
     const snap=await db.collection('commandes').where('table','==',tableNum).get();
@@ -2113,41 +1264,22 @@ async function encaisser(tableNum){
 
     showToast(`✅ Table ${tableNum} encaissée !`);
     chargerHistorique();
-    liberJetonDeTable(tableNum, addData.total||0, aCommandeRepas);
+    liberJetonDeTable(tableNum);
   }catch(e){showToast('❌ Erreur encaissement');console.error(e);}
 }
 
 // Libère automatiquement le(s) jeton(s) rattaché(s) à cette table (encaissement = fin de service)
-// et enregistre la visite (arrivée → départ) pour les statistiques.
-async function liberJetonDeTable(tableNum, totalAddition, aCommandeRepas){
+async function liberJetonDeTable(tableNum){
   try{
     const snap=await db.collection('jetons').where('table','==',tableNum).where('statut','==','actif').get();
     if(snap.empty) return;
     const b=db.batch();
-    const maintenant=Date.now();
     snap.forEach(d=>{
       const data=d.data();
-
-      // Enregistre la visite pour les statistiques (durée réelle, taille de table)
-      // Si aucun plat n'a été commandé, la visite est classée "boisson" — peu importe le nombre de couverts.
-      if(data.timestamp){
-        const arrivee=data.timestamp.toDate?data.timestamp.toDate():new Date(data.timestamp);
-        const dureeMinutes=Math.round((maintenant-arrivee.getTime())/60000);
-        db.collection('visites').add({
-          table:tableNum,
-          couverts:data.couverts||null,
-          type:aCommandeRepas?'repas':'boisson',
-          dureeMinutes,
-          total:totalAddition||0,
-          heureArrivee:data.timestamp,
-          heureDepart:firebase.firestore.FieldValue.serverTimestamp()
-        }).catch(e=>console.error('Erreur enregistrement visite',e));
-      }
-
       if(data.jetable){
         b.delete(d.ref); // jeton à usage unique imprimé à la volée → supprimé définitivement
       } else {
-        b.update(d.ref,{statut:'libre',table:null,couverts:null}); // jeton réutilisable (lot pré-imprimé) → remis dans le pool
+        b.update(d.ref,{statut:'libre',table:null}); // jeton réutilisable (lot pré-imprimé) → remis dans le pool
       }
     });
     await b.commit();
