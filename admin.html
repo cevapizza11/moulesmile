@@ -500,7 +500,8 @@ function remplirSelectCategories(){
   const sel=document.getElementById('newCat');
   if(!sel)return;
   sel.innerHTML='';
-  CATS.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.nom;sel.appendChild(o);});
+  if(!carte || !carte.categories)return;
+  carte.categories.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.nom;sel.appendChild(o);});
 }
 
 const boissonsMenuDefaut = [
@@ -852,8 +853,9 @@ function annulerImport(){importedData=null;document.getElementById('importPrevie
 
 function confirmerImport(){
   if(!importedData||!importedData.length)return;
+  if(!carte || !carte.categories){console.error('Pas de carte à importer');return;}
   const newCarte={categories:[]};
-  CATS.forEach(catDef=>{
+  carte.categories.forEach(catDef=>{
     let prods=importedData.filter(p=>p.cat===catDef.id||catDef.id.includes(p.cat));
     prods.sort((a,b)=>(a.ordre||9999)-(b.ordre||9999));
     const mapped=prods.map(p=>{
@@ -863,7 +865,7 @@ function confirmerImport(){
     });
     if(mapped.length)newCarte.categories.push({id:catDef.id,nom:catDef.nom,produits:mapped});
   });
-  const knownIds=CATS.map(c=>c.id);
+  const knownIds=carte.categories.map(c=>c.id);
   const others=importedData.filter(p=>!knownIds.includes(p.cat));
   if(others.length){
     others.sort((a,b)=>(a.ordre||9999)-(b.ordre||9999));
