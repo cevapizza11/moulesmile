@@ -50,6 +50,8 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 
 <div class="nav-tabs" style="overflow-x:auto">
   <div class="nav-tab active" onclick="switchTab('carte',this)">📋 Carte</div>
+  <div class="nav-tab" onclick="switchTab('menu',this)">🍺 Menu</div>
+  <div class="nav-tab" onclick="switchTab('enfant',this)">🧒 Enfant</div>
   <div class="nav-tab" onclick="switchTab('ajouter',this)">➕ Ajouter</div>
   <div class="nav-tab" onclick="switchTab('excel',this)">📥 Excel</div>
   <div class="nav-tab" onclick="switchTab('actions',this)">⚡ Actions</div>
@@ -60,6 +62,24 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 <div id="carte" class="content active">
   <div class="cat-tabs" id="catTabs"></div>
   <div id="carteContent"></div>
+</div>
+
+<!-- ONGLET MENU BOISSON -->
+<div id="menu" class="content">
+  <div class="section">
+    <h2>🍺 Menu Boisson</h2>
+    <div id="menuBoisson"></div>
+    <button class="btn-add" style="margin-top:12px" onclick="sauvegarder()">💾 Publier</button>
+  </div>
+</div>
+
+<!-- ONGLET MENU ENFANT -->
+<div id="enfant" class="content">
+  <div class="section">
+    <h2>🧒 Menu Enfant</h2>
+    <div id="menuEnfant"></div>
+    <button class="btn-add" style="margin-top:12px" onclick="sauvegarder()">💾 Publier</button>
+  </div>
 </div>
 
 <!-- ONGLET AJOUTER -->
@@ -171,6 +191,7 @@ async function init(){
   if(carte && carte.categories && carte.categories.length){
     catActive=carte.categories[0].id;
     render();
+    renderMenus();
     remplirSelectCategories();
   }
   
@@ -222,6 +243,32 @@ function remplirSelectCategories(){
   });
 }
 
+function renderMenus(){
+  // Menu Boisson
+  let htmlBoisson='';
+  (carte.boissonMenu||[]).forEach(p=>{
+    htmlBoisson+=`<div class="item-row">
+      <div><div class="item-nom">${p.emoji||'🥤'} ${p.nom}</div><div style="color:#888;font-size:11px">${p.desc||''}</div></div>
+      <div style="display:flex;gap:10px">
+        <label class="toggle"><input type="checkbox" ${p.actif!==false?'checked':''} onchange="modifierMenuBoisson('${p.id}','actif',this.checked)"><span class="toggle-slider"></span></label>
+      </div>
+    </div>`;
+  });
+  document.getElementById('menuBoisson').innerHTML=htmlBoisson;
+  
+  // Menu Enfant
+  let htmlEnfant='';
+  (carte.enfantMenu||[]).forEach(p=>{
+    htmlEnfant+=`<div class="item-row">
+      <div><div class="item-nom">${p.emoji||'🍽️'} ${p.nom}</div><div style="color:#888;font-size:11px">${p.desc||''}</div></div>
+      <div style="display:flex;gap:10px">
+        <label class="toggle"><input type="checkbox" ${p.actif!==false?'checked':''} onchange="modifierMenuEnfant('${p.id}','actif',this.checked)"><span class="toggle-slider"></span></label>
+      </div>
+    </div>`;
+  });
+  document.getElementById('menuEnfant').innerHTML=htmlEnfant;
+}
+
 // ============================================================
 // FONCTIONS
 // ============================================================
@@ -263,6 +310,22 @@ async function modifierActif(catId,prodId,actif){
   const prod=cat.produits.find(p=>p.id===prodId);
   if(prod)prod.actif=actif;
   await sauvegarder();
+}
+
+async function modifierMenuBoisson(id,field,value){
+  const item=carte.boissonMenu?.find(p=>p.id===id);
+  if(item){
+    item[field]=value;
+    await sauvegarder();
+  }
+}
+
+async function modifierMenuEnfant(id,field,value){
+  const item=carte.enfantMenu?.find(p=>p.id===id);
+  if(item){
+    item[field]=value;
+    await sauvegarder();
+  }
 }
 
 async function sauvegarder(){
