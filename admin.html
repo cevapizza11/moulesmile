@@ -323,8 +323,9 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 <div id="navImporter" class="content" style="display:none">
   <div class="excel-format">
     <strong>Format attendu — colonnes dans l'ordre :</strong><br>
-    A: ID · B: Catégorie · C: Nom · D: Description · E: Emoji · F: Prix EUR · G: Actif (OUI/NON)<br><br>
+    A: ID · B: Catégorie · C: Nom · D: Description · E: Emoji · F: Prix EUR · G: Actif (OUI/NON) · ... · J: ID Hiboutik (optionnel)<br><br>
     <strong>Catégories valides :</strong> formules · sauces · softs · bieres · vins_blancs · vins_roses · vins_rouges · cocktails · sangria · desserts · digestifs · chauds<br><br>
+    🔗 <strong style="color:#4ABA80">Colonne "ID Hiboutik"</strong> : si elle est remplie (dernière colonne de chaque onglet produit, et de l'onglet Familles Options), la Correspondance Hiboutik est mise à jour automatiquement à l'import — plus besoin de la ressaisir à la main dans l'écran "🔗 Correspondance Hiboutik".<br><br>
     ⚠️ <strong style="color:#C0392B">L'import remplace toute la carte.</strong> Utilisez MouleSmile_Carte_Admin.xlsx comme base.
   </div>
   <div class="import-zone" id="importZone" onclick="document.getElementById('importInput').click()"
@@ -380,7 +381,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
-<div class="version">v.12/08/2026 14:00 — Moule & Smile Admin</div>
+<div class="version">v.20/09/2026 08:15 — Moule & Smile Admin</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -657,8 +658,9 @@ function lireFamillesOptions(wb){
     const supplement=parseFloat(String(row[4]||'0').replace(',','.'))||0;
     const actif=String(row[5]||'OUI').trim().toUpperCase()!=='NON';
     const ordre=parseInt(row[6])||9999;
+    const idHiboutik=parseInt(row[7])||null;
     if(!familles[idFamille]) familles[idFamille]={id:idFamille,nom:nomFamille,options:[]};
-    familles[idFamille].options.push({id:idOption,nom:nomOption,supplement,actif,ordre});
+    familles[idFamille].options.push({id:idOption,nom:nomOption,supplement,actif,ordre,idHiboutik});
   });
   Object.values(familles).forEach(f=>f.options.sort((a,b)=>a.ordre-b.ordre));
   return familles;
@@ -708,7 +710,8 @@ function parseRows(rows){
     const prix=parseFloat(String(row[6]||'0').replace(',','.'))||0;
     const actif=String(row[7]||'OUI').trim().toUpperCase()!=='NON';
     const ordre=parseInt(row[8])||9999;
-    produits.push({id,cat,subcat,nom,desc,emoji,prix,actif,ordre});
+    const idHiboutik=parseInt(row[9])||null;
+    produits.push({id,cat,subcat,nom,desc,emoji,prix,actif,ordre,idHiboutik});
   });
   if(!produits.length){showToast('⚠️ Aucun produit trouvé');return;}
   importedData=produits;
@@ -788,14 +791,34 @@ function confirmerImport(){
 
   carte=newCarte;catActive=newCarte.categories[0]?.id;
   const nbImportes=importedData?importedData.length:0;
-  confirmerImportSauvegarde(nbImportes);
+  const nbMappes=fusionnerMappingHiboutikImport();
+  confirmerImportSauvegarde(nbImportes,nbMappes);
 }
 
-async function confirmerImportSauvegarde(nbImportes){
+// Colonne "ID Hiboutik" de l'Excel (produits + options) → fusion automatique dans
+// la Correspondance Hiboutik (config/hiboutikMapping), pour ne plus avoir à la
+// ressaisir à la main à chaque import. Ne touche que les ID présents dans le fichier ;
+// les entrées existantes non concernées sont conservées.
+function fusionnerMappingHiboutikImport(){
+  let nb=0;
+  (importedData||[]).forEach(p=>{
+    if(p.idHiboutik){ mappingHiboutik[p.id]=p.idHiboutik; nb++; }
+  });
+  Object.values(importedFamillesOptions||{}).forEach(f=>{
+    (f.options||[]).forEach(o=>{
+      if(o.idHiboutik){ mappingHiboutik[o.id]=o.idHiboutik; nb++; }
+    });
+  });
+  if(nb>0) sauvegarderMappingHiboutik();
+  return nb;
+}
+
+async function confirmerImportSauvegarde(nbImportes,nbMappes){
   try{
     await sauvegarder();
     render();annulerImport();
-    showToast(`✅ ${nbImportes} produits importés !`);
+    if(document.getElementById('mappingHiboutikList')) renderMappingHiboutik();
+    showToast(nbMappes>0?`✅ ${nbImportes} produits importés · 🔗 ${nbMappes} correspondance(s) Hiboutik mise(s) à jour`:`✅ ${nbImportes} produits importés !`);
   }catch(e){
     console.error('Import: échec sauvegarde', e);
     render();annulerImport();
@@ -1168,7 +1191,7 @@ const MAPPING_HIBOUTIK_INITIAL={
   "b15": 50, "b16": 51, "b17": 52, "b18": 53, "b19": 54, "b2": 40, "b20": 55,
   "b21": 56, "b22": 57, "b23": 58, "b24": 59, "b25": 60, "b26": 61, "b27": 62,
   "b28": 63, "b29": 64, "b3": 36, "b30": 65, "b31": 66, "b32": 67, "b33": 68,
-  "b34": 69, "b35": 41, "b4": 37, "b5": 70, "b6": 38, "b7": 42, "b8": 43,
+  "b34": 69, "b35": 41, "b4": 37, "b5": 70, "b6": 38, "b7": 101, "b8": 43,
   "b9": 44, "ca1": 32, "d4": 72, "d5": 73, "d6": 74, "dg1": 75, "dg2": 76,
   "dg3": 77, "en1": 78, "en2": 35, "fc1": 33, "fc2": 34, "p1": 31,
   "SUPPLEMENT": 79
