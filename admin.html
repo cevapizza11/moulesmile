@@ -381,7 +381,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
-<div class="version">v.20/09/2026 08:15 — Moule & Smile Admin</div>
+<div class="version">v.20/09/2026 09:50 — Moule & Smile Admin</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -1313,10 +1313,20 @@ function renderFamillesSuggestionAddition(){
   if(!carte)return;
   if(!carte.categoriesSuggestionAddition) carte.categoriesSuggestionAddition=[];
   const selectionnees=carte.categoriesSuggestionAddition;
-  document.getElementById('famillesSuggestionAdditionList').innerHTML=carte.categories.map(cat=>{
-    if(!(cat.produits||[]).length)return '';
+  // Ordre d'affichage dans cet écran = ordre réel des tuiles côté client :
+  // d'abord les familles cochées (dans l'ordre où elles apparaîtront), puis les non-cochées.
+  const catsAvecProduits=carte.categories.filter(cat=>(cat.produits||[]).length);
+  const cochees=selectionnees.map(id=>catsAvecProduits.find(c=>c.id===id)).filter(Boolean);
+  const nonCochees=catsAvecProduits.filter(c=>!selectionnees.includes(c.id));
+  const liste=[...cochees,...nonCochees];
+  document.getElementById('famillesSuggestionAdditionList').innerHTML=liste.map((cat,i)=>{
     const coche=selectionnees.includes(cat.id);
+    const idx=selectionnees.indexOf(cat.id);
+    const fleches=coche?`
+      <button type="button" onclick="deplacerFamilleSuggestionAddition('${cat.id}',-1)" ${idx<=0?'disabled':''} style="background:none;border:none;color:${idx<=0?'#444':'#D4AF37'};font-size:16px;cursor:${idx<=0?'default':'pointer'};padding:0 4px" title="Monter">▲</button>
+      <button type="button" onclick="deplacerFamilleSuggestionAddition('${cat.id}',1)" ${idx>=selectionnees.length-1?'disabled':''} style="background:none;border:none;color:${idx>=selectionnees.length-1?'#444':'#D4AF37'};font-size:16px;cursor:${idx>=selectionnees.length-1?'default':'pointer'};padding:0 4px" title="Descendre">▼</button>`:'<span style="display:inline-block;width:44px"></span>';
     return `<div class="item-row">
+      ${fleches}
       <div class="item-info" style="cursor:default"><div class="item-nom">${cat.nom}</div></div>
       <label class="toggle"><input type="checkbox" ${coche?'checked':''} onchange="toggleFamilleSuggestionAddition('${cat.id}',this.checked)"><span class="toggle-slider"></span></label>
     </div>`;
@@ -1332,7 +1342,20 @@ function toggleFamilleSuggestionAddition(catId,val){
     carte.categoriesSuggestionAddition=carte.categoriesSuggestionAddition.filter(id=>id!==catId);
   }
   sauvegarder();
+  renderFamillesSuggestionAddition();
   showToast(val?'✅ Famille ajoutée en tuile':'❌ Famille retirée');
+}
+
+// Réordonne les tuiles du popup avant addition (échange avec la voisine dans le sens demandé).
+function deplacerFamilleSuggestionAddition(catId,sens){
+  if(!carte||!carte.categoriesSuggestionAddition)return;
+  const arr=carte.categoriesSuggestionAddition;
+  const i=arr.indexOf(catId);
+  const j=i+sens;
+  if(i<0||j<0||j>=arr.length)return;
+  [arr[i],arr[j]]=[arr[j],arr[i]];
+  sauvegarder();
+  renderFamillesSuggestionAddition();
 }
 
 function renderSuggestionAddition(){
