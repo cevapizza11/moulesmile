@@ -92,9 +92,32 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 .reorder-btn:disabled:active{background:#2A2A2A;color:#D4AF37}
 .mini-cat-titre{color:#D4AF37;font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:.5px;margin:14px 0 6px;padding-bottom:4px;border-bottom:1px solid #333}
 .mini-cat-titre:first-child{margin-top:0}
+
+/* ÉCRAN DE CONNEXION ÉQUIPE (ajouté le 20/09/2026 — sécurisation Firestore) */
+#screenLoginEquipe{position:fixed;inset:0;background:#1A1A1A;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
+#screenLoginEquipe.masque{display:none}
+.login-box{background:#222;border:2px solid #D4AF37;border-radius:16px;padding:32px 28px;max-width:340px;width:100%;text-align:center}
+.login-box h2{color:#D4AF37;font-size:18px;margin-bottom:8px}
+.login-box p{color:#888;font-size:12px;margin-bottom:18px}
+.login-box input{width:100%;background:#111;border:2px solid #444;border-radius:10px;color:#fff;font-size:16px;text-align:center;padding:12px;margin-bottom:12px}
+.login-box input:focus{border-color:#D4AF37;outline:none}
+.login-box button{width:100%;background:#D4AF37;border:none;color:#1A1A1A;padding:13px;border-radius:10px;font-weight:bold;font-size:14px;cursor:pointer}
+.login-erreur{color:#ff8a8a;font-size:12px;margin-top:10px;min-height:16px}
 </style>
 </head>
 <body>
+
+<!-- ÉCRAN DE CONNEXION ÉQUIPE (mot de passe unique partagé, même compte que caisse.html) -->
+<div id="screenLoginEquipe" class="masque">
+  <div class="login-box">
+    <h2>🔒 Moule & Smile — Admin</h2>
+    <p>Code d'accès équipe</p>
+    <input type="password" id="loginPwdInput" placeholder="Mot de passe équipe" autocomplete="current-password" onkeydown="if(event.key==='Enter')connexionEquipe()">
+    <button onclick="connexionEquipe()">Se connecter</button>
+    <div class="login-erreur" id="loginErreur"></div>
+  </div>
+</div>
+
 <div class="header">
   <h1>⚙️ Admin — Moule & Smile</h1>
   <button class="save-btn" onclick="sauvegarder()">💾 Publier</button>
@@ -124,6 +147,20 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
     <div class="form-row">
       <div class="form-group" style="flex:1"><label>Prix (€)</label><input type="number" id="editPrix" step="0.10" min="0"></div>
       <div class="form-group" style="flex:1"><label>Sous-catégorie</label><input type="text" id="editSubcat" placeholder="Ex: Rouge, Softs..."></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="flex:1">
+        <label>📷 Photo</label>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:4px">
+          <img id="editPhotoApercu" src="" style="width:56px;height:56px;border-radius:8px;object-fit:cover;background:#111;display:none;border:1px solid #444">
+          <div id="editPhotoPlaceholder" style="width:56px;height:56px;border-radius:8px;background:#111;border:1px dashed #444;display:flex;align-items:center;justify-content:center;color:#555;font-size:20px">🖼️</div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+            <input type="file" id="editPhotoInput" accept="image/*" capture="environment" onchange="gererFichierPhoto(this.files[0])" style="font-size:11px;color:#aaa">
+            <div id="editPhotoStatut" style="font-size:11px;color:#888"></div>
+          </div>
+          <button type="button" id="editPhotoSupprimer" onclick="supprimerPhotoProduit()" style="display:none;background:#3A1A1A;border:1px solid #C0392B;color:#ff8a8a;border-radius:6px;padding:6px 8px;font-size:11px;cursor:pointer">🗑</button>
+        </div>
+      </div>
     </div>
     <div class="modal-actions">
       <button class="btn-annuler" onclick="fermerModalEdition()">Annuler</button>
@@ -381,15 +418,41 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
-<div class="version">v.20/09/2026 09:50 — Moule & Smile Admin</div>
+<div class="version">v.21/09/2026 09:23 — Moule & Smile Admin</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 <script>
 const firebaseConfig={apiKey:"AIzaSyDUb3LtVsMAq986DgtHwkMBeQFr8A8A2nU",authDomain:"commandemoulesmile.firebaseapp.com",projectId:"commandemoulesmile",storageBucket:"commandemoulesmile.firebasestorage.app",messagingSenderId:"303564394584",appId:"1:303564394584:web:cbde6960f99cac83517a2d"};
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
+const storage=firebase.storage();
+
+// ============================================================
+// CONNEXION ÉQUIPE (ajouté le 20/09/2026 — sécurisation Firestore)
+// Même compte partagé que caisse.html. L'écran de connexion couvre tout
+// l'admin tant que ce compte n'est pas identifié.
+// ============================================================
+const EMAIL_EQUIPE='mouleandsmile11@gmail.com';
+firebase.auth().onAuthStateChanged(user=>{
+  const estEquipeConnectee=user && !user.isAnonymous;
+  document.getElementById('screenLoginEquipe').classList.toggle('masque', !!estEquipeConnectee);
+});
+async function connexionEquipe(){
+  const pwd=document.getElementById('loginPwdInput').value;
+  const err=document.getElementById('loginErreur');
+  err.textContent='';
+  if(!pwd){err.textContent='Entrez le mot de passe';return;}
+  try{
+    await firebase.auth().signInWithEmailAndPassword(EMAIL_EQUIPE,pwd);
+  }catch(e){
+    err.textContent='❌ Mot de passe incorrect';
+  }
+}
+
 let carte=null,catActive=null,importedData=null;
 
 const CATS=[
@@ -459,7 +522,7 @@ function render(){
         <button class="reorder-btn" onclick="deplacerProduit('${catActive}',${idx},-1)" ${idx===0?'disabled':''} title="Monter">▲</button>
         <button class="reorder-btn" onclick="deplacerProduit('${catActive}',${idx},1)" ${idx===nbTotal-1?'disabled':''} title="Descendre">▼</button>
       </div>
-      <div class="item-info" onclick="ouvrirModalEdition('${catActive}',${idx})"><div class="item-nom">${p.emoji||''} ${p.nom}</div><div class="item-detail">${p.desc||''}${p.subcat?' · '+p.subcat:''}</div></div>
+      <div class="item-info" onclick="ouvrirModalEdition('${catActive}',${idx})"><div class="item-nom">${p.photo?`<img src="${p.photo}" style="width:20px;height:20px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px">`:''}${p.emoji||''} ${p.nom}</div><div class="item-detail">${p.desc||''}${p.subcat?' · '+p.subcat:''}</div></div>
       <div style="display:flex;align-items:center;gap:4px">
         ${p.prix>0?`<input type="number" class="prix-input" value="${p.prix}" step="0.10" onchange="updatePrix('${catActive}',${idx},this.value)"> €`:'<span style="color:#1A7A50;font-size:10px;font-weight:bold">Inclus</span>'}
         <label class="toggle"><input type="checkbox" ${p.actif?'checked':''} onchange="toggleItem('${catActive}',${idx},this.checked)"><span class="toggle-slider"></span></label>
@@ -537,7 +600,82 @@ function ouvrirModalEdition(catId,idx,source='carte'){
   document.getElementById('editSubcat').value=p.subcat||'';
   // Les listes spéciales (menu enfant) n'ont pas de sous-catégorie ni de gestion de prix pertinente pour ce contexte
   document.getElementById('editSubcat').closest('.form-group').style.display=(source==='carte')?'flex':'none';
+  afficherApercuPhoto(p.photo||null);
+  document.getElementById('editPhotoInput').value='';
+  document.getElementById('editPhotoStatut').textContent='';
   document.getElementById('modalEdition').classList.add('visible');
+}
+
+function afficherApercuPhoto(url){
+  const img=document.getElementById('editPhotoApercu');
+  const placeholder=document.getElementById('editPhotoPlaceholder');
+  const btnSupprimer=document.getElementById('editPhotoSupprimer');
+  if(url){
+    img.src=url;img.style.display='block';placeholder.style.display='none';btnSupprimer.style.display='block';
+  }else{
+    img.style.display='none';placeholder.style.display='flex';btnSupprimer.style.display='none';
+  }
+}
+
+// Redimensionne l'image côté téléphone AVANT l'envoi (max 1000px de large, JPEG qualité 72%) —
+// une photo de smartphone pèse souvent 3-5 Mo, inutile et lent à charger pour un client en
+// salle avec une connexion mobile moyenne ; ~100-200 Ko suffit largement pour un téléphone.
+function redimensionnerImage(file){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    const reader=new FileReader();
+    reader.onload=e=>{ img.src=e.target.result; };
+    reader.onerror=reject;
+    img.onload=()=>{
+      const MAX=1000;
+      let {width,height}=img;
+      if(width>height && width>MAX){height=Math.round(height*MAX/width);width=MAX;}
+      else if(height>MAX){width=Math.round(width*MAX/height);height=MAX;}
+      const canvas=document.createElement('canvas');
+      canvas.width=width;canvas.height=height;
+      canvas.getContext('2d').drawImage(img,0,0,width,height);
+      canvas.toBlob(blob=>resolve(blob),'image/jpeg',0.72);
+    };
+    img.onerror=reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function gererFichierPhoto(file){
+  if(!file||editionCatId===null||editionIdx===null)return;
+  const liste=getListeEdition(editionSource,editionCatId);
+  const p=liste&&liste[editionIdx];
+  if(!p)return;
+  const statut=document.getElementById('editPhotoStatut');
+  try{
+    statut.textContent='📤 Envoi en cours...';
+    const blob=await redimensionnerImage(file);
+    const chemin=`photos/${p.id}.jpg`;
+    await storage.ref(chemin).put(blob,{contentType:'image/jpeg'});
+    const url=await storage.ref(chemin).getDownloadURL();
+    p.photo=url;
+    afficherApercuPhoto(url);
+    statut.textContent='✅ Photo enregistrée';
+    await sauvegarder();
+    if(editionSource==='enfantMenu') renderEnfantMenu(); else render();
+  }catch(e){
+    console.error('Erreur upload photo',e);
+    statut.textContent='❌ Échec de l\'envoi';
+    showToast('❌ Erreur envoi photo — vérifiez votre connexion');
+  }
+}
+
+async function supprimerPhotoProduit(){
+  if(editionCatId===null||editionIdx===null)return;
+  const liste=getListeEdition(editionSource,editionCatId);
+  const p=liste&&liste[editionIdx];
+  if(!p||!p.photo)return;
+  try{ await storage.ref(`photos/${p.id}.jpg`).delete(); }catch(e){ /* déjà absente, tant pis */ }
+  delete p.photo;
+  afficherApercuPhoto(null);
+  await sauvegarder();
+  if(editionSource==='enfantMenu') renderEnfantMenu(); else render();
+  showToast('🗑 Photo supprimée');
 }
 
 function fermerModalEdition(){

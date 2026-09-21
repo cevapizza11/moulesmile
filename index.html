@@ -62,6 +62,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 .product-card .info{flex:1}
 .product-card .nom{font-size:14px;font-weight:bold;color:#fff;margin-bottom:3px}
 .product-card .desc{font-size:11px;color:#888;line-height:1.3}
+.product-card .photo{width:52px;height:52px;border-radius:10px;object-fit:cover;flex-shrink:0;margin-right:10px;background:#1A1A1A}
 .badge-menu{display:inline-block;background:#1A3A2A;border:1px solid #1A7A50;color:#4ABA80;font-size:9px;font-weight:bold;padding:1px 6px;border-radius:10px;margin-left:6px;vertical-align:middle}
 .add-btn{background:#D4AF37;border:none;border-radius:8px;color:#1A1A1A;font-size:22px;font-weight:bold;width:38px;height:38px;cursor:pointer;flex-shrink:0;margin-left:10px;display:flex;align-items:center;justify-content:center}
 .add-btn:active{background:#C49A2F;transform:scale(.95)}
@@ -130,6 +131,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 .upsell-box p{color:#aaa;font-size:13px;margin-bottom:20px;line-height:1.5}
 .upsell-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;text-align:left}
 .upsell-item{background:#2A2A2A;border:2px solid #333;border-radius:10px;padding:12px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.upsell-item .photo{width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0;margin-right:10px;background:#1A1A1A}
 .upsell-item:active{border-color:#D4AF37}
 .upsell-item .unom{font-size:13px;font-weight:bold;color:#fff}
 .upsell-item .udesc{font-size:11px;color:#888}
@@ -388,7 +390,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
-<div class="version">v.12/08/2026 14:00 — Moule & Smile</div>
+<div class="version">v.21/09/2026 08:00 — Moule & Smile</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -398,15 +400,12 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 const firebaseConfig={apiKey:"AIzaSyDUb3LtVsMAq986DgtHwkMBeQFr8A8A2nU",authDomain:"commandemoulesmile.firebaseapp.com",projectId:"commandemoulesmile",storageBucket:"commandemoulesmile.firebasestorage.app",messagingSenderId:"303564394584",appId:"1:303564394584:web:cbde6960f99cac83517a2d"};
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
-
-// ===== AUTHENTIFICATION ANONYME (Sept 2026) =====
-firebase.auth().signInAnonymously()
-  .then(userCredential => {
-    console.log('✅ Client authentifié anonymement:', userCredential.user.uid);
-  })
-  .catch(error => {
-    console.error('❌ Erreur auth anonyme:', error);
-  });
+// Connexion anonyme automatique, invisible pour le client (aucun mot de passe, aucun écran).
+// Nécessaire depuis le 20/09/2026 : les règles de sécurité Firestore exigent désormais d'être
+// connecté (même anonymement) pour lire/écrire — avant cette date, la base était ouverte à tous.
+// Les lectures/écritures ci-dessous (jetons, commandes, config...) attendent automatiquement
+// cette connexion avant de partir — pas besoin d'attendre nous-mêmes la fin de signInAnonymously().
+firebase.auth().signInAnonymously().catch(e=>console.error('Erreur connexion anonyme',e));
 
 let tableNum=null, panier=[], catActive=null, carte=null;
 let refuserSuggestionFormule=false; // "C'est juste pour boire" — mémorisé pour toute la session client
@@ -605,30 +604,15 @@ db.collection('config').doc('carte_v2').onSnapshot(doc=>{
 });
 
 // Écouter notifications caisse → téléphone client
-let unsubscribeNotifications=null;
-let notificationAffichee=false; // Flag pour éviter les doublons
-
 function ecouterNotifications(){
   if(!tableNum) return;
-  
-  // Arrêter l'ancien listener s'il existe
-  if(unsubscribeNotifications) unsubscribeNotifications();
-  
-  notificationAffichee=false;
-  
-  unsubscribeNotifications=db.collection('notifications').doc(`table_${tableNum}`).onSnapshot(doc=>{
-    if(!doc.exists){
-      notificationAffichee=false; // Réinitialiser si le doc n'existe plus
-      return;
-    }
-    
+  db.collection('notifications').doc(`table_${tableNum}`).onSnapshot(doc=>{
+    if(!doc.exists) return;
     const data=doc.data();
-    // Afficher UNE SEULE FOIS et marquer comme affichée
-    if(data&&data.message&&data.ts && !notificationAffichee){
-      notificationAffichee=true;
+    if(data&&data.message&&data.ts){
       afficherNotification(data.message);
-      // Supprimer après lecture (sans attendre la suppression pour arrêter le listener)
-      db.collection('notifications').doc(`table_${tableNum}`).delete().catch(e=>console.error(e));
+      // Supprimer après lecture
+      db.collection('notifications').doc(`table_${tableNum}`).delete();
     }
   });
   activerNotificationsPush();
@@ -988,6 +972,7 @@ function renderProduits(catId,filtreSubcat){
     }
     html+=`
       <div class="product-card" id="prodcard_${p.id}">
+        ${p.photo?`<img class="photo" src="${p.photo}" loading="lazy" alt="">`:''}
         <div class="info">
           <div class="nom">${p.emoji?p.emoji+' ':''}${p.nom}</div>
           ${p.desc?`<div class="desc">${p.desc}</div>`:''}
@@ -1401,8 +1386,9 @@ function renderUpsellList(){
           ? `<button class="qty-btn qty-minus" onclick="retirerUpsell('${p.id}')">−</button><span class="qty-num">${qte}</span><button class="qty-btn qty-plus" onclick="ajouterUpsell('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${prix})">+</button>`
           : `<button class="add-btn" onclick="ajouterUpsell('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${prix})">+</button>`;
         return `<div class="upsell-item">
+          ${p.photo?`<img class="photo" src="${p.photo}" loading="lazy" alt="">`:''}
           <div><div class="unom">${p.emoji||''} ${p.nom}</div>${p.desc?`<div class="udesc">${p.desc}</div>`:''}</div>
-          <div style="display:flex;align-items:center;gap:4px">
+          <div style="display:flex;align-items:center;gap:4px;margin-left:auto">
             <span class="uprix">${prix.toFixed(2).replace('.',',')} €</span>
             ${compteurHtml}
           </div>
@@ -1427,8 +1413,9 @@ function renderUpsellList(){
       ? `<button class="qty-btn qty-minus" onclick="retirerUpsell('${p.id}')">−</button><span class="qty-num">${qte}</span><button class="qty-btn qty-plus" onclick="ajouterUpsell('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${prix})">+</button>`
       : `<button class="add-btn" onclick="ajouterUpsell('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${prix})">+</button>`;
     return `<div class="upsell-item">
+      ${p.photo?`<img class="photo" src="${p.photo}" loading="lazy" alt="">`:''}
       <div><div class="unom">${p.emoji||(p.type==='dessert'?'🍮':'☕')} ${p.nom}</div>${p.desc?`<div class="udesc">${p.desc}</div>`:''}</div>
-      <div style="display:flex;align-items:center;gap:4px">
+      <div style="display:flex;align-items:center;gap:4px;margin-left:auto">
         <span class="uprix">${prix.toFixed(2).replace('.',',')} €</span>
         ${compteurHtml}
       </div>
@@ -1468,7 +1455,6 @@ async function validerAvantAddition(){
   const total=panierAvantAddition.reduce((s,p)=>s+p.prix,0);
   try{
     await db.collection('commandes').add({
-      clientUid: firebase.auth().currentUser.uid,
       table:tableNum,
       couverts:nbCouverts||null,
       nbAdultes:nbAdultes!=null?nbAdultes:null,
@@ -1504,7 +1490,6 @@ async function validerCommande(){
   const heure=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
   try{
     await db.collection('commandes').add({
-      clientUid: firebase.auth().currentUser.uid,
       table:tableNum,
       couverts:nbCouverts||null,
       nbAdultes:nbAdultes!=null?nbAdultes:null,

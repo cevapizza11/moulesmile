@@ -157,9 +157,31 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
 
 /* MODAL MOT DE PASSE */
 .pwd-input{width:100%;background:#111;border:2px solid #D4AF37;border-radius:10px;color:#D4AF37;font-size:22px;font-weight:bold;text-align:center;padding:14px;letter-spacing:6px;margin-bottom:14px}
+
+/* ÉCRAN DE CONNEXION ÉQUIPE (ajouté le 20/09/2026 — sécurisation Firestore) */
+#screenLoginEquipe{position:fixed;inset:0;background:#111;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
+#screenLoginEquipe.masque{display:none}
+.login-box{background:#1A1A1A;border:2px solid #D4AF37;border-radius:16px;padding:32px 28px;max-width:340px;width:100%;text-align:center}
+.login-box h2{color:#D4AF37;font-size:18px;margin-bottom:8px}
+.login-box p{color:#888;font-size:12px;margin-bottom:18px}
+.login-box input{width:100%;background:#111;border:2px solid #444;border-radius:10px;color:#fff;font-size:16px;text-align:center;padding:12px;margin-bottom:12px}
+.login-box input:focus{border-color:#D4AF37;outline:none}
+.login-box button{width:100%;background:#D4AF37;border:none;color:#1A1A1A;padding:13px;border-radius:10px;font-weight:bold;font-size:14px;cursor:pointer}
+.login-erreur{color:#ff8a8a;font-size:12px;margin-top:10px;min-height:16px}
 </style>
 </head>
 <body>
+
+<!-- ÉCRAN DE CONNEXION ÉQUIPE (mot de passe unique partagé) -->
+<div id="screenLoginEquipe" class="masque">
+  <div class="login-box">
+    <h2>🔒 Moule & Smile — Caisse</h2>
+    <p>Code d'accès équipe</p>
+    <input type="password" id="loginPwdInput" placeholder="Mot de passe équipe" autocomplete="current-password" onkeydown="if(event.key==='Enter')connexionEquipe()">
+    <button onclick="connexionEquipe()">Se connecter</button>
+    <div class="login-erreur" id="loginErreur"></div>
+  </div>
+</div>
 
 <!-- HEADER -->
 <div class="header">
@@ -390,11 +412,12 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
   </div>
 </div>
 
-<div class="version">v.12/08/2026 14:00 — Moule & Smile Caisse</div>
+<div class="version">v.21/09/2026 09:23 — Moule & Smile Caisse</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-functions-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script>
 // ============================================================
 // FIREBASE
@@ -410,6 +433,34 @@ const firebaseConfig={
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 const fonctions=firebase.app().functions('europe-west3');
+
+// ============================================================
+// CONNEXION ÉQUIPE (ajouté le 20/09/2026 — sécurisation Firestore)
+// Un seul compte partagé pour toute l'équipe (caisse.html + admin.html).
+// L'écran de connexion reste affiché tant qu'on n'est pas identifié ;
+// une fois connecté, Firebase garde la session sur cet appareil (pas besoin
+// de retaper le mot de passe à chaque ouverture, sauf déconnexion explicite).
+// ============================================================
+const EMAIL_EQUIPE='mouleandsmile11@gmail.com';
+firebase.auth().onAuthStateChanged(user=>{
+  const estEquipeConnectee=user && !user.isAnonymous;
+  document.getElementById('screenLoginEquipe').classList.toggle('masque', !!estEquipeConnectee);
+  if(estEquipeConnectee){
+    // Ne se lance qu'une fois identifié — avant, les requêtes Firestore seraient refusées.
+    chargerHistorique();
+  }
+});
+async function connexionEquipe(){
+  const pwd=document.getElementById('loginPwdInput').value;
+  const err=document.getElementById('loginErreur');
+  err.textContent='';
+  if(!pwd){err.textContent='Entrez le mot de passe';return;}
+  try{
+    await firebase.auth().signInWithEmailAndPassword(EMAIL_EQUIPE,pwd);
+  }catch(e){
+    err.textContent='❌ Mot de passe incorrect';
+  }
+}
 // ⚠️ Adaptez cette URL à celle de votre app si elle change un jour (utilisée pour impression + copie de lien)
 const BASE_URL_APP='https://cevapizza11.github.io/moulesmile/index.html';
 
@@ -2254,8 +2305,9 @@ table{width:100%;border-collapse:collapse}
 
 // ============================================================
 // INIT
+// (chargerHistorique() est désormais lancé depuis onAuthStateChanged
+// ci-dessus, une fois la connexion équipe confirmée — voir plus haut)
 // ============================================================
-chargerHistorique();
 </script>
 </body>
 </html>
