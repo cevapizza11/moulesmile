@@ -390,7 +390,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
-<div class="version">v.21/09/2026 08:00 — Moule & Smile</div>
+<div class="version">v.22/09/2026 07:20 — Moule & Smile</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -974,7 +974,7 @@ function renderProduits(catId,filtreSubcat){
       <div class="product-card" id="prodcard_${p.id}">
         ${p.photo?`<img class="photo" src="${p.photo}" loading="lazy" alt="">`:''}
         <div class="info">
-          <div class="nom">${p.emoji?p.emoji+' ':''}${p.nom}</div>
+          <div class="nom">${(p.emoji&&!p.photo)?p.emoji+' ':''}${p.nom}</div>
           ${p.desc?`<div class="desc">${p.desc}</div>`:''}
         </div>
         <div style="display:flex;align-items:center;flex-shrink:0;gap:4px">
@@ -1387,7 +1387,7 @@ function renderUpsellList(){
           : `<button class="add-btn" onclick="ajouterUpsell('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${prix})">+</button>`;
         return `<div class="upsell-item">
           ${p.photo?`<img class="photo" src="${p.photo}" loading="lazy" alt="">`:''}
-          <div><div class="unom">${p.emoji||''} ${p.nom}</div>${p.desc?`<div class="udesc">${p.desc}</div>`:''}</div>
+          <div><div class="unom">${(p.emoji&&!p.photo)?p.emoji+' ':''}${p.nom}</div>${p.desc?`<div class="udesc">${p.desc}</div>`:''}</div>
           <div style="display:flex;align-items:center;gap:4px;margin-left:auto">
             <span class="uprix">${prix.toFixed(2).replace('.',',')} €</span>
             ${compteurHtml}
@@ -1414,7 +1414,7 @@ function renderUpsellList(){
       : `<button class="add-btn" onclick="ajouterUpsell('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${prix})">+</button>`;
     return `<div class="upsell-item">
       ${p.photo?`<img class="photo" src="${p.photo}" loading="lazy" alt="">`:''}
-      <div><div class="unom">${p.emoji||(p.type==='dessert'?'🍮':'☕')} ${p.nom}</div>${p.desc?`<div class="udesc">${p.desc}</div>`:''}</div>
+      <div><div class="unom">${(!p.photo?(p.emoji||(p.type==='dessert'?'🍮':'☕'))+' ':'')}${p.nom}</div>${p.desc?`<div class="udesc">${p.desc}</div>`:''}</div>
       <div style="display:flex;align-items:center;gap:4px;margin-left:auto">
         <span class="uprix">${prix.toFixed(2).replace('.',',')} €</span>
         ${compteurHtml}

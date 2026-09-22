@@ -418,7 +418,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
-<div class="version">v.21/09/2026 09:23 — Moule & Smile Admin</div>
+<div class="version">v.22/09/2026 07:20 — Moule & Smile Admin</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -877,6 +877,16 @@ function annulerImport(){importedData=null;document.getElementById('importPrevie
 
 function confirmerImport(){
   if(!importedData||!importedData.length)return;
+  // Conserver les photos déjà envoyées : l'Excel ne contient jamais la photo,
+  // donc sans ça un réimport (même pour juste changer un prix) effacerait
+  // toutes les photos existantes. On retrouve chaque photo via l'ID produit,
+  // qui ne change pas d'un import à l'autre.
+  const photosExistantes={};
+  if(carte&&carte.categories){
+    carte.categories.forEach(c=>(c.produits||[]).forEach(p=>{
+      if(p.photo)photosExistantes[p.id]=p.photo;
+    }));
+  }
   const newCarte={categories:[]};
   CATS.forEach(catDef=>{
     let prods=importedData.filter(p=>p.cat===catDef.id||catDef.id.includes(p.cat));
@@ -884,6 +894,7 @@ function confirmerImport(){
     const mapped=prods.map(p=>{
       const item={id:p.id,nom:p.nom,desc:p.desc,emoji:p.emoji,prix:p.prix,actif:p.actif};
       if(p.subcat) item.subcat=p.subcat;
+      if(photosExistantes[p.id]) item.photo=photosExistantes[p.id];
       return item;
     });
     if(mapped.length)newCarte.categories.push({id:catDef.id,nom:catDef.nom,produits:mapped});
@@ -892,7 +903,11 @@ function confirmerImport(){
   const others=importedData.filter(p=>!knownIds.includes(p.cat));
   if(others.length){
     others.sort((a,b)=>(a.ordre||9999)-(b.ordre||9999));
-    newCarte.categories.push({id:'autres',nom:'📦 Autres',produits:others.map(p=>({id:p.id,nom:p.nom,desc:p.desc,emoji:p.emoji,prix:p.prix,actif:p.actif}))});
+    newCarte.categories.push({id:'autres',nom:'📦 Autres',produits:others.map(p=>{
+      const item={id:p.id,nom:p.nom,desc:p.desc,emoji:p.emoji,prix:p.prix,actif:p.actif};
+      if(photosExistantes[p.id]) item.photo=photosExistantes[p.id];
+      return item;
+    })});
   }
   // Conserver les réglages existants (compteur global, catégories actives, menus spéciaux) lors d'un import
   if(carte){
