@@ -418,7 +418,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
-<div class="version">v.22/09/2026 07:36 — Moule & Smile Admin</div>
+<div class="version">v.22/09/2026 08:08 — Moule & Smile Admin</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -1121,7 +1121,7 @@ function renderEnfantMenu() {
         <button class="reorder-btn" onclick="deplacerEnfantMenu(${idx},1)" ${idx===em.length-1?'disabled':''} title="Descendre">▼</button>
       </div>
       <div class="item-info" onclick="ouvrirModalEdition(null,${idx},'enfantMenu')">
-        <div class="item-nom">${p.emoji||'🧒'} ${p.nom}</div>
+        <div class="item-nom">${p.photo?`<img src="${p.photo}" style="width:20px;height:20px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px">`:''}${p.emoji||'🧒'} ${p.nom}</div>
         <div class="item-detail">${p.desc||''}</div>
       </div>
       <div style="display:flex;align-items:center;gap:6px">
