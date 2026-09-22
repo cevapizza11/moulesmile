@@ -54,6 +54,8 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
 .jeton-pastille:active{transform:scale(.95)}
 .jeton-pastille.libre{border-color:#555}
 .jeton-pastille.actif{background:#1E3A2E;border-color:#4ABA80}
+.jeton-pastille.jeton-employe{background:#2E1E3A;border-color:#8E44AD}
+.jeton-pastille.jeton-employe .jp-num,.jeton-pastille.jeton-employe .jp-sub{color:#C89EDB}
 .jeton-pastille.en-attente{background:#3A2E1A;border-color:#D4941E}
 .jeton-pastille.en-attente .jp-num{color:#D4941E}
 .jeton-pastille.en-attente .jp-sub{color:#D4941E}
@@ -315,7 +317,8 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
   <div class="status-bar"><div class="dot"></div>Imprimez un jeton jetable au moment de placer une table — il s'active tout seul, se libère automatiquement à l'encaissement.</div>
   <div id="occupationCounter" style="background:#1A2A1A;border:1px solid #2ab54a;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#8aff9d;font-weight:bold;text-align:center"></div>
   <button class="btn-encaisser" style="width:100%;font-size:15px;padding:14px;margin-bottom:8px" onclick="ouvrirModalNouvelleTable()">🖨️ Nouvelle table — imprimer un jeton</button>
-  <button class="btn-encaisser" style="width:100%;font-size:15px;padding:14px;margin-bottom:14px;background:#2A6FB5" onclick="imprimerJetonAvance()">🖨️ Imprimer à l'avance (sans table — à attribuer ensuite)</button>
+  <button class="btn-encaisser" style="width:100%;font-size:15px;padding:14px;margin-bottom:8px;background:#2A6FB5" onclick="imprimerJetonAvance()">🖨️ Imprimer à l'avance (sans table — à attribuer ensuite)</button>
+  <button class="btn-encaisser" style="width:100%;font-size:15px;padding:14px;margin-bottom:14px;background:#8E44AD" onclick="creerJetonEmploye()">🍽️ Nouveau repas employé (10 points offerts)</button>
   <div class="recherche-bar">
     <input type="number" id="rechercheJeton" class="recherche-input" placeholder="🔍 Rechercher par n° de jeton OU n° de table..." inputmode="numeric" oninput="filtrerJetons()">
     <button class="btn-sm" onclick="document.getElementById('rechercheJeton').value='';filtrerJetons()" id="btnViderRechercheJeton" style="display:none">✕ Effacer</button>
@@ -412,7 +415,7 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
   </div>
 </div>
 
-<div class="version">v.21/09/2026 09:23 — Moule & Smile Caisse</div>
+<div class="version">v.22/09/2026 19:06 — Moule & Smile Caisse</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -637,6 +640,13 @@ let allJetons={};
 let filtreJetonsCourant='tous';
 let jetonEnCoursActivation=null;
 
+// Retrouve le libellé à afficher pour un numéro de "table" — "🍽️ Prénom" pour un repas employé
+// (bande 500+), "Table N" sinon. Utilisé partout où l'app affiche normalement "Table X".
+function libelleTable(t){
+  const je=Object.values(allJetons).find(j=>j.type==='employe' && j.table===t && j.statut==='actif');
+  return je?`🍽️ ${je.employeNom||'Employé'}`:`Table ${t}`;
+}
+
 db.collection('jetons').orderBy('numero').onSnapshot(snap=>{
   snap.docChanges().forEach(change=>{
     if(change.type==='removed'){
@@ -681,14 +691,15 @@ function renderJetons(){
   grid.innerHTML=jetons.map(j=>{
     const actif=j.statut==='actif';
     const enAttente=j.statut==='en_attente';
-    const classe=actif?'actif':(enAttente?'en-attente':'libre');
-    const sousLibelle=actif?'Table '+j.table+(j.couverts?' ('+j.couverts+'p)':''):(enAttente?'⏳ À attribuer':'Libre');
+    const estEmploye=j.type==='employe';
+    const classe=(actif?'actif':(enAttente?'en-attente':'libre'))+(estEmploye?' jeton-employe':'');
+    const sousLibelle=estEmploye?`🍽️ ${j.employeNom||'Employé'}`:(actif?'Table '+j.table+(j.couverts?' ('+j.couverts+'p)':''):(enAttente?'⏳ À attribuer':'Libre'));
     return `<div class="jeton-pastille ${classe}" style="position:relative">
       <div onclick="ouvrirModalJeton('${j.id}',${j.numero})">
-        <div class="jp-num">🎫 ${j.numero}</div>
+        <div class="jp-num">${estEmploye?'🍽️':'🎫'} ${j.numero}</div>
         <div class="jp-sub">${sousLibelle}</div>
       </div>
-      ${actif?`<button class="jp-print" onclick="event.stopPropagation();imprimerTicketJeton(${j.numero},'${j.token}',${j.table});showToast('🖨️ Réimpression jeton n°${j.numero} — Table ${j.table}')" title="Réimprimer">🖨️</button>`:''}
+      ${actif?`<button class="jp-print" onclick="event.stopPropagation();imprimerTicketJeton(${j.numero},'${j.token}',${j.table},null,${estEmploye?`'${(j.employeNom||'').replace(/'/g,"\\'")}'`:'null'});showToast('🖨️ Réimpression jeton n°${j.numero}')" title="Réimprimer">🖨️</button>`:''}
       ${enAttente?`<button class="jp-print" onclick="event.stopPropagation();imprimerTicketJeton(${j.numero},'${j.token}',null);showToast('🖨️ Réimpression jeton n°${j.numero}')" title="Réimprimer">🖨️</button>`:''}
     </div>`;
   }).join('');
@@ -1346,6 +1357,37 @@ async function validerNouvelleTable(){
   }catch(e){console.error(e);showToast('❌ Erreur création jeton');if(printWin)printWin.close();}
 }
 
+// ============================================================
+// REPAS EMPLOYÉ — jeton spécial avec un budget de 10 points (voir admin → onglet Options/Carte
+// pour le nombre de points de chaque plat). Réutilise tout le mécanisme des jetons de table :
+// l'employé scanne, commande normalement, la cuisine reçoit le ticket comme d'habitude — mais
+// index.html bloque l'ajout d'un article qui ferait dépasser 10 points, et l'encaissement ne
+// transmet PAS ce repas à Hiboutik (ce n'est pas une vente).
+// On lui attribue un numéro de "table" virtuel dans la bande 500+ (jamais utilisée par une vraie
+// table, plafonnée à 150) uniquement pour réutiliser tel quel tout le pipeline commandes/cuisine/
+// encaissement existant.
+// ============================================================
+async function creerJetonEmploye(){
+  const nom=(prompt('Prénom de l\'employé ?')||'').trim();
+  if(!nom){return;}
+
+  const printWin=window.open('','_blank','width=420,height=500');
+  if(!printWin){showToast('⚠️ Fenêtre d\'impression bloquée par le navigateur — autorisez les popups pour ce site');return;}
+
+  try{
+    const numero=await prochainNumeroJeton();
+    const token=genererTokenJeton();
+    const tableVirtuelle=500+numero;
+    await db.collection('jetons').doc(token).set({
+      numero, token, statut:'actif', table:tableVirtuelle, couverts:1, unites:1, jetable:true,
+      type:'employe', employeNom:nom, pointsBudget:10,
+      timestamp:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    showToast(`✅ Repas employé activé — ${nom} (10 points)`);
+    imprimerTicketJeton(numero, token, tableVirtuelle, printWin, nom);
+  }catch(e){console.error(e);showToast('❌ Erreur création repas employé');if(printWin)printWin.close();}
+}
+
 // Imprime un jeton tout de suite, SANS table assignée (statut "en_attente") — pratique pour
 // l'accueil : on donne le ticket au client en le conduisant à sa table, puis on attribue le
 // numéro de table depuis n'importe quel poste (Jetons → pastille orange → renseigner la table).
@@ -1424,15 +1466,16 @@ window.onload=function(){setTimeout(()=>{window.print();setTimeout(()=>window.cl
   win.document.close();
 }
 
-function imprimerTicketJeton(numero, token, tableNum, printWin){
+function imprimerTicketJeton(numero, token, tableNum, printWin, employeNom){
   const baseUrl=BASE_URL_APP;
   const url=`${baseUrl}?j=${token}`;
   const aTable=tableNum!==null && tableNum!==undefined;
+  const estEmploye=!!employeNom;
 
   const win=printWin||window.open('','_blank','width=420,height=500');
   if(!win){showToast('⚠️ Fenêtre d\'impression bloquée par le navigateur');return;}
   win.document.write(`<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>${aTable?'Jeton Table '+tableNum:'Jeton n°'+numero}</title>
+<html><head><meta charset="UTF-8"><title>${estEmploye?'Repas employé — '+employeNom:(aTable?'Jeton Table '+tableNum:'Jeton n°'+numero)}</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:900;color:#000;background:white;width:80mm;margin:0 auto;padding:8mm;text-align:center;-webkit-print-color-adjust:exact}
@@ -1444,8 +1487,8 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:900;color
 @media print{body{width:80mm;margin:0;padding:6mm}@page{margin:0;size:80mm auto}}
 </style></head><body>
 <div class="title">🐚 MOULE & SMILE</div>
-<div class="sub">${aTable?'Scannez pour commander depuis votre table':'Bienvenue ! Votre table va vous être attribuée'}</div>
-${aTable?`<div class="table-num">Table ${tableNum}</div>`:''}
+<div class="sub">${estEmploye?'Repas employé — 10 points offerts':(aTable?'Scannez pour commander depuis votre table':'Bienvenue ! Votre table va vous être attribuée')}</div>
+${estEmploye?`<div class="table-num">🍽️ ${employeNom}</div>`:(aTable?`<div class="table-num">Table ${tableNum}</div>`:'')}
 <div id="qr"></div>
 <div class="footer">Jeton n°${numero}<br>À usage unique — ne pas transférer</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
@@ -1600,7 +1643,7 @@ function renderCommandes(){
     const estDeux=cmd.couverts===2;
     return `<div class="cmd-card ${cmd.statut||'nouvelle'}">
       <div class="cmd-header">
-        <div class="cmd-table">Table ${cmd.table} ${estDeux?'<span class="badge-prio">👥 2 pers.</span>':''}</div>
+        <div class="cmd-table">${libelleTable(cmd.table)} ${estDeux?'<span class="badge-prio">👥 2 pers.</span>':''}</div>
         <div class="cmd-meta">
           <div class="cmd-heure">🕐 ${cmd.heure||'--:--'}</div>
           <div class="cmd-statut" style="color:${statutColors[cmd.statut]||'#888'}">${statutLabels[cmd.statut]||''}</div>
@@ -1725,7 +1768,7 @@ function imprimerTicketCuisine(cmd,printWin){
   const win=printWin||window.open('','_blank','width=420,height=600');
   if(!win){showToast('⚠️ Fenêtre d\'impression bloquée par le navigateur');return;}
   win.document.write(`<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>Cuisine Table ${cmd.table}</title>
+<html><head><meta charset="UTF-8"><title>Cuisine ${libelleTable(cmd.table)}</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:900;color:#000;background:white;width:80mm;margin:0 auto;padding:8mm;-webkit-print-color-adjust:exact}
@@ -1735,7 +1778,7 @@ table{width:100%;border-collapse:collapse}
 @media print{body{width:80mm;margin:0;padding:6mm}@page{margin:0;size:80mm auto}}
 </style></head><body>
 <div class="title">🍳 CUISINE</div>
-<div class="sub">Table ${cmd.table} — ${cmd.heure||new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</div>
+<div class="sub">${libelleTable(cmd.table)} — ${cmd.heure||new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</div>
 <table>${lignes}</table>
 <script>window.onload=function(){window.print();setTimeout(()=>window.close(),1500);}<\/script>
 </body></html>`);
@@ -1963,7 +2006,7 @@ function renderAdditions(){
     <div class="addition-card ${enRetard?'en-retard':''}">
       <div class="addition-header">
         <div>
-          <div class="addition-table-num">🪑 Table ${add.table}${enRetard?`<span class="badge-retard">⏰ ${mins} min</span>`:''}</div>
+          <div class="addition-table-num">🪑 ${libelleTable(add.table)}${enRetard?`<span class="badge-retard">⏰ ${mins} min</span>`:''}</div>
           <div class="addition-nb">${(add.commandes||[]).length} commande(s)</div>
         </div>
         <div class="addition-total">${(add.total||0).toFixed(2).replace('.',',')} €</div>
@@ -2054,12 +2097,14 @@ async function envoyerVenteVersHiboutik(tableNum, commandes, couverts){
     }
   }catch(e){
     console.error(`❌ Échec transmission Hiboutik — table ${tableNum} :`, e.message);
-    showToast(`⚠️ Table ${tableNum} encaissée, mais échec transmission Hiboutik`);
+    showToast(`⚠️ ${libelleTable(tableNum)} encaissée, mais échec transmission Hiboutik`);
   }
 }
 
 async function encaisser(tableNum){
-  if(!confirm(`Encaisser la table ${tableNum} ?`)) return;
+  const jetonActif=Object.values(allJetons).find(j=>j.statut==='actif' && j.table===tableNum);
+  const estRepasEmploye=jetonActif&&jetonActif.type==='employe';
+  if(!confirm(`Encaisser ${libelleTable(tableNum)} ?`)) return;
   try{
     const addRef=db.collection('additions').doc(`table_${tableNum}`);
     const addSnap=await addRef.get();
@@ -2072,18 +2117,25 @@ async function encaisser(tableNum){
       (cmd.items||[]).some(item=>nomsPlatsRepas.includes((item.nom||'').trim().toLowerCase()))
     );
 
-    // Archiver dans historique
+    // Archiver dans historique — un repas employé est tagué à part (type + prénom) pour ne pas
+    // fausser les statistiques de chiffre d'affaires ; son "total" reste indicatif (valeur du repas
+    // s'il avait été facturé), pas un encaissement réel.
     await db.collection('historique').add({
       table:tableNum,
       total:addData.total||0,
       commandes:addData.commandes||[],
       heureReglement:new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}),
-      timestamp:firebase.firestore.FieldValue.serverTimestamp()
+      timestamp:firebase.firestore.FieldValue.serverTimestamp(),
+      ...(estRepasEmploye?{type:'employe',employeNom:jetonActif.employeNom||null}:{})
     });
 
     // Transmission à Hiboutik (caisse certifiée) — ne bloque JAMAIS l'encaissement local en cas d'échec.
-    const jetonActif=Object.values(allJetons).find(j=>j.statut==='actif' && j.table===tableNum);
-    envoyerVenteVersHiboutik(tableNum, addData.commandes||[], jetonActif?.couverts||null);
+    // Un repas employé n'est PAS une vente : on ne le transmet jamais à Hiboutik.
+    if(estRepasEmploye){
+      console.log(`🍽️ Repas employé (${jetonActif.employeNom}) — non transmis à Hiboutik`);
+    } else {
+      envoyerVenteVersHiboutik(tableNum, addData.commandes||[], jetonActif?.couverts||null);
+    }
 
     // Marquer toutes les commandes réglées + supprimer addition + supprimer alerte
     const snap=await db.collection('commandes').where('table','==',tableNum).get();
@@ -2100,7 +2152,7 @@ async function encaisser(tableNum){
       ts:firebase.firestore.FieldValue.serverTimestamp()
     });
 
-    showToast(`✅ Table ${tableNum} encaissée !`);
+    showToast(`✅ ${libelleTable(tableNum)} encaissée !`);
     chargerHistorique();
     liberJetonDeTable(tableNum, addData.total||0, aCommandeRepas);
   }catch(e){showToast('❌ Erreur encaissement');console.error(e);}

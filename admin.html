@@ -149,6 +149,9 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
       <div class="form-group" style="flex:1"><label>Prix (€)</label><input type="number" id="editPrix" step="0.10" min="0"></div>
       <div class="form-group" style="flex:1"><label>Sous-catégorie</label><input type="text" id="editSubcat" placeholder="Ex: Rouge, Softs..."></div>
     </div>
+    <div class="form-row" id="editPointsRow">
+      <div class="form-group" style="flex:1"><label>🍽️ Points repas employé</label><input type="number" id="editPoints" step="1" min="0" placeholder="0"></div>
+    </div>
     <div class="form-row">
       <div class="form-group" style="flex:1">
         <label>📷 Photo</label>
@@ -430,7 +433,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
-<div class="version">v.22/09/2026 09:10 — Moule & Smile Admin</div>
+<div class="version">v.22/09/2026 19:06 — Moule & Smile Admin</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -535,7 +538,7 @@ function render(){
         <button class="reorder-btn" onclick="deplacerProduit('${catActive}',${idx},-1)" ${idx===0?'disabled':''} title="Monter">▲</button>
         <button class="reorder-btn" onclick="deplacerProduit('${catActive}',${idx},1)" ${idx===nbTotal-1?'disabled':''} title="Descendre">▼</button>
       </div>
-      <div class="item-info" onclick="ouvrirModalEdition('${catActive}',${idx})"><div class="item-nom">${p.photo?`<img src="${p.photo}" style="width:20px;height:20px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px">`:''}${p.emoji||''} ${p.nom}</div><div class="item-detail">${p.desc||''}${p.subcat?' · '+p.subcat:''}</div></div>
+      <div class="item-info" onclick="ouvrirModalEdition('${catActive}',${idx})"><div class="item-nom">${p.photo?`<img src="${p.photo}" style="width:20px;height:20px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px">`:''}${p.emoji||''} ${p.nom}</div><div class="item-detail">${p.desc||''}${p.subcat?' · '+p.subcat:''}${p.points?` · 🍽️${p.points}pt`:''}</div></div>
       <div style="display:flex;align-items:center;gap:4px">
         ${p.prix>0?`<input type="number" class="prix-input" value="${p.prix}" step="0.10" onchange="updatePrix('${catActive}',${idx},this.value)"> €`:'<span style="color:#1A7A50;font-size:10px;font-weight:bold">Inclus</span>'}
         <label class="toggle"><input type="checkbox" ${p.actif?'checked':''} onchange="toggleItem('${catActive}',${idx},this.checked)"><span class="toggle-slider"></span></label>
@@ -621,6 +624,10 @@ function ouvrirModalEdition(catId,idx,source='carte'){
   document.getElementById('editEmoji').closest('.form-group').style.display=(source==='optionFamille')?'none':'flex';
   document.getElementById('editDesc').closest('.form-group').style.display=(source==='optionFamille')?'none':'flex';
   document.getElementById('editPrix').closest('.form-group').querySelector('label').textContent=(source==='optionFamille')?'Supplément (€)':'Prix (€)';
+  // Points "repas employé" : pertinents pour un produit de la carte ou une option (sauce, nappage...),
+  // pas pour le menu enfant (offert, hors sujet du budget de points).
+  document.getElementById('editPointsRow').style.display=(source==='enfantMenu')?'none':'flex';
+  document.getElementById('editPoints').value=p.points||0;
   afficherApercuPhoto(p.photo||null);
   document.getElementById('editPhotoInput').value='';
   document.getElementById('editPhotoStatut').textContent='';
@@ -739,6 +746,9 @@ function validerEdition(){
     if(subcat) p.subcat=subcat; else delete p.subcat;
   } else if(editionSource==='optionFamille'){
     p.supplement=parseFloat(document.getElementById('editPrix').value)||0;
+  }
+  if(editionSource!=='enfantMenu'){
+    p.points=parseInt(document.getElementById('editPoints').value)||0;
   }
   sauvegarder();
   if(editionSource==='enfantMenu') renderEnfantMenu();
@@ -1279,7 +1289,7 @@ function renderFamillesOptions(){
         ${opts.map(o=>`
           <div class="item-row">
             <div class="item-info" onclick="ouvrirModalEdition('${fid}',${(f.options||[]).indexOf(o)},'optionFamille')">
-              <div class="item-nom">${o.photo?`<img src="${o.photo}" style="width:20px;height:20px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px">`:''}${o.nom}</div>
+              <div class="item-nom">${o.photo?`<img src="${o.photo}" style="width:20px;height:20px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px">`:''}${o.nom}${o.points?` <span style="color:#8E44AD;font-size:11px">🍽️${o.points}pt</span>`:''}</div>
             </div>
             <div style="display:flex;align-items:center;gap:6px">
               <input type="number" value="${o.supplement||0}" step="0.10" min="0" style="width:60px;background:#1A1A1A;border:1px solid #444;border-radius:6px;color:#fff;padding:4px" onchange="updateSupplementOption('${fid}','${o.id}',this.value)">

@@ -169,6 +169,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   <h1>🐚 MOULE & SMILE</h1>
   <div class="header-badges">
     <div id="tableBadge" style="display:none" class="table-badge">Table <span id="tableNumHeader"></span></div>
+    <div id="pointsBadgeHeader" style="display:none" class="total-badge">🍽️ …</div>
     <div id="totalBadgeHeader" style="display:none" class="total-badge">💰 Total : <span id="totalBadgeAmount">0,00 €</span></div>
   </div>
 </div>
@@ -391,7 +392,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
-<div class="version">v.22/09/2026 08:08 — Moule & Smile</div>
+<div class="version">v.22/09/2026 19:06 — Moule & Smile</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -411,6 +412,37 @@ firebase.auth().signInAnonymously().catch(e=>console.error('Erreur connexion ano
 let tableNum=null, panier=[], catActive=null, carte=null;
 let refuserSuggestionFormule=false; // "C'est juste pour boire" — mémorisé pour toute la session client
 let totalDejaCommande=0; // Somme des commandes déjà envoyées (hors panier en cours)
+
+// ============================================================
+// REPAS EMPLOYÉ — jeton spécial (créé depuis caisse.html → 🎫 Jetons → 🍽️ Nouveau repas employé)
+// avec un budget de points au lieu d'un prix. Chaque produit/option a un nombre de points
+// (réglé dans admin.html), et l'employé ne peut pas commander au-delà de son budget du service.
+// ============================================================
+let modeEmploye=false, employeNom='', pointsBudgetEmploye=10, pointsEnvoyes=0;
+
+function pointsPanierActuel(){
+  return panier.reduce((s,p)=>s+(p.points||0),0);
+}
+function pointsRestants(){
+  return pointsBudgetEmploye-pointsEnvoyes-pointsPanierActuel();
+}
+// Renvoie false (et prévient) si ajouter `pointsAAjouter` ferait dépasser le budget du service —
+// à appeler avant tout ajout au panier quand on est en mode employé. Hors mode employé : toujours true.
+function verifierBudgetPoints(pointsAAjouter){
+  if(!modeEmploye) return true;
+  if(pointsEnvoyes+pointsPanierActuel()+(pointsAAjouter||0)>pointsBudgetEmploye){
+    showToast(`⚠️ Budget de ${pointsBudgetEmploye} points atteint — reste ${Math.max(0,pointsRestants())} pt`);
+    return false;
+  }
+  return true;
+}
+function updateBadgePoints(){
+  const badge=document.getElementById('pointsBadgeHeader');
+  if(!badge)return;
+  if(!modeEmploye){badge.style.display='none';return;}
+  badge.style.display='inline-block';
+  badge.textContent=`🍽️ ${employeNom} — ${Math.max(0,pointsRestants())}/${pointsBudgetEmploye} pt`;
+}
 
 // JETON DE TABLE (sécurité — remplace l'ancienne saisie libre du numéro de table)
 const urlParams=new URLSearchParams(window.location.search);
@@ -437,14 +469,25 @@ if(!jetonToken){
     }
     // Jeton valide et actif → table assignée automatiquement, pas de saisie manuelle
     masquerBlocageJeton();
-    tableNum=doc.data().table;
+    const d=doc.data();
+    tableNum=d.table;
+    modeEmploye=(d.type==='employe');
+    employeNom=d.employeNom||'';
+    pointsBudgetEmploye=d.pointsBudget||10;
     if(!jetonEnCours){
       jetonEnCours=true;
       nbAdultes=1;nbEnfants=0;
-      majAffichageCouverts();
-      showScreen('screenCouverts');
+      if(modeEmploye){
+        // Repas employé : pas de "combien de couverts ?" à demander, on va direct au menu.
+        majAffichageCouverts();
+        validerTable(1);
+      } else {
+        majAffichageCouverts();
+        showScreen('screenCouverts');
+      }
     } else {
       document.getElementById('tableNumHeader').textContent=tableNum;
+      updateBadgePoints();
     }
   }, err=>{
     console.error('Erreur vérification jeton',err);
@@ -781,7 +824,10 @@ function validerCouverts(){
 function validerTable(couverts){
   nbCouverts=couverts;
   document.getElementById('tableNumHeader').textContent=tableNum;
-  document.getElementById('tableBadge').style.display='inline-block';
+  // Repas employé : pas de badge "Table N" (numéro virtuel, sans intérêt pour l'employé) — le badge
+  // de points prend sa place.
+  document.getElementById('tableBadge').style.display=modeEmploye?'none':'inline-block';
+  updateBadgePoints();
   renderTuilesAccueil();
   ecouterNotifications();
   rafraichirTotalDejaCommande();
@@ -957,7 +1003,9 @@ function renderProduits(catId,filtreSubcat){
       html+=`<div class="subcat-header">${p.subcat}</div>`;
       lastSubcat=p.subcat;
     }
-    const prixDisplay=p.prix===0?'<span class="gratuit">Inclus</span>':`<span class="prix">${p.prix.toFixed(2).replace('.',',')} €</span>`;
+    const prixDisplay=modeEmploye
+      ?`<span class="prix" style="color:#C89EDB">🍽️ ${p.points||0} pt</span>`
+      :(p.prix===0?'<span class="gratuit">Inclus</span>':`<span class="prix">${p.prix.toFixed(2).replace('.',',')} €</span>`);
     const qte=qteDansPanier(p.id);
     let compteurHtml;
     if(consultationSeule){
@@ -965,11 +1013,11 @@ function renderProduits(catId,filtreSubcat){
       compteurHtml='';
     } else if(!compteurActif){
       // Réglage global désactivé → simple bouton + sans jamais de compteur visible
-      compteurHtml=`<button class="add-btn" onclick="ajouterPanier('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${p.prix})">+</button>`;
+      compteurHtml=`<button class="add-btn" onclick="ajouterPanier('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${p.prix},${p.points||0})">+</button>`;
     } else {
       compteurHtml=qte>0
-        ? `<button class="qty-btn qty-minus" onclick="retirerUnite('${p.id}')">−</button><span class="qty-num">${qte}</span><button class="qty-btn qty-plus" onclick="ajouterPanier('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${p.prix})">+</button>`
-        : `<button class="add-btn" onclick="ajouterPanier('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${p.prix})">+</button>`;
+        ? `<button class="qty-btn qty-minus" onclick="retirerUnite('${p.id}')">−</button><span class="qty-num">${qte}</span><button class="qty-btn qty-plus" onclick="ajouterPanier('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${p.prix},${p.points||0})">+</button>`
+        : `<button class="add-btn" onclick="ajouterPanier('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${p.prix},${p.points||0})">+</button>`;
     }
     html+=`
       <div class="product-card" id="prodcard_${p.id}">
@@ -1023,7 +1071,11 @@ function nbFormulesTotalTable(){
   return nbPanier+nbEnvoyees;
 }
 
-function ajouterPanier(id,nom,desc,prix){
+function ajouterPanier(id,nom,desc,prix,points){
+  points=points||0;
+  // Mode repas employé — budget de points (voir verifierBudgetPoints) : bloque l'ajout si ça
+  // ferait dépasser le budget du service en cours. Ne s'applique pas au menu enfant offert (en1).
+  if(id!=='en1' && !verifierBudgetPoints(points)) return;
   // Vérification enfant gratuit
   if(id==='en1'){
     // Doit y avoir au moins 1 adulte payant
@@ -1044,7 +1096,7 @@ function ajouterPanier(id,nom,desc,prix){
   // Menu Enfant/Ado 6-17 ans → popup choix du plat (moules ou calamars)
   if(id==='en2'){
     const uid=Date.now()+Math.random();
-    panier.push({id,nom,desc,prix,uid});
+    panier.push({id,nom,desc,prix,points,uid});
     updatePanierBar();
     ouvrirModalMenuAdo(uid);
     return;
@@ -1052,7 +1104,7 @@ function ajouterPanier(id,nom,desc,prix){
 
   // Tous les autres — ajout silencieux (pas de toast)
   const uid=Date.now()+Math.random();
-  panier.push({id,nom,desc,prix,uid});
+  panier.push({id,nom,desc,prix,points,uid});
   updatePanierBar();
 
   // Système générique d'options par étapes (coulis, croquant, nappage, sauce...)
@@ -1089,18 +1141,21 @@ function ouvrirProchainePopupOption(uidItem,etapes,index,source){
   document.getElementById('modalOptionTitre').textContent=famille.nom||'Choisissez une option';
   const options=famille.options.filter(o=>o.actif);
   document.getElementById('modalOptionList').innerHTML=options.map(o=>`
-    <div class="modal-item" onclick="choisirOption('${o.id}','${esc(o.nom)}',${o.supplement||0})">
+    <div class="modal-item" onclick="choisirOption('${o.id}','${esc(o.nom)}',${o.supplement||0},${o.points||0})">
       <div><div class="mnom">${o.nom}</div></div>
-      ${o.supplement>0?`<div class="mprix">+${o.supplement.toFixed(2).replace('.',',')} €</div>`:''}
+      ${modeEmploye?(o.points>0?`<div class="mprix" style="color:#C89EDB">+${o.points} pt</div>`:''):(o.supplement>0?`<div class="mprix">+${o.supplement.toFixed(2).replace('.',',')} €</div>`:'')}
     </div>`).join('');
   document.getElementById('modalOption').classList.add('visible');
 }
 
 let optionEnCours=null;
 
-function choisirOption(optionId,optionNom,supplement){
+function choisirOption(optionId,optionNom,supplement,points){
   if(!optionEnCours) return;
   const {uidItem,etapes,index,famille,source}=optionEnCours;
+  // Mode employé : une option qui ferait dépasser le budget est refusée — le popup reste ouvert
+  // pour que l'employé choisisse une autre option (ex: une sauce à 0 point).
+  if(!verifierBudgetPoints(points||0)) return;
   const tableau=source==='upsell'?panierAvantAddition:panier;
   const item=tableau.find(p=>p.uid===uidItem);
   if(item){
@@ -1110,6 +1165,9 @@ function choisirOption(optionId,optionNom,supplement){
       item.prix+=supplement;
       item.desc+=` (+${supplement.toFixed(2).replace('.',',')} €)`;
       item.choix+=` (+${supplement.toFixed(2).replace('.',',')} €)`;
+    }
+    if(points>0){
+      item.points=(item.points||0)+points;
     }
   }
   document.getElementById('modalOption').classList.remove('visible');
@@ -1136,9 +1194,12 @@ function updatePanierBar(){
   const total=panier.reduce((s,p)=>s+p.prix,0);
   const nb=panier.length;
   document.getElementById('panierNb').textContent=nb+' article'+(nb>1?'s':'');
-  document.getElementById('panierTotalBar').textContent=total.toFixed(2).replace('.',',')+' €';
+  document.getElementById('panierTotalBar').textContent=modeEmploye
+    ?pointsPanierActuel()+' pt'
+    :total.toFixed(2).replace('.',',')+' €';
   document.getElementById('panierBar').classList.toggle('visible',nb>0);
   updateTotalBadgeHeader();
+  updateBadgePoints();
   rafraichirCompteursProduits();
 }
 
@@ -1153,17 +1214,21 @@ function ecouterMesCommandes(){
   if(unsubscribeMesCommandes) unsubscribeMesCommandes(); // éviter les doublons d'écoute
   unsubscribeMesCommandes=db.collection('commandes').where('table','==',tableNum).onSnapshot(snap=>{
     let total=0;
+    let points=0;
     const commandes=[];
     snap.forEach(doc=>{
       const d=doc.data();
       if(d.statut==='regle') return;
       total+=d.total||0;
+      points+=d.totalPoints||(d.items||[]).reduce((s,it)=>s+(it.points||0),0);
       if((d.items||[]).length) commandes.push({id:doc.id,heure:d.heure||'--:--',items:d.items||[],total:d.total||0});
     });
     commandes.sort((a,b)=>a.heure.localeCompare(b.heure));
     totalDejaCommande=total;
+    pointsEnvoyes=points;
     mesCommandesEnvoyees=commandes;
     updateTotalBadgeHeader();
+    updateBadgePoints();
     // Si le client est en train de regarder l'écran de confirmation, on le met à jour en direct
     if(document.getElementById('screenConfirm').classList.contains('active')){
       renderRecapCommandesEnvoyees();
@@ -1180,6 +1245,7 @@ function updateTotalBadgeHeader(){
   const badge=document.getElementById('totalBadgeHeader');
   const amountEl=document.getElementById('totalBadgeAmount');
   if(!badge||!amountEl||!tableNum) return;
+  if(modeEmploye){ badge.style.display='none'; return; } // repas employé : le badge de points remplace le total €
   const totalPanier=panier.reduce((s,p)=>s+p.prix,0);
   const totalGlobal=totalDejaCommande+totalPanier;
   amountEl.textContent=totalGlobal.toFixed(2).replace('.',',')+' €';
@@ -1384,13 +1450,13 @@ function renderUpsellList(){
         const prix=p.prix!=null?p.prix:0;
         const qte=qteAvantAddition(p.id);
         const compteurHtml=qte>0
-          ? `<button class="qty-btn qty-minus" onclick="retirerUpsell('${p.id}')">−</button><span class="qty-num">${qte}</span><button class="qty-btn qty-plus" onclick="ajouterUpsell('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${prix})">+</button>`
-          : `<button class="add-btn" onclick="ajouterUpsell('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${prix})">+</button>`;
+          ? `<button class="qty-btn qty-minus" onclick="retirerUpsell('${p.id}')">−</button><span class="qty-num">${qte}</span><button class="qty-btn qty-plus" onclick="ajouterUpsell('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${prix},${p.points||0})">+</button>`
+          : `<button class="add-btn" onclick="ajouterUpsell('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${prix},${p.points||0})">+</button>`;
         return `<div class="upsell-item">
           ${p.photo?`<img class="photo" src="${p.photo}" loading="lazy" decoding="async" alt="">`:''}
           <div><div class="unom">${(p.emoji&&!p.photo)?p.emoji+' ':''}${p.nom}</div>${p.desc?`<div class="udesc">${p.desc}</div>`:''}</div>
           <div style="display:flex;align-items:center;gap:4px;margin-left:auto">
-            <span class="uprix">${prix.toFixed(2).replace('.',',')} €</span>
+            <span class="uprix">${modeEmploye?(p.points||0)+" pt":prix.toFixed(2).replace('.',',')+" €"}</span>
             ${compteurHtml}
           </div>
         </div>`;
@@ -1411,13 +1477,13 @@ function renderUpsellList(){
     const prix=p.prix!=null?p.prix:(p.type==='dessert'?3.50:2.50);
     const qte=qteAvantAddition(p.id);
     const compteurHtml=qte>0
-      ? `<button class="qty-btn qty-minus" onclick="retirerUpsell('${p.id}')">−</button><span class="qty-num">${qte}</span><button class="qty-btn qty-plus" onclick="ajouterUpsell('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${prix})">+</button>`
-      : `<button class="add-btn" onclick="ajouterUpsell('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${prix})">+</button>`;
+      ? `<button class="qty-btn qty-minus" onclick="retirerUpsell('${p.id}')">−</button><span class="qty-num">${qte}</span><button class="qty-btn qty-plus" onclick="ajouterUpsell('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${prix},${p.points||0})">+</button>`
+      : `<button class="add-btn" onclick="ajouterUpsell('${p.id}','${esc(p.nom)}','${esc(p.desc||'')}',${prix},${p.points||0})">+</button>`;
     return `<div class="upsell-item">
       ${p.photo?`<img class="photo" src="${p.photo}" loading="lazy" decoding="async" alt="">`:''}
       <div><div class="unom">${(!p.photo?(p.emoji||(p.type==='dessert'?'🍮':'☕'))+' ':'')}${p.nom}</div>${p.desc?`<div class="udesc">${p.desc}</div>`:''}</div>
       <div style="display:flex;align-items:center;gap:4px;margin-left:auto">
-        <span class="uprix">${prix.toFixed(2).replace('.',',')} €</span>
+        <span class="uprix">${modeEmploye?(p.points||0)+" pt":prix.toFixed(2).replace('.',',')+" €"}</span>
         ${compteurHtml}
       </div>
     </div>`;
@@ -1426,9 +1492,11 @@ function renderUpsellList(){
   container.innerHTML=famillesHtml+produitsHtml;
 }
 
-function ajouterUpsell(id,nom,desc,prix){
+function ajouterUpsell(id,nom,desc,prix,points){
+  points=points||0;
+  if(!verifierBudgetPoints(points))return;
   const uid=Date.now()+Math.random();
-  panierAvantAddition.push({id,nom,desc,prix,uid});
+  panierAvantAddition.push({id,nom,desc,prix,points,uid});
   renderUpsellList();
 
   // Système générique d'options par étapes (coulis, croquant, nappage, sauce...)
@@ -1454,14 +1522,16 @@ async function validerAvantAddition(){
   }
   const heure=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
   const total=panierAvantAddition.reduce((s,p)=>s+p.prix,0);
+  const totalPoints=panierAvantAddition.reduce((s,p)=>s+(p.points||0),0);
   try{
     await db.collection('commandes').add({
       table:tableNum,
       couverts:nbCouverts||null,
       nbAdultes:nbAdultes!=null?nbAdultes:null,
       nbEnfants:nbEnfants!=null?nbEnfants:0,
-      items:panierAvantAddition.map(p=>({id:p.id,nom:p.nom,desc:p.desc||'',choix:p.choix||'',prix:p.prix})),
+      items:panierAvantAddition.map(p=>({id:p.id,nom:p.nom,desc:p.desc||'',choix:p.choix||'',prix:p.prix,points:p.points||0})),
       total,
+      totalPoints,
       timestamp:firebase.firestore.FieldValue.serverTimestamp(),
       statut:'nouvelle',
       heure
@@ -1488,6 +1558,7 @@ async function validerCommande(){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('loader').style.display='block';
   const total=panier.reduce((s,p)=>s+p.prix,0);
+  const totalPoints=panier.reduce((s,p)=>s+(p.points||0),0);
   const heure=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
   try{
     await db.collection('commandes').add({
@@ -1495,8 +1566,9 @@ async function validerCommande(){
       couverts:nbCouverts||null,
       nbAdultes:nbAdultes!=null?nbAdultes:null,
       nbEnfants:nbEnfants!=null?nbEnfants:0,
-      items:panier.map(p=>({id:p.id,nom:p.nom,desc:p.desc||'',choix:p.choix||'',prix:p.prix})),
+      items:panier.map(p=>({id:p.id,nom:p.nom,desc:p.desc||'',choix:p.choix||'',prix:p.prix,points:p.points||0})),
       total,
+      totalPoints,
       timestamp:firebase.firestore.FieldValue.serverTimestamp(),
       statut:'nouvelle',
       heure
