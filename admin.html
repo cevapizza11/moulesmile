@@ -418,7 +418,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
-<div class="version">v.22/09/2026 08:08 — Moule & Smile Admin</div>
+<div class="version">v.22/09/2026 08:46 — Moule & Smile Admin</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -643,7 +643,7 @@ function redimensionnerImage(file){
 }
 
 async function gererFichierPhoto(file){
-  if(!file||editionCatId===null||editionIdx===null)return;
+  if(!file||editionIdx===null)return;
   const liste=getListeEdition(editionSource,editionCatId);
   const p=liste&&liste[editionIdx];
   if(!p)return;
@@ -671,7 +671,7 @@ async function gererFichierPhoto(file){
 }
 
 async function supprimerPhotoProduit(){
-  if(editionCatId===null||editionIdx===null)return;
+  if(editionIdx===null)return;
   const liste=getListeEdition(editionSource,editionCatId);
   const p=liste&&liste[editionIdx];
   if(!p||!p.photo)return;
@@ -689,7 +689,7 @@ function fermerModalEdition(){
 }
 
 function validerEdition(){
-  if(editionCatId===null||editionIdx===null)return;
+  if(editionIdx===null)return;
   const liste=getListeEdition(editionSource,editionCatId);
   if(!liste)return;
   const p=liste[editionIdx];
