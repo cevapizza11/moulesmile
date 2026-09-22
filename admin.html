@@ -418,7 +418,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
-<div class="version">v.22/09/2026 07:20 — Moule & Smile Admin</div>
+<div class="version">v.22/09/2026 07:36 — Moule & Smile Admin</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -617,9 +617,10 @@ function afficherApercuPhoto(url){
   }
 }
 
-// Redimensionne l'image côté téléphone AVANT l'envoi (max 1000px de large, JPEG qualité 72%) —
+// Redimensionne l'image côté téléphone AVANT l'envoi (max 800px de large, JPEG qualité 65%) —
 // une photo de smartphone pèse souvent 3-5 Mo, inutile et lent à charger pour un client en
-// salle avec une connexion mobile moyenne ; ~100-200 Ko suffit largement pour un téléphone.
+// salle avec une connexion mobile moyenne ; ces vignettes ne s'affichent qu'en petit (52-44px
+// à l'écran), donc 800px/65% suffit très largement et pèse encore moins que la version précédente.
 function redimensionnerImage(file){
   return new Promise((resolve,reject)=>{
     const img=new Image();
@@ -627,14 +628,14 @@ function redimensionnerImage(file){
     reader.onload=e=>{ img.src=e.target.result; };
     reader.onerror=reject;
     img.onload=()=>{
-      const MAX=1000;
+      const MAX=800;
       let {width,height}=img;
       if(width>height && width>MAX){height=Math.round(height*MAX/width);width=MAX;}
       else if(height>MAX){width=Math.round(width*MAX/height);height=MAX;}
       const canvas=document.createElement('canvas');
       canvas.width=width;canvas.height=height;
       canvas.getContext('2d').drawImage(img,0,0,width,height);
-      canvas.toBlob(blob=>resolve(blob),'image/jpeg',0.72);
+      canvas.toBlob(blob=>resolve(blob),'image/jpeg',0.65);
     };
     img.onerror=reject;
     reader.readAsDataURL(file);
@@ -651,7 +652,11 @@ async function gererFichierPhoto(file){
     statut.textContent='📤 Envoi en cours...';
     const blob=await redimensionnerImage(file);
     const chemin=`photos/${p.id}.jpg`;
-    await storage.ref(chemin).put(blob,{contentType:'image/jpeg'});
+    // cacheControl : demande aux navigateurs des clients de garder la photo en cache 1 jour —
+    // une fois qu'un client l'a vue, elle ne se retélécharge plus s'il revient sur la carte
+    // pendant le même service. 1 jour (pas plus) pour qu'un changement de photo se voie vite
+    // si tu la remplaces depuis l'admin.
+    await storage.ref(chemin).put(blob,{contentType:'image/jpeg',cacheControl:'public,max-age=86400'});
     const url=await storage.ref(chemin).getDownloadURL();
     p.photo=url;
     afficherApercuPhoto(url);
