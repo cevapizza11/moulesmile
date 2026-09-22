@@ -126,6 +126,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   <div class="nav-tab active" onclick="switchNav('Carte',this)" style="flex-shrink:0">📋 Carte</div>
   <div class="nav-tab" onclick="switchNav('BoissonMenu',this)" style="flex-shrink:0">🍺 Menu</div>
   <div class="nav-tab" onclick="switchNav('EnfantMenu',this)" style="flex-shrink:0">🧒 Enfant</div>
+  <div class="nav-tab" onclick="switchNav('Options',this)" style="flex-shrink:0">🎛️ Options</div>
   <div class="nav-tab" onclick="switchNav('Reglages',this)" style="flex-shrink:0">⚙️ Réglages</div>
   <div class="nav-tab" onclick="switchNav('Ajouter',this)" style="flex-shrink:0">➕ Ajouter</div>
   <div class="nav-tab" onclick="switchNav('Importer',this)" style="flex-shrink:0">📥 Excel</div>
@@ -221,6 +222,17 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   <div style="background:#2A2A2A;border-radius:10px;padding:12px;margin-top:14px;font-size:12px;color:#888;line-height:1.7">
     💡 Ces produits apparaissent dans le popup <strong style="color:#D4AF37">Menu Enfant</strong> quand le client confirme un enfant de 0-5 ans.<br>
     C'est gratuit — inclus dans l'offre enfant.
+  </div>
+</div>
+
+<!-- FAMILLES D'OPTIONS (nappages, sauces, coulis...) -->
+<div id="navOptions" class="content" style="display:none">
+  <div class="status-bar"><div class="dot"></div>Choix proposés au client pendant sa commande (sauce, coulis, nappage...)</div>
+  <div id="famillesOptionsList"></div>
+  <div style="background:#2A2A2A;border-radius:10px;padding:12px;margin-top:14px;font-size:12px;color:#888;line-height:1.7">
+    💡 Modifie ici le prix, l'activation ou la photo de chaque choix sans repasser par l'Excel.<br>
+    Si tu réimportes un fichier Excel qui contient l'onglet <strong style="color:#D4AF37">"Familles Options"</strong>, ce contenu sera écrasé par le fichier (les photos, elles, sont toujours préservées). Sans cet onglet dans le fichier, tes modifications ici restent intactes.<br>
+    Pour créer une toute nouvelle famille d'options, passe encore par l'Excel — cet onglet permet de modifier l'existant, pas d'en créer une nouvelle pour l'instant.
   </div>
 </div>
 
@@ -418,7 +430,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
-<div class="version">v.22/09/2026 08:46 — Moule & Smile Admin</div>
+<div class="version">v.22/09/2026 09:10 — Moule & Smile Admin</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -498,10 +510,11 @@ db.collection('config').doc('carte_v2').onSnapshot(doc=>{
 function switchNav(tab,el){
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
-  ['navCarte','navBoissonMenu','navEnfantMenu','navReglages','navAjouter','navImporter','navActions'].forEach(id=>document.getElementById(id).style.display='none');
+  ['navCarte','navBoissonMenu','navEnfantMenu','navOptions','navReglages','navAjouter','navImporter','navActions'].forEach(id=>document.getElementById(id).style.display='none');
   document.getElementById('nav'+tab).style.display='block';
   if(tab==='BoissonMenu') renderBoissonMenu();
   if(tab==='EnfantMenu') renderEnfantMenu();
+  if(tab==='Options') renderFamillesOptions();
   if(tab==='Reglages') renderReglages();
 }
 
@@ -583,6 +596,10 @@ let editionCatId=null,editionIdx=null,editionSource='carte'; // 'carte' = catég
 // Renvoie le tableau de produits ciblé selon la source d'édition
 function getListeEdition(source,catId){
   if(source==='enfantMenu') return carte.enfantMenu;
+  if(source==='optionFamille'){
+    const f=carte.famillesOptions&&carte.famillesOptions[catId];
+    return f?f.options:null;
+  }
   const cat=carte.categories.find(c=>c.id===catId);
   return cat?cat.produits:null;
 }
@@ -596,10 +613,14 @@ function ouvrirModalEdition(catId,idx,source='carte'){
   document.getElementById('editEmoji').value=p.emoji||'';
   document.getElementById('editNom').value=p.nom||'';
   document.getElementById('editDesc').value=p.desc||'';
-  document.getElementById('editPrix').value=p.prix||0;
+  document.getElementById('editPrix').value=(source==='optionFamille')?(p.supplement||0):(p.prix||0);
   document.getElementById('editSubcat').value=p.subcat||'';
   // Les listes spéciales (menu enfant) n'ont pas de sous-catégorie ni de gestion de prix pertinente pour ce contexte
   document.getElementById('editSubcat').closest('.form-group').style.display=(source==='carte')?'flex':'none';
+  // Les options d'une famille (sauce, nappage...) n'ont ni emoji ni description — juste un nom, un prix et une photo
+  document.getElementById('editEmoji').closest('.form-group').style.display=(source==='optionFamille')?'none':'flex';
+  document.getElementById('editDesc').closest('.form-group').style.display=(source==='optionFamille')?'none':'flex';
+  document.getElementById('editPrix').closest('.form-group').querySelector('label').textContent=(source==='optionFamille')?'Supplément (€)':'Prix (€)';
   afficherApercuPhoto(p.photo||null);
   document.getElementById('editPhotoInput').value='';
   document.getElementById('editPhotoStatut').textContent='';
@@ -642,6 +663,13 @@ function redimensionnerImage(file){
   });
 }
 
+// Chemin de stockage de la photo — namespacé par famille pour les options (photos/opt_<famille>_<id>.jpg)
+// afin d'éviter toute collision avec un produit de la carte qui porterait le même ID.
+function getCheminPhoto(source,catId,p){
+  if(source==='optionFamille') return `photos/opt_${catId}_${p.id}.jpg`;
+  return `photos/${p.id}.jpg`;
+}
+
 async function gererFichierPhoto(file){
   if(!file||editionIdx===null)return;
   const liste=getListeEdition(editionSource,editionCatId);
@@ -651,7 +679,7 @@ async function gererFichierPhoto(file){
   try{
     statut.textContent='📤 Envoi en cours...';
     const blob=await redimensionnerImage(file);
-    const chemin=`photos/${p.id}.jpg`;
+    const chemin=getCheminPhoto(editionSource,editionCatId,p);
     // cacheControl : demande aux navigateurs des clients de garder la photo en cache 1 jour —
     // une fois qu'un client l'a vue, elle ne se retélécharge plus s'il revient sur la carte
     // pendant le même service. 1 jour (pas plus) pour qu'un changement de photo se voie vite
@@ -662,7 +690,9 @@ async function gererFichierPhoto(file){
     afficherApercuPhoto(url);
     statut.textContent='✅ Photo enregistrée';
     await sauvegarder();
-    if(editionSource==='enfantMenu') renderEnfantMenu(); else render();
+    if(editionSource==='enfantMenu') renderEnfantMenu();
+    else if(editionSource==='optionFamille') renderFamillesOptions();
+    else render();
   }catch(e){
     console.error('Erreur upload photo',e);
     statut.textContent='❌ Échec de l\'envoi';
@@ -675,11 +705,13 @@ async function supprimerPhotoProduit(){
   const liste=getListeEdition(editionSource,editionCatId);
   const p=liste&&liste[editionIdx];
   if(!p||!p.photo)return;
-  try{ await storage.ref(`photos/${p.id}.jpg`).delete(); }catch(e){ /* déjà absente, tant pis */ }
+  try{ await storage.ref(getCheminPhoto(editionSource,editionCatId,p)).delete(); }catch(e){ /* déjà absente, tant pis */ }
   delete p.photo;
   afficherApercuPhoto(null);
   await sauvegarder();
-  if(editionSource==='enfantMenu') renderEnfantMenu(); else render();
+  if(editionSource==='enfantMenu') renderEnfantMenu();
+  else if(editionSource==='optionFamille') renderFamillesOptions();
+  else render();
   showToast('🗑 Photo supprimée');
 }
 
@@ -697,15 +729,21 @@ function validerEdition(){
   const nom=document.getElementById('editNom').value.trim();
   if(!nom){showToast('⚠️ Nom obligatoire');return;}
   p.nom=nom;
-  p.emoji=document.getElementById('editEmoji').value.trim();
-  p.desc=document.getElementById('editDesc').value.trim();
+  if(editionSource!=='optionFamille'){
+    p.emoji=document.getElementById('editEmoji').value.trim();
+    p.desc=document.getElementById('editDesc').value.trim();
+  }
   if(editionSource==='carte'){
     p.prix=parseFloat(document.getElementById('editPrix').value)||0;
     const subcat=document.getElementById('editSubcat').value.trim();
     if(subcat) p.subcat=subcat; else delete p.subcat;
+  } else if(editionSource==='optionFamille'){
+    p.supplement=parseFloat(document.getElementById('editPrix').value)||0;
   }
   sauvegarder();
-  if(editionSource==='enfantMenu') renderEnfantMenu(); else render();
+  if(editionSource==='enfantMenu') renderEnfantMenu();
+  else if(editionSource==='optionFamille') renderFamillesOptions();
+  else render();
   fermerModalEdition();
   showToast(`✅ "${nom}" modifié !`);
 }
@@ -943,8 +981,29 @@ function confirmerImport(){
   } else {
     newCarte.categoriesConsultationSeule={sauces:true};
   }
-  // Familles d'options + assignation produits — importées si présentes dans le fichier, sinon on garde l'existant
-  newCarte.famillesOptions=importedFamillesOptions||(carte?carte.famillesOptions:null)||{};
+  // Familles d'options + assignation produits — importées si présentes dans le fichier, sinon on garde l'existant.
+  // Comme pour les produits : l'Excel ne contient jamais les photos des options (sauce, coulis, nappage...),
+  // donc si le fichier réimporté contient l'onglet "Familles Options", on réapplique les photos déjà envoyées
+  // en retrouvant chaque option via famille+ID pour ne pas les perdre.
+  if(importedFamillesOptions){
+    const photosOptionsExistantes={};
+    if(carte&&carte.famillesOptions){
+      Object.keys(carte.famillesOptions).forEach(fid=>{
+        (carte.famillesOptions[fid].options||[]).forEach(o=>{
+          if(o.photo)photosOptionsExistantes[fid+'|'+o.id]=o.photo;
+        });
+      });
+    }
+    Object.keys(importedFamillesOptions).forEach(fid=>{
+      (importedFamillesOptions[fid].options||[]).forEach(o=>{
+        const photo=photosOptionsExistantes[fid+'|'+o.id];
+        if(photo)o.photo=photo;
+      });
+    });
+    newCarte.famillesOptions=importedFamillesOptions;
+  } else {
+    newCarte.famillesOptions=(carte?carte.famillesOptions:null)||{};
+  }
   newCarte.optionsProduits=importedOptionsProduits||(carte?carte.optionsProduits:null)||{};
 
   carte=newCarte;catActive=newCarte.categories[0]?.id;
@@ -1195,6 +1254,99 @@ function ajouterEnfantMenu() {
   sauvegarder();
   renderEnfantMenu();
   showToast(`✅ "${nom}" ajouté au menu enfant !`);
+}
+
+// ============================================================
+// FAMILLES D'OPTIONS (sauce, coulis, nappage...) — modifier prix/photo/actif
+// sans repasser par l'Excel. Créées à l'origine par l'import (onglet "Familles
+// Options"), cette section permet ensuite de les ajuster directement.
+// ============================================================
+function renderFamillesOptions(){
+  if(!carte)return;
+  const familles=carte.famillesOptions||{};
+  const container=document.getElementById('famillesOptionsList');
+  const ids=Object.keys(familles);
+  if(!ids.length){
+    container.innerHTML='<div style="color:#888;text-align:center;padding:20px">Aucune famille d\'options pour l\'instant — importe un fichier Excel avec l\'onglet "Familles Options" pour en créer.</div>';
+    return;
+  }
+  container.innerHTML=ids.map(fid=>{
+    const f=familles[fid];
+    const opts=(f.options||[]).slice().sort((a,b)=>(a.ordre||9999)-(b.ordre||9999));
+    return `
+      <div class="section" style="margin-bottom:14px">
+        <h2>🎛️ ${f.nom||fid}</h2>
+        ${opts.map(o=>`
+          <div class="item-row">
+            <div class="item-info" onclick="ouvrirModalEdition('${fid}',${(f.options||[]).indexOf(o)},'optionFamille')">
+              <div class="item-nom">${o.photo?`<img src="${o.photo}" style="width:20px;height:20px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px">`:''}${o.nom}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <input type="number" value="${o.supplement||0}" step="0.10" min="0" style="width:60px;background:#1A1A1A;border:1px solid #444;border-radius:6px;color:#fff;padding:4px" onchange="updateSupplementOption('${fid}','${o.id}',this.value)">
+              <label class="toggle">
+                <input type="checkbox" ${o.actif?'checked':''} onchange="toggleOptionFamille('${fid}','${o.id}',this.checked)">
+                <span class="toggle-slider"></span>
+              </label>
+              <button class="del-prod-btn" onclick="supprimerOptionFamille('${fid}','${o.id}')">🗑</button>
+            </div>
+          </div>
+        `).join('')}
+        <div class="form-row" style="margin-top:10px">
+          <div class="form-group" style="flex:2"><input type="text" id="newOpt_${fid}_nom" placeholder="Nouveau choix (ex: Coulis caramel)"></div>
+          <div class="form-group" style="flex:1"><input type="number" id="newOpt_${fid}_supp" placeholder="Supp. €" step="0.10" min="0"></div>
+        </div>
+        <button class="btn-add-prod" onclick="ajouterOptionFamille('${fid}')">✅ Ajouter ce choix</button>
+      </div>
+    `;
+  }).join('');
+}
+
+function updateSupplementOption(fid,optId,val){
+  const f=carte.famillesOptions&&carte.famillesOptions[fid];
+  if(!f)return;
+  const o=f.options.find(x=>x.id===optId);
+  if(!o)return;
+  o.supplement=parseFloat(val)||0;
+  sauvegarder();
+}
+
+function toggleOptionFamille(fid,optId,val){
+  const f=carte.famillesOptions&&carte.famillesOptions[fid];
+  if(!f)return;
+  const o=f.options.find(x=>x.id===optId);
+  if(!o)return;
+  o.actif=val;
+  sauvegarder();
+  showToast(`${o.nom} ${val?'✅ activé':'❌ désactivé'}`);
+}
+
+function supprimerOptionFamille(fid,optId){
+  const f=carte.famillesOptions&&carte.famillesOptions[fid];
+  if(!f)return;
+  const o=f.options.find(x=>x.id===optId);
+  if(!o)return;
+  if(!confirm(`Supprimer le choix "${o.nom}" ?`))return;
+  f.options=f.options.filter(x=>x.id!==optId);
+  sauvegarder();
+  renderFamillesOptions();
+  showToast(`🗑 "${o.nom}" supprimé`);
+}
+
+function ajouterOptionFamille(fid){
+  const f=carte.famillesOptions&&carte.famillesOptions[fid];
+  if(!f)return;
+  const nomInput=document.getElementById(`newOpt_${fid}_nom`);
+  const suppInput=document.getElementById(`newOpt_${fid}_supp`);
+  const nom=nomInput.value.trim();
+  if(!nom){showToast('⚠️ Nom obligatoire');return;}
+  const supplement=parseFloat(suppInput.value)||0;
+  const maxOrdre=(f.options||[]).reduce((m,o)=>Math.max(m,o.ordre||0),0);
+  if(!f.options)f.options=[];
+  f.options.push({id:'opt_'+Date.now(),nom,supplement,actif:true,ordre:maxOrdre+1});
+  nomInput.value='';suppInput.value='';
+  sauvegarder();
+  renderFamillesOptions();
+  showToast(`✅ "${nom}" ajouté !`);
 }
 
 // ============================================================
