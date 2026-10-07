@@ -49,6 +49,13 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
 
 /* GRILLE COMMANDES */
 .commandes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.cuisine-compteurs{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin:12px 0 18px}
+.cuisine-compteur{background:#242424;border:2px solid #D4AF37;border-radius:14px;padding:14px 10px;text-align:center}
+.cuisine-compteur.zero{border-color:#333;opacity:.55}
+.cuisine-compteur .cc-nb{font-size:48px;font-weight:bold;color:#D4AF37;line-height:1}
+.cuisine-compteur.zero .cc-nb{color:#666}
+.cuisine-compteur .cc-nom{font-size:14px;font-weight:bold;color:#fff;margin-top:6px}
+.cuisine-compteur .cc-detail{font-size:11px;color:#4ABA80;margin-top:6px;line-height:1.5}
 .jetons-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px;margin-top:14px}
 .jeton-pastille{background:#242424;border:2px solid #444;border-radius:12px;padding:10px 6px;text-align:center;cursor:pointer;transition:transform .1s}
 .jeton-pastille:active{transform:scale(.95)}
@@ -203,6 +210,9 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
   <div class="nav-tab" id="tab-btn-deux" onclick="switchTab('deux')">
     👥 Tables 2 pers. <span class="badge-r" id="badgeDeux" style="display:none">0</span>
   </div>
+  <div class="nav-tab" id="tab-btn-cuisine" onclick="switchTab('cuisine')">
+    🍳 Cuisine <span class="badge-r" id="badgeCuisine" style="display:none">0</span>
+  </div>
   <div class="nav-tab" id="tab-btn-additions" onclick="switchTab('additions')">
     🧾 Additions <span class="badge-r" id="badgeAdd" style="display:none">0</span>
   </div>
@@ -273,6 +283,13 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
   <div class="commandes-grid" id="commandesGridDeux">
     <div class="empty"><div class="em">👥</div><p>Aucune commande de table 2 personnes</p></div>
   </div>
+</div>
+
+<!-- ===== ONGLET CUISINE (plats à préparer, regroupés) ===== -->
+<div class="tab-content" id="tab-cuisine">
+  <div class="status-bar"><div class="dot"></div>🍳 Plats à préparer — seuls les produits cochés « Afficher dans l'onglet Cuisine » (admin) apparaissent ici. « ✓ Prêt » retire la commande de cette vue.</div>
+  <div class="cuisine-compteurs" id="cuisineCompteurs"></div>
+  <div class="commandes-grid" id="cuisineTickets"></div>
 </div>
 
 <!-- ===== ONGLET ADDITIONS ===== -->
@@ -415,7 +432,7 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
   </div>
 </div>
 
-<div class="version">v.22/09/2026 19:06 — Moule & Smile Caisse</div>
+<div class="version">v.07/10/2026 13:30 — Moule & Smile Caisse</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -473,13 +490,21 @@ let carteConsignes={};
 let carteSauces=[]; // options de la famille "sauce" (pour la recharge rapide de marmite)
 let carteFamillesOptions={}; // TOUTES les familles d'options (sauce, croquant, coulis, nappage...) — transmission Hiboutik générique
 let carteCapacite={salle:0,terrasse:0,terrasseOuverte:false};
+let carteCuisine={}; // id produit → libellé cuisine (produits cochés « Afficher dans l'onglet Cuisine »)
 db.collection('config').doc('carte_v2').onSnapshot(doc=>{
   carteConsignes=(doc.exists && doc.data().consignesCuisine)||{};
   const famillesOptions=(doc.exists && doc.data().famillesOptions)||{};
   carteSauces=(famillesOptions.sauce&&famillesOptions.sauce.options||[]).filter(o=>o.actif);
   carteFamillesOptions=famillesOptions;
   carteCapacite=(doc.exists && doc.data().capaciteSalle)||{salle:0,terrasse:0,terrasseOuverte:false};
+  // Produits à afficher dans l'onglet Cuisine (cochés dans l'admin) : id produit → libellé de regroupement
+  const cuisine={};
+  ((doc.exists&&doc.data().categories)||[]).forEach(cat=>(cat.produits||[]).forEach(p=>{
+    if(p.cuisine) cuisine[p.id]=(p.cuisineLabel||'').trim()||p.nom;
+  }));
+  carteCuisine=cuisine;
   updateOccupationCounter();
+  renderCuisine();
 });
 
 // ============================================================
@@ -531,6 +556,7 @@ function switchTab(nom){
   // Actions spéciales
   if(nom==='historique') chargerHistorique();
   if(nom==='deux') renderCommandesDeux();
+  if(nom==='cuisine') renderCuisine();
   if(nom==='additions') filtrerAdditions();
   if(nom==='stats') chargerStats(filtreStatsJours);
 }
@@ -570,6 +596,7 @@ function demarrerEcouteCommandes(){
       if(hasNew) playBeep(1);
       renderCommandes();
       renderCommandesDeux();
+      renderCuisine();
       renderCA();
       updateStats();
     }, err=>{console.error('Commandes listener error:',err);});
@@ -1725,6 +1752,103 @@ function renderCommandesDeux(){
     badgeDeux.textContent=nbNouv;
     badgeDeux.style.display=nbNouv>0?'inline':'none';
   }
+}
+
+// ============================================================
+// ONGLET CUISINE — plats à préparer, regroupés (réglé produit par produit dans admin.html)
+// Une commande reste visible ici tant qu'elle n'est pas "✓ Prêt" (champ cuisineFait) ni réglée.
+// ============================================================
+function lignesCuisineDe(cmd){
+  const lignes=[];
+  (cmd.items||[]).forEach(it=>{
+    const idBase=(it.id||'').replace('_inclus','');
+    const label=carteCuisine[idBase];
+    if(label) lignes.push({...it,label});
+  });
+  return lignes;
+}
+
+function choixSansPrix(c){
+  return (c||'').replace(/\s*\(\+[\d,]+\s*€\)/g,'').trim();
+}
+
+function renderCuisine(){
+  const elCompteurs=document.getElementById('cuisineCompteurs');
+  const elTickets=document.getElementById('cuisineTickets');
+  if(!elCompteurs||!elTickets) return;
+
+  const aPreparer=Object.values(allCommandes)
+    .filter(c=>c.statut!=='regle' && !c.cuisineFait)
+    .map(c=>({cmd:c,lignes:lignesCuisineDe(c)}))
+    .filter(x=>x.lignes.length)
+    .sort((a,b)=>(a.cmd.heure||'').localeCompare(b.cmd.heure||''));
+
+  // Pastille sur l'onglet : nombre total de plats en attente
+  const nbTotal=aPreparer.reduce((s,x)=>s+x.lignes.length,0);
+  const badge=document.getElementById('badgeCuisine');
+  if(badge){badge.textContent=nbTotal;badge.style.display=nbTotal>0?'inline':'none';}
+
+  const labelsConfigures=[...new Set(Object.values(carteCuisine))].sort((a,b)=>a.localeCompare(b));
+  if(!labelsConfigures.length){
+    elCompteurs.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="em">🍳</div><p>Aucun produit réglé pour la cuisine.<br>Dans l\'admin : Carte → clique un produit → coche « Afficher dans l\'onglet Cuisine ».</p></div>';
+    elTickets.innerHTML='';
+    return;
+  }
+
+  // Compteurs : un par libellé (y compris à 0, pour que l'écran ne saute pas), détail par choix
+  const groupes={};
+  labelsConfigures.forEach(l=>groupes[l]={nb:0,choix:{}});
+  aPreparer.forEach(x=>x.lignes.forEach(l=>{
+    const g=groupes[l.label]; if(!g) return;
+    g.nb++;
+    const c=choixSansPrix(l.choix);
+    if(c) g.choix[c]=(g.choix[c]||0)+1;
+  }));
+  elCompteurs.innerHTML=labelsConfigures.map(l=>{
+    const g=groupes[l];
+    const detail=Object.entries(g.choix).map(([c,n])=>`${c} ×${n}`).join('<br>');
+    return `<div class="cuisine-compteur ${g.nb===0?'zero':''}">
+      <div class="cc-nb">${g.nb}</div>
+      <div class="cc-nom">${l}</div>
+      ${detail?`<div class="cc-detail">${detail}</div>`:''}
+    </div>`;
+  }).join('');
+
+  // Tickets : uniquement les lignes cuisine de chaque commande
+  if(!aPreparer.length){
+    elTickets.innerHTML='<div class="empty"><div class="em">✅</div><p>Rien à préparer pour le moment</p></div>';
+    return;
+  }
+  const statutLabels={nouvelle:'🟡 Pas encore vue',vue:'✅ Vue',en_addition:'🖨️ Envoyée'};
+  elTickets.innerHTML=aPreparer.map(({cmd,lignes})=>`
+    <div class="cmd-card ${cmd.statut==='nouvelle'?'nouvelle':'en_addition'}">
+      <div class="cmd-header">
+        <div class="cmd-table">${libelleTable(cmd.table)}</div>
+        <div class="cmd-meta">
+          <div class="cmd-heure">🕐 ${cmd.heure||'--:--'}</div>
+          <div class="cmd-statut" style="color:#888">${statutLabels[cmd.statut]||''}</div>
+        </div>
+      </div>
+      <div class="cmd-items">
+        ${lignes.map(it=>`
+          <div class="cmd-item-row" style="flex-direction:column;align-items:stretch">
+            <div style="font-size:15px;font-weight:bold">${it.nom}</div>
+            ${it.choix?`<div style="font-size:12px;color:#4ABA80;padding-left:4px">${it.choix}</div>`:''}
+          </div>`).join('')}
+      </div>
+      <div class="cmd-actions">
+        <button class="btn-vu" onclick="marquerCuisinePret('${cmd.id}')">✓ Prêt</button>
+      </div>
+    </div>`).join('');
+}
+
+async function marquerCuisinePret(id){
+  try{
+    await db.collection('commandes').doc(id).update({
+      cuisineFait:true,
+      cuisineHeure:firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }catch(e){showToast('❌ Erreur');console.error(e);}
 }
 
 // ============================================================

@@ -152,6 +152,17 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
     <div class="form-row" id="editPointsRow">
       <div class="form-group" style="flex:1"><label>🍽️ Points repas employé</label><input type="number" id="editPoints" step="1" min="0" placeholder="0"></div>
     </div>
+    <div class="form-row" id="editCuisineRow" style="flex-direction:column;align-items:stretch;gap:6px">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#ddd;cursor:pointer">
+        <input type="checkbox" id="editCuisine" onchange="document.getElementById('editCuisineLabelGroup').style.display=this.checked?'flex':'none'" style="width:20px;height:20px;flex:none">
+        🍳 Afficher dans l'onglet Cuisine de la caisse
+      </label>
+      <div class="form-group" id="editCuisineLabelGroup" style="display:none;flex:1">
+        <label>Regrouper sous le nom (facultatif)</label>
+        <input type="text" id="editCuisineLabel" placeholder="Ex: Nuggets (pour regrouper poulet + poisson)">
+      </div>
+      <div style="font-size:11px;color:#888;line-height:1.5">Les commandes contenant ce produit apparaissent en cuisine avec le nombre total à préparer. Sans nom de regroupement, le nom du produit est utilisé.</div>
+    </div>
     <div class="form-row">
       <div class="form-group" style="flex:1">
         <label>📷 Photo</label>
@@ -433,7 +444,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
-<div class="version">v.22/09/2026 19:06 — Moule & Smile Admin</div>
+<div class="version">v.07/10/2026 13:30 — Moule & Smile Admin</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -538,7 +549,7 @@ function render(){
         <button class="reorder-btn" onclick="deplacerProduit('${catActive}',${idx},-1)" ${idx===0?'disabled':''} title="Monter">▲</button>
         <button class="reorder-btn" onclick="deplacerProduit('${catActive}',${idx},1)" ${idx===nbTotal-1?'disabled':''} title="Descendre">▼</button>
       </div>
-      <div class="item-info" onclick="ouvrirModalEdition('${catActive}',${idx})"><div class="item-nom">${p.photo?`<img src="${p.photo}" style="width:20px;height:20px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px">`:''}${p.emoji||''} ${p.nom}</div><div class="item-detail">${p.desc||''}${p.subcat?' · '+p.subcat:''}${p.points?` · 🍽️${p.points}pt`:''}</div></div>
+      <div class="item-info" onclick="ouvrirModalEdition('${catActive}',${idx})"><div class="item-nom">${p.photo?`<img src="${p.photo}" style="width:20px;height:20px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px">`:''}${p.emoji||''} ${p.nom}</div><div class="item-detail">${p.desc||''}${p.subcat?' · '+p.subcat:''}${p.points?` · 🍽️${p.points}pt`:''}${p.cuisine?' · 🍳'+(p.cuisineLabel?' '+p.cuisineLabel:''):''}</div></div>
       <div style="display:flex;align-items:center;gap:4px">
         ${p.prix>0?`<input type="number" class="prix-input" value="${p.prix}" step="0.10" onchange="updatePrix('${catActive}',${idx},this.value)"> €`:'<span style="color:#1A7A50;font-size:10px;font-weight:bold">Inclus</span>'}
         <label class="toggle"><input type="checkbox" ${p.actif?'checked':''} onchange="toggleItem('${catActive}',${idx},this.checked)"><span class="toggle-slider"></span></label>
@@ -628,6 +639,11 @@ function ouvrirModalEdition(catId,idx,source='carte'){
   // pas pour le menu enfant (offert, hors sujet du budget de points).
   document.getElementById('editPointsRow').style.display=(source==='enfantMenu')?'none':'flex';
   document.getElementById('editPoints').value=p.points||0;
+  // Onglet Cuisine de la caisse : uniquement pour les produits de la carte (pas options, pas menu enfant)
+  document.getElementById('editCuisineRow').style.display=(source==='carte')?'flex':'none';
+  document.getElementById('editCuisine').checked=!!p.cuisine;
+  document.getElementById('editCuisineLabel').value=p.cuisineLabel||'';
+  document.getElementById('editCuisineLabelGroup').style.display=p.cuisine?'flex':'none';
   afficherApercuPhoto(p.photo||null);
   document.getElementById('editPhotoInput').value='';
   document.getElementById('editPhotoStatut').textContent='';
@@ -749,6 +765,15 @@ function validerEdition(){
   }
   if(editionSource!=='enfantMenu'){
     p.points=parseInt(document.getElementById('editPoints').value)||0;
+  }
+  if(editionSource==='carte'){
+    if(document.getElementById('editCuisine').checked){
+      p.cuisine=true;
+      const lib=document.getElementById('editCuisineLabel').value.trim();
+      if(lib) p.cuisineLabel=lib; else delete p.cuisineLabel;
+    } else {
+      delete p.cuisine; delete p.cuisineLabel;
+    }
   }
   sauvegarder();
   if(editionSource==='enfantMenu') renderEnfantMenu();
@@ -930,37 +955,36 @@ function annulerImport(){importedData=null;document.getElementById('importPrevie
 
 function confirmerImport(){
   if(!importedData||!importedData.length)return;
-  // Conserver les photos déjà envoyées : l'Excel ne contient jamais la photo,
-  // donc sans ça un réimport (même pour juste changer un prix) effacerait
-  // toutes les photos existantes. On retrouve chaque photo via l'ID produit,
-  // qui ne change pas d'un import à l'autre.
-  const photosExistantes={};
+  // Conserver les réglages faits dans l'admin : l'Excel ne contient NI la photo, NI les points repas
+  // employé, NI le réglage "Afficher en cuisine" — sans ça, un réimport (même pour juste changer un
+  // prix) les effacerait tous. On les retrouve via l'ID produit, qui ne change pas d'un import à l'autre.
+  const CHAMPS_ADMIN=['photo','points','cuisine','cuisineLabel'];
+  const reglagesExistants={};
   if(carte&&carte.categories){
     carte.categories.forEach(c=>(c.produits||[]).forEach(p=>{
-      if(p.photo)photosExistantes[p.id]=p.photo;
+      const r={};
+      CHAMPS_ADMIN.forEach(k=>{ if(p[k]!==undefined&&p[k]!==null&&p[k]!==''&&p[k]!==0) r[k]=p[k]; });
+      if(Object.keys(r).length) reglagesExistants[p.id]=r;
     }));
   }
+  const construireItem=p=>{
+    const item={id:p.id,nom:p.nom,desc:p.desc,emoji:p.emoji,prix:p.prix,actif:p.actif};
+    if(p.subcat) item.subcat=p.subcat;
+    Object.assign(item,reglagesExistants[p.id]||{});
+    return item;
+  };
   const newCarte={categories:[]};
   CATS.forEach(catDef=>{
     let prods=importedData.filter(p=>p.cat===catDef.id||catDef.id.includes(p.cat));
     prods.sort((a,b)=>(a.ordre||9999)-(b.ordre||9999));
-    const mapped=prods.map(p=>{
-      const item={id:p.id,nom:p.nom,desc:p.desc,emoji:p.emoji,prix:p.prix,actif:p.actif};
-      if(p.subcat) item.subcat=p.subcat;
-      if(photosExistantes[p.id]) item.photo=photosExistantes[p.id];
-      return item;
-    });
+    const mapped=prods.map(construireItem);
     if(mapped.length)newCarte.categories.push({id:catDef.id,nom:catDef.nom,produits:mapped});
   });
   const knownIds=CATS.map(c=>c.id);
   const others=importedData.filter(p=>!knownIds.includes(p.cat));
   if(others.length){
     others.sort((a,b)=>(a.ordre||9999)-(b.ordre||9999));
-    newCarte.categories.push({id:'autres',nom:'📦 Autres',produits:others.map(p=>{
-      const item={id:p.id,nom:p.nom,desc:p.desc,emoji:p.emoji,prix:p.prix,actif:p.actif};
-      if(photosExistantes[p.id]) item.photo=photosExistantes[p.id];
-      return item;
-    })});
+    newCarte.categories.push({id:'autres',nom:'📦 Autres',produits:others.map(construireItem)});
   }
   // Conserver les réglages existants (compteur global, catégories actives, menus spéciaux) lors d'un import
   if(carte){
@@ -996,18 +1020,20 @@ function confirmerImport(){
   // donc si le fichier réimporté contient l'onglet "Familles Options", on réapplique les photos déjà envoyées
   // en retrouvant chaque option via famille+ID pour ne pas les perdre.
   if(importedFamillesOptions){
-    const photosOptionsExistantes={};
+    const reglagesOptionsExistants={};
     if(carte&&carte.famillesOptions){
       Object.keys(carte.famillesOptions).forEach(fid=>{
         (carte.famillesOptions[fid].options||[]).forEach(o=>{
-          if(o.photo)photosOptionsExistantes[fid+'|'+o.id]=o.photo;
+          const r={};
+          if(o.photo) r.photo=o.photo;
+          if(o.points) r.points=o.points;
+          if(Object.keys(r).length) reglagesOptionsExistants[fid+'|'+o.id]=r;
         });
       });
     }
     Object.keys(importedFamillesOptions).forEach(fid=>{
       (importedFamillesOptions[fid].options||[]).forEach(o=>{
-        const photo=photosOptionsExistantes[fid+'|'+o.id];
-        if(photo)o.photo=photo;
+        Object.assign(o,reglagesOptionsExistants[fid+'|'+o.id]||{});
       });
     });
     newCarte.famillesOptions=importedFamillesOptions;
