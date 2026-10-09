@@ -490,7 +490,7 @@ body.cuisine-plein{overflow:hidden}
   </div>
 </div>
 
-<div class="version">v.09/10/2026 11:40 — Moule & Smile Caisse</div>
+<div class="version">v.09/10/2026 12:10 — Moule & Smile Caisse</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -1854,23 +1854,42 @@ function renderCommandesDeux(){
 // ONGLET CUISINE — plats à préparer, regroupés (réglé produit par produit dans admin.html)
 // Une commande reste visible ici tant qu'elle n'est pas "✓ Prêt" (champ cuisineFait) ni réglée.
 // ============================================================
+// Plat choisi dans un menu enfant / ado : écrit dans le détail (« Menu : Nuggets » / « Choix : Calamars à volonté »)
+function platMenuDe(choix){
+  const segs=(choix||'').split(' — ');
+  for(const sg of segs){
+    const m=sg.match(/^\s*(?:Menu|Choix)\s*:\s*(.+?)\s*$/i);
+    if(m) return {plat:m[1].trim(),segs,seg:sg};
+  }
+  return null;
+}
+
 function lignesCuisineDe(cmd){
   const lignes=[];
   (cmd.items||[]).forEach(it=>{
     const idBase=(it.id||'').replace('_inclus','');
-    const label=carteCuisine[idBase];
-    if(label){ lignes.push({...it,label}); return; }
-    // Menus enfant / ado : le plat choisi est écrit dans le détail (« Menu : Nuggets » / « Choix : Calamars à volonté »)
-    const segs=(it.choix||'').split(' — ');
-    segs.forEach(sg=>{
-      const m=sg.match(/^\s*(?:Menu|Choix)\s*:\s*(.+?)\s*$/i);
-      if(!m) return;
-      const nomPlat=m[1].trim();
-      const lab=carteCuisineParNom[nomPlat.toLowerCase()];
-      if(lab) lignes.push({...it,nom:'🧒 '+nomPlat,choix:segs.filter(x=>x!==sg).join(' — '),label:lab});
-    });
+    const labelItem=carteCuisine[idBase];
+    const pm=platMenuDe(it.choix);
+    const labPlat=pm?carteCuisineParNom[pm.plat.toLowerCase()]:null;
+    if(labPlat){
+      // Le plat choisi (ex. Nuggets) remplace la ligne « Enfant / Ado » : la cuisine voit ce qu'il faut préparer
+      lignes.push({...it,nom:'🧒 '+pm.plat,choix:pm.segs.filter(x=>x!==pm.seg).join(' — '),label:labPlat,menuPlat:true});
+    } else if(labelItem){
+      const l={...it,label:labelItem};
+      if(pm) l.platMenu=pm.plat;                                   // plat affiché même s'il n'est pas coché cuisine
+      else if(/enfant|ado/i.test(it.nom||'')) l.aPreciser=true;     // tarif enfant/ado sans plat choisi
+      lignes.push(l);
+    }
   });
   return lignes;
+}
+
+// Texte court d'une ligne pour les pastilles du plein écran
+function texteLigneCuisine(l){
+  if(l.menuPlat) return '🧒 '+l.label;
+  if(l.platMenu) return l.label+' → '+l.platMenu;
+  if(l.aPreciser) return l.label+' ⚠️ plat non choisi';
+  return l.label;
 }
 
 function choixSansPrix(c){
@@ -1897,7 +1916,7 @@ function renderCuisine(){
   const kT=document.getElementById('kioskTickets');
   if(kT){
     kT.innerHTML=aPreparer.length?aPreparer.map(({cmd,lignes})=>{
-      const par={}; lignes.forEach(l=>{par[l.label]=(par[l.label]||0)+1;});
+      const par={}; lignes.forEach(l=>{const t=texteLigneCuisine(l); par[t]=(par[t]||0)+1;});
       const plats=Object.entries(par).map(([n,q])=>`${n} ×${q}`).join(', ');
       return `<div class="kiosk-ticket ${cmd.statut==='nouvelle'?'nouvelle':''}">
         <div><b>${libelleTable(cmd.table)}</b> · 🕐 ${cmd.heure||'--:--'}<div class="kt-plats">${plats}</div></div>
@@ -1965,6 +1984,7 @@ function renderCuisine(){
           <div class="cmd-item-row" style="flex-direction:column;align-items:stretch">
             <div style="font-size:15px;font-weight:bold">${it.nom}</div>
             ${it.choix?`<div style="font-size:12px;color:#4ABA80;padding-left:4px">${it.choix}</div>`:''}
+            ${it.aPreciser?`<div style="font-size:12px;color:#ff8a8a;padding-left:4px;font-weight:bold">⚠️ Plat non choisi par le client — demander au serveur</div>`:''}
           </div>`).join('')}
       </div>
       <div class="cmd-actions">
