@@ -58,6 +58,10 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
 .btn-plein{background:#D4AF37;color:#1a1a1a;border:none;border-radius:10px;padding:10px 16px;font-weight:bold;font-size:14px;cursor:pointer;margin:10px 0 0}
 #cuisineKiosk{display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:#111;color:#fff;overflow:auto;padding:10px 12px 16px;-webkit-overflow-scrolling:touch}
 body.cuisine-plein #cuisineKiosk{display:block}
+/* iPad/iPhone Safari : la barre d'état et le bouton ✕ du plein écran recouvrent le haut de l'écran */
+@supports (-webkit-touch-callout:none){
+  #cuisineKiosk{padding-top:calc(env(safe-area-inset-top,0px) + 34px)}
+}
 body.cuisine-plein{overflow:hidden}
 .kiosk-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
 .kiosk-top .kt{font-size:13px;color:#888}
@@ -68,6 +72,12 @@ body.cuisine-plein{overflow:hidden}
 .kiosk-titre{font-size:13px;font-weight:bold;letter-spacing:1px;margin:10px 0 6px;padding-left:2px}
 .kiosk-titre.faire{color:#D4AF37}
 .kiosk-titre.fait{color:#4ABA80}
+.kiosk-tickets{display:flex;flex-wrap:wrap;gap:8px}
+.kiosk-ticket{display:flex;align-items:center;gap:8px;background:#242424;border:1px solid #555;border-radius:10px;padding:6px 8px 6px 10px;font-size:12px}
+.kiosk-ticket.nouvelle{border-color:#E67E22}
+.kiosk-ticket b{color:#D4AF37;font-size:13px}
+.kiosk-ticket .kt-plats{color:#ddd;line-height:1.35}
+.kiosk-ticket button{background:#1A7A50;color:#fff;border:none;border-radius:8px;padding:8px 12px;font-weight:bold;font-size:14px;cursor:pointer}
 .kiosk-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
 .kiosk-grille .cuisine-compteur{padding:8px 6px;border-radius:10px}
 .kiosk-grille .cc-nb{font-size:34px}
@@ -328,6 +338,8 @@ body.cuisine-plein{overflow:hidden}
       <div class="kiosk-grille" id="kioskAFaire"></div>
     </div>
   </div>
+  <div class="kiosk-titre" style="color:#aaa;margin-top:14px">🎫 COMMANDES EN COURS — appuie sur ✓ quand c'est prêt</div>
+  <div class="kiosk-tickets" id="kioskTickets"></div>
 </div>
 
 <!-- ===== ONGLET ADDITIONS ===== -->
@@ -370,6 +382,14 @@ body.cuisine-plein{overflow:hidden}
 <!-- ===== ONGLET JETONS ===== -->
 <div class="tab-content" id="tab-jetons">
   <div class="status-bar"><div class="dot"></div>Imprimez un jeton jetable au moment de placer une table — il s'active tout seul, se libère automatiquement à l'encaissement.</div>
+  <div style="background:#242424;border:1px solid #D4AF37;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px">
+    <label for="choixAdresseApp" style="color:#D4AF37;font-weight:bold">🔗 Adresse mise dans les QR codes :</label>
+    <select id="choixAdresseApp" onchange="changerAdresseApp(this.value)" style="margin-left:6px;padding:6px;border-radius:8px;background:#1a1a1a;color:#fff;border:1px solid #555;font-size:13px">
+      <option value="github">GitHub (actuelle)</option>
+      <option value="firebase">Firebase — commandemoulesmile.web.app (test)</option>
+    </select>
+    <div id="adresseAppAffichee" style="color:#888;font-size:11px;margin-top:4px;word-break:break-all"></div>
+  </div>
   <div id="occupationCounter" style="background:#1A2A1A;border:1px solid #2ab54a;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#8aff9d;font-weight:bold;text-align:center"></div>
   <button class="btn-encaisser" style="width:100%;font-size:15px;padding:14px;margin-bottom:8px" onclick="ouvrirModalNouvelleTable()">🖨️ Nouvelle table — imprimer un jeton</button>
   <button class="btn-encaisser" style="width:100%;font-size:15px;padding:14px;margin-bottom:8px;background:#2A6FB5" onclick="imprimerJetonAvance()">🖨️ Imprimer à l'avance (sans table — à attribuer ensuite)</button>
@@ -470,7 +490,7 @@ body.cuisine-plein{overflow:hidden}
   </div>
 </div>
 
-<div class="version">v.09/10/2026 09:30 — Moule & Smile Caisse</div>
+<div class="version">v.09/10/2026 10:25 — Moule & Smile Caisse</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -520,7 +540,26 @@ async function connexionEquipe(){
   }
 }
 // ⚠️ Adaptez cette URL à celle de votre app si elle change un jour (utilisée pour impression + copie de lien)
-const BASE_URL_APP='https://cevapizza11.github.io/moulesmile/index.html';
+// Adresse de la page client mise dans les QR codes / liens des jetons (choix dans l'onglet Jetons).
+// Les deux adresses lisent les mêmes jetons Firestore : un jeton marche sur les deux.
+const URLS_APP={
+  github:'https://cevapizza11.github.io/moulesmile/index.html',
+  firebase:'https://commandemoulesmile.web.app/'
+};
+let adresseAppChoisie='github';
+try{const v=localStorage.getItem('adresseApp'); if(v&&URLS_APP[v]) adresseAppChoisie=v;}catch(e){}
+function baseUrlApp(){return URLS_APP[adresseAppChoisie]||URLS_APP.github;}
+function changerAdresseApp(v){
+  if(!URLS_APP[v]) return;
+  adresseAppChoisie=v;
+  try{localStorage.setItem('adresseApp',v);}catch(e){}
+  const el=document.getElementById('adresseAppAffichee'); if(el) el.textContent=baseUrlApp();
+  showToast('🔗 Les prochains QR codes utiliseront : '+(v==='firebase'?'Firebase (web.app)':'GitHub'));
+}
+(function(){
+  const sel=document.getElementById('choixAdresseApp'); if(sel) sel.value=adresseAppChoisie;
+  const el=document.getElementById('adresseAppAffichee'); if(el) el.textContent=baseUrlApp();
+})();
 
 // Lecture seule de la carte — uniquement pour connaître les consignes de service par produit
 // (ex: "Apporter une marmite"). Ne JAMAIS écrire dans ce document depuis caisse.html.
@@ -1321,7 +1360,7 @@ function copierLienJetonDepuisModal(){
   if(!jetonEnCoursActivation) return;
   const j=allJetons[jetonEnCoursActivation];
   if(!j||j.statut!=='actif'){showToast('⚠️ Ce jeton n\'est plus actif');return;}
-  const url=`${BASE_URL_APP}?j=${j.token}`;
+  const url=`${baseUrlApp()}?j=${j.token}`;
   navigator.clipboard.writeText(url).then(()=>{
     showToast(`📋 Lien copié — Table ${j.table} (collez-le dans votre navigateur)`);
   }).catch(()=>{
@@ -1488,7 +1527,7 @@ async function imprimerJetonAvance(){
 // Imprime N jetons "en attente" en un seul job (une étiquette par jeton, saut de page entre chaque —
 // idéal pour une imprimante à étiquettes autocollantes en rouleau continu).
 function imprimerTicketsJetonAvance(jetons,printWin){
-  const baseUrl=BASE_URL_APP;
+  const baseUrl=baseUrlApp();
   const win=printWin||window.open('','_blank','width=420,height=500');
   if(!win){showToast('⚠️ Fenêtre d\'impression bloquée par le navigateur');return;}
 
@@ -1532,7 +1571,7 @@ window.onload=function(){setTimeout(()=>{window.print();setTimeout(()=>window.cl
 }
 
 function imprimerTicketJeton(numero, token, tableNum, printWin, employeNom){
-  const baseUrl=BASE_URL_APP;
+  const baseUrl=baseUrlApp();
   const url=`${baseUrl}?j=${token}`;
   const aTable=tableNum!==null && tableNum!==undefined;
   const estEmploye=!!employeNom;
@@ -1825,6 +1864,19 @@ function renderCuisine(){
   const nbTotal=aPreparer.reduce((s,x)=>s+x.lignes.length,0);
   const badge=document.getElementById('badgeCuisine');
   if(badge){badge.textContent=nbTotal;badge.style.display=nbTotal>0?'inline':'none';}
+
+  // Mode plein écran : petites pastilles pour pouvoir marquer « prêt » (sinon les commandes ne partent jamais)
+  const kT=document.getElementById('kioskTickets');
+  if(kT){
+    kT.innerHTML=aPreparer.length?aPreparer.map(({cmd,lignes})=>{
+      const par={}; lignes.forEach(l=>{par[l.label]=(par[l.label]||0)+1;});
+      const plats=Object.entries(par).map(([n,q])=>`${n} ×${q}`).join(', ');
+      return `<div class="kiosk-ticket ${cmd.statut==='nouvelle'?'nouvelle':''}">
+        <div><b>${libelleTable(cmd.table)}</b> · 🕐 ${cmd.heure||'--:--'}<div class="kt-plats">${plats}</div></div>
+        <button onclick="marquerCuisinePret('${cmd.id}')">✓</button>
+      </div>`;
+    }).join(''):'<span style="color:#666;font-size:12px">Rien en cours ✅</span>';
+  }
 
   const labelsConfigures=[...new Set(Object.values(carteCuisine))].sort((a,b)=>a.localeCompare(b));
   if(!labelsConfigures.length){
