@@ -55,6 +55,28 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
 .cuisine-compteur .cc-nb{font-size:48px;font-weight:bold;color:#D4AF37;line-height:1}
 .cuisine-compteur.zero .cc-nb{color:#666}
 .cuisine-compteur .cc-nom{font-size:14px;font-weight:bold;color:#fff;margin-top:6px}
+.btn-plein{background:#D4AF37;color:#1a1a1a;border:none;border-radius:10px;padding:10px 16px;font-weight:bold;font-size:14px;cursor:pointer;margin:10px 0 0}
+#cuisineKiosk{display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:#111;color:#fff;overflow:auto;padding:10px 12px 16px;-webkit-overflow-scrolling:touch}
+body.cuisine-plein #cuisineKiosk{display:block}
+body.cuisine-plein{overflow:hidden}
+.kiosk-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.kiosk-top .kt{font-size:13px;color:#888}
+.btn-quitter{background:#333;color:#fff;border:1px solid #666;border-radius:10px;padding:8px 14px;font-weight:bold;font-size:14px;cursor:pointer}
+.kiosk-cols{display:flex;gap:12px;align-items:flex-start}
+.kiosk-col{flex:1;min-width:0}
+.kiosk-col:first-child{border-right:1px solid #333;padding-right:12px}
+.kiosk-titre{font-size:13px;font-weight:bold;letter-spacing:1px;margin:10px 0 6px;padding-left:2px}
+.kiosk-titre.faire{color:#D4AF37}
+.kiosk-titre.fait{color:#4ABA80}
+.kiosk-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
+.kiosk-grille .cuisine-compteur{padding:8px 6px;border-radius:10px}
+.kiosk-grille .cc-nb{font-size:34px}
+.kiosk-grille .cc-nom{font-size:12px;margin-top:3px}
+.kiosk-grille .cc-detail{font-size:10px;margin-top:3px}
+.kiosk-grille.fait .cuisine-compteur{border-color:#1A7A50}
+.kiosk-grille.fait .cc-nb{color:#4ABA80}
+.kiosk-grille.fait .cuisine-compteur.zero{border-color:#333}
+.kiosk-grille.fait .cuisine-compteur.zero .cc-nb{color:#666}
 .cuisine-compteur .cc-detail{font-size:11px;color:#4ABA80;margin-top:6px;line-height:1.5}
 .jetons-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px;margin-top:14px}
 .jeton-pastille{background:#242424;border:2px solid #444;border-radius:12px;padding:10px 6px;text-align:center;cursor:pointer;transition:transform .1s}
@@ -288,8 +310,24 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
 <!-- ===== ONGLET CUISINE (plats à préparer, regroupés) ===== -->
 <div class="tab-content" id="tab-cuisine">
   <div class="status-bar"><div class="dot"></div>🍳 Plats à préparer — seuls les produits cochés « Afficher dans l'onglet Cuisine » (admin) apparaissent ici. « ✓ Prêt » retire la commande de cette vue.</div>
+  <button class="btn-plein" onclick="basculerCuisinePlein(true)">⛶ Plein écran (compteurs seuls)</button>
   <div class="cuisine-compteurs" id="cuisineCompteurs"></div>
   <div class="commandes-grid" id="cuisineTickets"></div>
+</div>
+
+<!-- Mode plein écran cuisine : compteurs seuls, À FAIRE + FAIT -->
+<div id="cuisineKiosk">
+  <div class="kiosk-top"><span class="kt">🍳 Cuisine — mise à jour en direct</span><button class="btn-quitter" onclick="basculerCuisinePlein(false)">✕ Quitter</button></div>
+  <div class="kiosk-cols">
+    <div class="kiosk-col">
+      <div class="kiosk-titre fait">✅ FAIT</div>
+      <div class="kiosk-grille fait" id="kioskFait"></div>
+    </div>
+    <div class="kiosk-col">
+      <div class="kiosk-titre faire">🔥 À FAIRE</div>
+      <div class="kiosk-grille" id="kioskAFaire"></div>
+    </div>
+  </div>
 </div>
 
 <!-- ===== ONGLET ADDITIONS ===== -->
@@ -432,7 +470,7 @@ body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;pa
   </div>
 </div>
 
-<div class="version">v.07/10/2026 13:30 — Moule & Smile Caisse</div>
+<div class="version">v.09/10/2026 09:30 — Moule & Smile Caisse</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -1792,27 +1830,40 @@ function renderCuisine(){
   if(!labelsConfigures.length){
     elCompteurs.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="em">🍳</div><p>Aucun produit réglé pour la cuisine.<br>Dans l\'admin : Carte → clique un produit → coche « Afficher dans l\'onglet Cuisine ».</p></div>';
     elTickets.innerHTML='';
+    const kA0=document.getElementById('kioskAFaire'),kF0=document.getElementById('kioskFait');
+    if(kA0) kA0.innerHTML=elCompteurs.innerHTML; if(kF0) kF0.innerHTML='';
     return;
   }
 
   // Compteurs : un par libellé (y compris à 0, pour que l'écran ne saute pas), détail par choix
-  const groupes={};
-  labelsConfigures.forEach(l=>groupes[l]={nb:0,choix:{}});
-  aPreparer.forEach(x=>x.lignes.forEach(l=>{
-    const g=groupes[l.label]; if(!g) return;
-    g.nb++;
-    const c=choixSansPrix(l.choix);
-    if(c) g.choix[c]=(g.choix[c]||0)+1;
-  }));
-  elCompteurs.innerHTML=labelsConfigures.map(l=>{
-    const g=groupes[l];
-    const detail=Object.entries(g.choix).map(([c,n])=>`${c} ×${n}`).join('<br>');
-    return `<div class="cuisine-compteur ${g.nb===0?'zero':''}">
-      <div class="cc-nb">${g.nb}</div>
-      <div class="cc-nom">${l}</div>
-      ${detail?`<div class="cc-detail">${detail}</div>`:''}
-    </div>`;
-  }).join('');
+  const faits=Object.values(allCommandes)
+    .filter(c=>c.cuisineFait)
+    .map(c=>({cmd:c,lignes:lignesCuisineDe(c)}))
+    .filter(x=>x.lignes.length);
+  const htmlCompteurs=(liste)=>{
+    const groupes={};
+    labelsConfigures.forEach(l=>groupes[l]={nb:0,choix:{}});
+    liste.forEach(x=>x.lignes.forEach(l=>{
+      const g=groupes[l.label]; if(!g) return;
+      g.nb++;
+      const c=choixSansPrix(l.choix);
+      if(c) g.choix[c]=(g.choix[c]||0)+1;
+    }));
+    return labelsConfigures.map(l=>{
+      const g=groupes[l];
+      const detail=Object.entries(g.choix).map(([c,n])=>`${c} ×${n}`).join('<br>');
+      return `<div class="cuisine-compteur ${g.nb===0?'zero':''}">
+        <div class="cc-nb">${g.nb}</div>
+        <div class="cc-nom">${l}</div>
+        ${detail?`<div class="cc-detail">${detail}</div>`:''}
+      </div>`;
+    }).join('');
+  };
+  const hAFaire=htmlCompteurs(aPreparer);
+  elCompteurs.innerHTML=hAFaire;
+  const kA=document.getElementById('kioskAFaire'), kF=document.getElementById('kioskFait');
+  if(kA) kA.innerHTML=hAFaire;
+  if(kF) kF.innerHTML=htmlCompteurs(faits);
 
   // Tickets : uniquement les lignes cuisine de chaque commande
   if(!aPreparer.length){
@@ -1841,6 +1892,36 @@ function renderCuisine(){
       </div>
     </div>`).join('');
 }
+
+// Plein écran cuisine : API native si dispo, sinon recouvrement CSS (iPhone/iPad Safari...)
+let cuisineFsNatif=false;
+function basculerCuisinePlein(on){
+  document.body.classList.toggle('cuisine-plein',!!on);
+  const el=document.documentElement;
+  if(on){
+    renderCuisine();
+    try{
+      const f=el.requestFullscreen||el.webkitRequestFullscreen||el.msRequestFullscreen;
+      if(f){const r=f.call(el); cuisineFsNatif=true; if(r&&r.catch) r.catch(()=>{cuisineFsNatif=false;});}
+    }catch(e){cuisineFsNatif=false;}
+  }else{
+    cuisineFsNatif=false;
+    try{
+      if(document.fullscreenElement||document.webkitFullscreenElement){
+        (document.exitFullscreen||document.webkitExitFullscreen).call(document);
+      }
+    }catch(e){}
+  }
+}
+function _fsChange(){
+  // Échap / geste du navigateur : on quitte aussi notre mode
+  if(!document.fullscreenElement&&!document.webkitFullscreenElement&&cuisineFsNatif){
+    cuisineFsNatif=false;
+    document.body.classList.remove('cuisine-plein');
+  }
+}
+document.addEventListener('fullscreenchange',_fsChange);
+document.addEventListener('webkitfullscreenchange',_fsChange);
 
 async function marquerCuisinePret(id){
   try{
