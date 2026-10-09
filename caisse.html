@@ -230,7 +230,7 @@ body.cuisine-plein{overflow:hidden}
 
 <!-- HEADER -->
 <div class="header">
-  <h1>🐚 CAISSE — Moule & Smile</h1>
+  <h1>🐚 <span id="motCaisse" onclick="tapMotCaisse()" style="cursor:default;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent">CAISSE</span> — Moule & Smile</h1>
   <div class="stats-row">
     <div class="stat"><div class="num" id="statNouv">0</div><div class="lbl">Nouvelles</div></div>
     <div class="stat"><div class="num" id="statAdd">0</div><div class="lbl">Additions</div></div>
@@ -494,7 +494,7 @@ body.cuisine-plein{overflow:hidden}
   </div>
 </div>
 
-<div class="version">v.09/10/2026 12:25 — Moule & Smile Caisse</div>
+<div class="version">v.09/10/2026 12:45 — Moule & Smile Caisse</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -2006,17 +2006,45 @@ function basculerCuisinePlein(on){
   if(on){
     renderCuisine();
     try{
+      const dejaPlein=!!(document.fullscreenElement||document.webkitFullscreenElement);
       const f=el.requestFullscreen||el.webkitRequestFullscreen||el.msRequestFullscreen;
-      if(f){const r=f.call(el); cuisineFsNatif=true; if(r&&r.catch) r.catch(()=>{cuisineFsNatif=false;});}
+      if(f&&!dejaPlein){const r=f.call(el); cuisineFsNatif=true; if(r&&r.catch) r.catch(()=>{cuisineFsNatif=false;});}
     }catch(e){cuisineFsNatif=false;}
   }else{
+    // On ne quitte le plein écran du navigateur que si c'est ce mode cuisine qui l'avait lancé
+    // (si toute la caisse est déjà en plein écran via le mot CAISSE, elle y reste).
+    const etaitGere=cuisineFsNatif;
     cuisineFsNatif=false;
     try{
-      if(document.fullscreenElement||document.webkitFullscreenElement){
+      if(etaitGere&&(document.fullscreenElement||document.webkitFullscreenElement)){
         (document.exitFullscreen||document.webkitExitFullscreen).call(document);
       }
     }catch(e){}
   }
+}
+
+// ============================================================
+// PLEIN ÉCRAN DE TOUTE LA CAISSE — commande cachée : 3 appuis rapides sur le mot « CAISSE » (en haut à gauche)
+// → entre en plein écran ; 3 appuis rapides de nouveau → en sort. Aucun bouton visible pour le personnel.
+// ============================================================
+let tapsCaisse=[];
+function tapMotCaisse(){
+  const now=Date.now();
+  tapsCaisse=tapsCaisse.filter(t=>now-t<1500);
+  tapsCaisse.push(now);
+  if(tapsCaisse.length<3) return;
+  tapsCaisse=[];
+  const el=document.documentElement;
+  const enPleinEcran=!!(document.fullscreenElement||document.webkitFullscreenElement);
+  try{
+    if(enPleinEcran){
+      (document.exitFullscreen||document.webkitExitFullscreen).call(document);
+    }else{
+      const f=el.requestFullscreen||el.webkitRequestFullscreen||el.msRequestFullscreen;
+      if(!f){showToast('⚠️ Plein écran non disponible sur ce navigateur');return;}
+      const r=f.call(el); if(r&&r.catch) r.catch(()=>showToast('⚠️ Plein écran refusé par le navigateur'));
+    }
+  }catch(e){showToast('⚠️ Plein écran non disponible');}
 }
 function _fsChange(){
   // Échap / geste du navigateur : on quitte aussi notre mode
