@@ -91,6 +91,19 @@ body.cuisine-plein{overflow:hidden}
 .kiosk-grille.fait .cc-nb{color:#4ABA80}
 .kiosk-grille.fait .cuisine-compteur.zero{border-color:#333}
 .kiosk-grille.fait .cuisine-compteur.zero .cc-nb{color:#666}
+.cuisine-duo{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-top:6px}
+.cuisine-duo-col{flex:1;min-width:300px}
+.cuisine-duo .cuisine-compteurs{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));margin:6px 0 10px;gap:8px}
+.cuisine-duo .cuisine-compteur{padding:10px 8px}
+.cuisine-duo .cc-nb{font-size:38px}
+.cuisine-compteurs.fait .cuisine-compteur{border-color:#1A7A50}
+.cuisine-compteurs.fait .cuisine-compteur .cc-nb{color:#4ABA80}
+.cuisine-compteurs.fait .cuisine-compteur.zero{border-color:#333}
+.cuisine-compteurs.fait .cuisine-compteur.zero .cc-nb{color:#666}
+.cuisine-histo-titre{font-size:14px;font-weight:bold;color:#aaa;margin:22px 0 8px;letter-spacing:.5px}
+.histo-carte{opacity:.85}
+.histo-carte .cmd-table{font-size:18px}
+.btn-remettre{background:#444;color:#fff;border:1px solid #777;border-radius:8px;padding:8px 12px;font-weight:bold;font-size:13px;cursor:pointer;width:100%}
 .cuisine-compteur .cc-detail{font-size:11px;color:#4ABA80;margin-top:6px;line-height:1.5}
 .jetons-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px;margin-top:14px}
 .jeton-pastille{background:#242424;border:2px solid #444;border-radius:12px;padding:10px 6px;text-align:center;cursor:pointer;transition:transform .1s}
@@ -325,8 +338,19 @@ body.cuisine-plein{overflow:hidden}
 <div class="tab-content" id="tab-cuisine">
   <div class="status-bar"><div class="dot"></div>🍳 Plats à préparer — seuls les produits cochés « Afficher dans l'onglet Cuisine » (admin) apparaissent ici. « ✓ Prêt » retire la commande de cette vue.</div>
   <button class="btn-plein" onclick="basculerCuisinePlein(true)">⛶ Plein écran (compteurs seuls)</button>
-  <div class="cuisine-compteurs" id="cuisineCompteurs"></div>
+  <div class="cuisine-duo">
+    <div class="cuisine-duo-col">
+      <div class="kiosk-titre fait">✅ FAIT</div>
+      <div class="cuisine-compteurs fait" id="cuisineCompteursFait"></div>
+    </div>
+    <div class="cuisine-duo-col">
+      <div class="kiosk-titre faire">🔥 À FAIRE</div>
+      <div class="cuisine-compteurs" id="cuisineCompteurs"></div>
+    </div>
+  </div>
   <div class="commandes-grid" id="cuisineTickets"></div>
+  <div class="cuisine-histo-titre">📜 HISTORIQUE CUISINE — commandes déjà prêtes (service en cours)</div>
+  <div class="commandes-grid" id="cuisineHistorique"></div>
 </div>
 
 <!-- Mode plein écran cuisine : compteurs seuls, À FAIRE + FAIT -->
@@ -494,7 +518,7 @@ body.cuisine-plein{overflow:hidden}
   </div>
 </div>
 
-<div class="version">v.09/10/2026 12:45 — Moule & Smile Caisse</div>
+<div class="version">v.09/10/2026 13:10 — Moule & Smile Caisse</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -1930,12 +1954,45 @@ function renderCuisine(){
     }).join(''):'<span style="color:#666;font-size:12px">Rien en cours ✅</span>';
   }
 
+  // Historique : commandes déjà marquées « Prêt » (la plus récente en haut) + possibilité de remettre à faire
+  const elHisto=document.getElementById('cuisineHistorique');
+  if(elHisto){
+    const heurePret=c=>{
+      try{const d=c.cuisineHeure&&c.cuisineHeure.toDate?c.cuisineHeure.toDate():null; return d?d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'';}catch(e){return '';}
+    };
+    const msPret=c=>{try{return c.cuisineHeure&&c.cuisineHeure.toMillis?c.cuisineHeure.toMillis():0;}catch(e){return 0;}};
+    const dejaPrets=Object.values(allCommandes)
+      .filter(c=>c.cuisineFait)
+      .map(c=>({cmd:c,lignes:lignesCuisineDe(c)}))
+      .filter(x=>x.lignes.length)
+      .sort((a,b)=>msPret(b.cmd)-msPret(a.cmd)||(b.cmd.heure||'').localeCompare(a.cmd.heure||''));
+    elHisto.innerHTML=dejaPrets.length?dejaPrets.map(({cmd,lignes})=>`
+      <div class="cmd-card en_addition histo-carte">
+        <div class="cmd-header">
+          <div class="cmd-table">${libelleTable(cmd.table)}</div>
+          <div class="cmd-meta">
+            <div class="cmd-heure">🕐 ${cmd.heure||'--:--'}</div>
+            <div class="cmd-statut" style="color:#4ABA80">✅ Prêt${heurePret(cmd)?' à '+heurePret(cmd):''}</div>
+          </div>
+        </div>
+        <div class="cmd-items">
+          ${lignes.map(it=>`
+            <div class="cmd-item-row" style="flex-direction:column;align-items:stretch">
+              <div style="font-size:14px;font-weight:bold">${it.menuPlat?it.nom:(it.platMenu?it.nom+' → '+it.platMenu:it.nom)}</div>
+              ${it.choix?`<div style="font-size:12px;color:#4ABA80;padding-left:4px">${it.choix}</div>`:''}
+            </div>`).join('')}
+        </div>
+        <div class="cmd-actions"><button class="btn-remettre" onclick="remettreCuisineAFaire('${cmd.id}')">↩ Remettre à faire</button></div>
+      </div>`).join(''):'<div class="empty"><div class="em">📜</div><p>Aucune commande prête pour le moment</p></div>';
+  }
+
   const labelsConfigures=[...new Set(Object.values(carteCuisine))].sort((a,b)=>a.localeCompare(b));
   if(!labelsConfigures.length){
     elCompteurs.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="em">🍳</div><p>Aucun produit réglé pour la cuisine.<br>Dans l\'admin : Carte → clique un produit → coche « Afficher dans l\'onglet Cuisine ».</p></div>';
     elTickets.innerHTML='';
     const kA0=document.getElementById('kioskAFaire'),kF0=document.getElementById('kioskFait');
     if(kA0) kA0.innerHTML=elCompteurs.innerHTML; if(kF0) kF0.innerHTML='';
+    const elF0=document.getElementById('cuisineCompteursFait'); if(elF0) elF0.innerHTML='';
     return;
   }
 
@@ -1966,8 +2023,11 @@ function renderCuisine(){
   const hAFaire=htmlCompteurs(aPreparer);
   elCompteurs.innerHTML=hAFaire;
   const kA=document.getElementById('kioskAFaire'), kF=document.getElementById('kioskFait');
+  const hFait=htmlCompteurs(faits);
   if(kA) kA.innerHTML=hAFaire;
-  if(kF) kF.innerHTML=htmlCompteurs(faits);
+  if(kF) kF.innerHTML=hFait;
+  const elFait=document.getElementById('cuisineCompteursFait');
+  if(elFait) elFait.innerHTML=hFait;
 
   // Tickets : uniquement les lignes cuisine de chaque commande
   if(!aPreparer.length){
@@ -2055,6 +2115,16 @@ function _fsChange(){
 }
 document.addEventListener('fullscreenchange',_fsChange);
 document.addEventListener('webkitfullscreenchange',_fsChange);
+
+async function remettreCuisineAFaire(id){
+  try{
+    await db.collection('commandes').doc(id).update({
+      cuisineFait:firebase.firestore.FieldValue.delete(),
+      cuisineHeure:firebase.firestore.FieldValue.delete()
+    });
+    showToast('↩ Commande remise « à faire » en cuisine');
+  }catch(e){console.error(e);showToast('❌ Erreur');}
+}
 
 async function marquerCuisinePret(id){
   try{
