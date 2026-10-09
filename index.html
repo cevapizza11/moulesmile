@@ -392,7 +392,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
-<div class="version">v.22/09/2026 19:06 — Moule & Smile</div>
+<div class="version">v.09/10/2026 11:40 — Moule & Smile</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -1719,12 +1719,20 @@ async function demanderAddition(){
       statut:'nouvelle'
     });
 
-    // Mettre à jour l'addition sans écraser les commandes existantes
+    // Mettre à jour l'addition sans écraser les commandes existantes.
+    // demandeTimestamp = moment où le client demande l'addition → c'est lui qui lance le chrono d'alerte en caisse
+    // (on le conserve si le client a déjà demandé : un 2e clic ne remet pas le chrono à zéro).
+    let demandeTs=firebase.firestore.FieldValue.serverTimestamp();
+    try{
+      const ex=await db.collection('additions').doc(`table_${tableNum}`).get();
+      if(ex.exists && ex.data().statut==='demandee' && ex.data().demandeTimestamp) demandeTs=ex.data().demandeTimestamp;
+    }catch(e){}
     await db.collection('additions').doc(`table_${tableNum}`).set({
       table:tableNum,
       total,
       commandes:commandes.map(c=>({heure:c.heure||'--:--',items:c.items||[],total:c.total||0})),
       timestamp:firebase.firestore.FieldValue.serverTimestamp(),
+      demandeTimestamp:demandeTs,
       statut:'demandee'
     });
 

@@ -490,7 +490,7 @@ body.cuisine-plein{overflow:hidden}
   </div>
 </div>
 
-<div class="version">v.09/10/2026 11:10 — Moule & Smile Caisse</div>
+<div class="version">v.09/10/2026 11:40 — Moule & Smile Caisse</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -1632,13 +1632,23 @@ function minutesDepuis(timestamp){
   return Math.floor((Date.now()-d.getTime())/60000);
 }
 
+// Le chrono ne démarre QUE quand le client a demandé l'addition (statut « demandee »),
+// et se compte depuis cette demande (demandeTimestamp). « Vu → Addition » ne lance plus rien.
+function additionDemandee(a){return a.statut==='demandee';}
+function minutesAttenteAddition(a){
+  if(!additionDemandee(a)) return 0;
+  return minutesDepuis(a.demandeTimestamp||a.timestamp);
+}
+function additionEnRetard(a){
+  return a.statut!=='regle' && additionDemandee(a) && minutesAttenteAddition(a)>=SEUIL_ALERTE_MINUTES;
+}
+
 function verifierAdditionsEnRetard(){
-  const enRetard=Object.values(allAdditions)
-    .filter(a=>a.statut!=='regle' && minutesDepuis(a.timestamp)>=SEUIL_ALERTE_MINUTES);
+  const enRetard=Object.values(allAdditions).filter(additionEnRetard);
 
   const bandeau=document.getElementById('bandeauRetard');
   if(enRetard.length>0){
-    const tables=enRetard.map(a=>a.table).join(', ');
+    const tables=enRetard.map(a=>libelleTable(a.table).replace('Table ','')).join(', ');
     bandeau.textContent=`⏰ ${enRetard.length} table(s) en attente d'encaissement depuis plus de ${SEUIL_ALERTE_MINUTES} min — Table(s) ${tables}`;
     bandeau.classList.add('visible');
     // Bip toutes les 60s tant qu'il reste au moins une table en retard (évite le spam sonore)
@@ -2073,13 +2083,21 @@ async function recalcAddition(tableNum){
   });
   commandes.sort((a,b)=>a.heure.localeCompare(b.heure));
   if(!commandes.length) return;
-  await db.collection('additions').doc(`table_${tableNum}`).set({
+  // Si le client avait déjà demandé l'addition, on garde cette demande (et son heure) pour ne pas perdre/relancer le chrono
+  let demande=null;
+  try{
+    const ex=await db.collection('additions').doc(`table_${tableNum}`).get();
+    if(ex.exists && ex.data().statut==='demandee') demande={ts:ex.data().demandeTimestamp||ex.data().timestamp};
+  }catch(e){}
+  const doc={
     table:tableNum,
     total,
     commandes,
     timestamp:firebase.firestore.FieldValue.serverTimestamp(),
-    statut:'en_cours'
-  });
+    statut:demande?'demandee':'en_cours'
+  };
+  if(demande&&demande.ts) doc.demandeTimestamp=demande.ts;
+  await db.collection('additions').doc(`table_${tableNum}`).set(doc);
 }
 
 async function archiverCommande(id,tableNum){
@@ -2250,9 +2268,10 @@ function renderAdditions(){
   let adds=Object.values(allAdditions)
     .filter(a=>a.statut!=='regle')
     .sort((a,b)=>{
-      const retardA=minutesDepuis(a.timestamp)>=SEUIL_ALERTE_MINUTES;
-      const retardB=minutesDepuis(b.timestamp)>=SEUIL_ALERTE_MINUTES;
+      const retardA=additionEnRetard(a), retardB=additionEnRetard(b);
       if(retardA!==retardB) return retardA?-1:1; // en retard en premier
+      const demA=additionDemandee(a), demB=additionDemandee(b);
+      if(demA!==demB) return demA?-1:1; // puis celles que le client a demandées
       return (a.table||0)-(b.table||0);
     });
 
@@ -2275,13 +2294,14 @@ function renderAdditions(){
   });
 
   container.innerHTML=adds.map(add=>{
-    const mins=minutesDepuis(add.timestamp);
-    const enRetard=mins>=SEUIL_ALERTE_MINUTES;
+    const mins=minutesAttenteAddition(add);
+    const enRetard=additionEnRetard(add);
+    const demandee=additionDemandee(add);
     return `
     <div class="addition-card ${enRetard?'en-retard':''}">
       <div class="addition-header">
         <div>
-          <div class="addition-table-num">🪑 ${libelleTable(add.table)}${enRetard?`<span class="badge-retard">⏰ ${mins} min</span>`:''}</div>
+          <div class="addition-table-num">🪑 ${libelleTable(add.table)}${enRetard?`<span class="badge-retard">⏰ ${mins} min</span>`:(demandee?`<span class="badge-retard" style="background:#E67E22">🔔 Demandée · ${mins} min</span>`:'')}</div>
           <div class="addition-nb">${(add.commandes||[]).length} commande(s)</div>
         </div>
         <div class="addition-total">${(add.total||0).toFixed(2).replace('.',',')} €</div>
