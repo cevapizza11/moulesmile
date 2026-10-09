@@ -386,7 +386,8 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 <div id="navImporter" class="content" style="display:none">
   <div class="excel-format">
     <strong>Format attendu — colonnes dans l'ordre :</strong><br>
-    A: ID · B: Catégorie · C: Nom · D: Description · E: Emoji · F: Prix EUR · G: Actif (OUI/NON) · ... · J: ID Hiboutik (optionnel)<br><br>
+    A: ID · B: Catégorie · C: Nom · D: Description · E: Emoji · F: Prix EUR · G: Actif (OUI/NON) · ... · J: ID Hiboutik (optionnel) · <span style="color:#D4AF37">K: Cuisine (OUI/NON, optionnel) · L: Libellé cuisine (optionnel)</span><br><br>
+    🍳 <strong style="color:#D4AF37">Colonnes "Cuisine"</strong> : mets <b>OUI</b> en colonne K pour qu'un produit s'affiche dans l'onglet Cuisine de la caisse (un nouveau produit est ainsi pris en compte dès l'import, sans rien cocher ici). Colonne L : nom de regroupement facultatif (ex. « Nuggets » pour regrouper poulet + poisson). <b>NON</b> retire le produit de la cuisine. <b>Case vide</b> = on garde le réglage fait dans l'admin. Les plats du menu enfant se cochent à la main (Carte → Menu enfant → clique le plat).<br><br>
     <strong>Catégories valides :</strong> formules · sauces · softs · bieres · vins_blancs · vins_roses · vins_rouges · cocktails · sangria · desserts · digestifs · chauds<br><br>
     🔗 <strong style="color:#4ABA80">Colonne "ID Hiboutik"</strong> : si elle est remplie (dernière colonne de chaque onglet produit, et de l'onglet Familles Options), la Correspondance Hiboutik est mise à jour automatiquement à l'import — plus besoin de la ressaisir à la main dans l'écran "🔗 Correspondance Hiboutik".<br><br>
     ⚠️ <strong style="color:#C0392B">L'import remplace toute la carte.</strong> Utilisez MouleSmile_Carte_Admin.xlsx comme base.
@@ -444,7 +445,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
-<div class="version">v.07/10/2026 13:30 — Moule & Smile Admin</div>
+<div class="version">v.09/10/2026 11:10 — Moule & Smile Admin</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -639,8 +640,8 @@ function ouvrirModalEdition(catId,idx,source='carte'){
   // pas pour le menu enfant (offert, hors sujet du budget de points).
   document.getElementById('editPointsRow').style.display=(source==='enfantMenu')?'none':'flex';
   document.getElementById('editPoints').value=p.points||0;
-  // Onglet Cuisine de la caisse : uniquement pour les produits de la carte (pas options, pas menu enfant)
-  document.getElementById('editCuisineRow').style.display=(source==='carte')?'flex':'none';
+  // Onglet Cuisine de la caisse : produits de la carte et plats du menu enfant (pas les options)
+  document.getElementById('editCuisineRow').style.display=(source==='carte'||source==='enfantMenu')?'flex':'none';
   document.getElementById('editCuisine').checked=!!p.cuisine;
   document.getElementById('editCuisineLabel').value=p.cuisineLabel||'';
   document.getElementById('editCuisineLabelGroup').style.display=p.cuisine?'flex':'none';
@@ -766,7 +767,7 @@ function validerEdition(){
   if(editionSource!=='enfantMenu'){
     p.points=parseInt(document.getElementById('editPoints').value)||0;
   }
-  if(editionSource==='carte'){
+  if(editionSource==='carte'||editionSource==='enfantMenu'){
     if(document.getElementById('editCuisine').checked){
       p.cuisine=true;
       const lib=document.getElementById('editCuisineLabel').value.trim();
@@ -927,7 +928,10 @@ function parseRows(rows){
     const actif=String(row[7]||'OUI').trim().toUpperCase()!=='NON';
     const ordre=parseInt(row[8])||9999;
     const idHiboutik=parseInt(row[9])||null;
-    produits.push({id,cat,subcat,nom,desc,emoji,prix,actif,ordre,idHiboutik});
+    // Colonnes optionnelles K « Cuisine » (OUI/NON, vide = ne rien changer) et L « Libellé cuisine »
+    const cuisineXl=String(row[10]||'').trim().toUpperCase();
+    const cuisineLabelXl=String(row[11]||'').trim();
+    produits.push({id,cat,subcat,nom,desc,emoji,prix,actif,ordre,idHiboutik,cuisineXl,cuisineLabelXl});
   });
   if(!produits.length){showToast('⚠️ Aucun produit trouvé');return;}
   importedData=produits;
@@ -971,6 +975,13 @@ function confirmerImport(){
     const item={id:p.id,nom:p.nom,desc:p.desc,emoji:p.emoji,prix:p.prix,actif:p.actif};
     if(p.subcat) item.subcat=p.subcat;
     Object.assign(item,reglagesExistants[p.id]||{});
+    // Excel : colonne K « Cuisine » = OUI → affiché en cuisine ; NON → retiré ; vide → réglage de l'admin conservé
+    if(p.cuisineXl==='OUI'){
+      item.cuisine=true;
+      if(p.cuisineLabelXl) item.cuisineLabel=p.cuisineLabelXl;
+    } else if(p.cuisineXl==='NON'){
+      delete item.cuisine; delete item.cuisineLabel;
+    }
     return item;
   };
   const newCarte={categories:[]};
@@ -1217,7 +1228,7 @@ function renderEnfantMenu() {
       </div>
       <div class="item-info" onclick="ouvrirModalEdition(null,${idx},'enfantMenu')">
         <div class="item-nom">${p.photo?`<img src="${p.photo}" style="width:20px;height:20px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px">`:''}${p.emoji||'🧒'} ${p.nom}</div>
-        <div class="item-detail">${p.desc||''}</div>
+        <div class="item-detail">${p.desc||''}${p.cuisine?` <span style="color:#D4AF37">🍳 ${p.cuisineLabel||'Cuisine'}</span>`:''}</div>
       </div>
       <div style="display:flex;align-items:center;gap:6px">
         <label class="toggle">

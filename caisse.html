@@ -490,7 +490,7 @@ body.cuisine-plein{overflow:hidden}
   </div>
 </div>
 
-<div class="version">v.09/10/2026 10:25 — Moule & Smile Caisse</div>
+<div class="version">v.09/10/2026 11:10 — Moule & Smile Caisse</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -567,6 +567,7 @@ let carteConsignes={};
 let carteSauces=[]; // options de la famille "sauce" (pour la recharge rapide de marmite)
 let carteFamillesOptions={}; // TOUTES les familles d'options (sauce, croquant, coulis, nappage...) — transmission Hiboutik générique
 let carteCapacite={salle:0,terrasse:0,terrasseOuverte:false};
+let carteCuisineParNom={}; // nom produit (minuscule) → libellé cuisine, pour retrouver les choix des menus enfant/ado
 let carteCuisine={}; // id produit → libellé cuisine (produits cochés « Afficher dans l'onglet Cuisine »)
 db.collection('config').doc('carte_v2').onSnapshot(doc=>{
   carteConsignes=(doc.exists && doc.data().consignesCuisine)||{};
@@ -580,6 +581,14 @@ db.collection('config').doc('carte_v2').onSnapshot(doc=>{
     if(p.cuisine) cuisine[p.id]=(p.cuisineLabel||'').trim()||p.nom;
   }));
   carteCuisine=cuisine;
+  const parNom={};
+  ((doc.exists&&doc.data().categories)||[]).forEach(cat=>(cat.produits||[]).forEach(p=>{
+    if(p.cuisine) parNom[(p.nom||'').trim().toLowerCase()]=(p.cuisineLabel||'').trim()||p.nom;
+  }));
+  ((doc.exists&&doc.data().enfantMenu)||[]).forEach(p=>{
+    if(p.cuisine) parNom[(p.nom||'').trim().toLowerCase()]=(p.cuisineLabel||'').trim()||p.nom;
+  });
+  carteCuisineParNom=parNom;
   updateOccupationCounter();
   renderCuisine();
 });
@@ -1840,7 +1849,16 @@ function lignesCuisineDe(cmd){
   (cmd.items||[]).forEach(it=>{
     const idBase=(it.id||'').replace('_inclus','');
     const label=carteCuisine[idBase];
-    if(label) lignes.push({...it,label});
+    if(label){ lignes.push({...it,label}); return; }
+    // Menus enfant / ado : le plat choisi est écrit dans le détail (« Menu : Nuggets » / « Choix : Calamars à volonté »)
+    const segs=(it.choix||'').split(' — ');
+    segs.forEach(sg=>{
+      const m=sg.match(/^\s*(?:Menu|Choix)\s*:\s*(.+?)\s*$/i);
+      if(!m) return;
+      const nomPlat=m[1].trim();
+      const lab=carteCuisineParNom[nomPlat.toLowerCase()];
+      if(lab) lignes.push({...it,nom:'🧒 '+nomPlat,choix:segs.filter(x=>x!==sg).join(' — '),label:lab});
+    });
   });
   return lignes;
 }
