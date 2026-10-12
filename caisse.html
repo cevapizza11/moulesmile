@@ -413,8 +413,8 @@ body.cuisine-plein{overflow:hidden}
   <div style="background:#242424;border:1px solid #D4AF37;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px">
     <label for="choixAdresseApp" style="color:#D4AF37;font-weight:bold">🔗 Adresse mise dans les QR codes :</label>
     <select id="choixAdresseApp" onchange="changerAdresseApp(this.value)" style="margin-left:6px;padding:6px;border-radius:8px;background:#1a1a1a;color:#fff;border:1px solid #555;font-size:13px">
-      <option value="github">GitHub (actuelle)</option>
-      <option value="firebase">Firebase — commandemoulesmile.web.app (test)</option>
+      <option value="firebase">Firebase — commandemoulesmile.web.app (recommandée)</option>
+      <option value="github">GitHub — ancienne adresse (cevapizza11.github.io)</option>
     </select>
     <div id="adresseAppAffichee" style="color:#888;font-size:11px;margin-top:4px;word-break:break-all"></div>
   </div>
@@ -518,7 +518,7 @@ body.cuisine-plein{overflow:hidden}
   </div>
 </div>
 
-<div class="version">v.09/10/2026 13:10 — Moule & Smile Caisse</div>
+<div class="version">v.12/10/2026 07:30 — Moule & Smile Caisse</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -574,7 +574,7 @@ const URLS_APP={
   github:'https://cevapizza11.github.io/moulesmile/index.html',
   firebase:'https://commandemoulesmile.web.app/'
 };
-let adresseAppChoisie='github';
+let adresseAppChoisie='firebase'; // adresse par défaut des QR codes (modifiable dans l'onglet Jetons)
 try{const v=localStorage.getItem('adresseApp'); if(v&&URLS_APP[v]) adresseAppChoisie=v;}catch(e){}
 function baseUrlApp(){return URLS_APP[adresseAppChoisie]||URLS_APP.github;}
 function changerAdresseApp(v){
@@ -582,7 +582,7 @@ function changerAdresseApp(v){
   adresseAppChoisie=v;
   try{localStorage.setItem('adresseApp',v);}catch(e){}
   const el=document.getElementById('adresseAppAffichee'); if(el) el.textContent=baseUrlApp();
-  showToast('🔗 Les prochains QR codes utiliseront : '+(v==='firebase'?'Firebase (web.app)':'GitHub'));
+  showToast('🔗 Les prochains QR codes utiliseront : '+(v==='firebase'?'Firebase (web.app)':'GitHub (ancienne adresse)'));
 }
 (function(){
   const sel=document.getElementById('choixAdresseApp'); if(sel) sel.value=adresseAppChoisie;
