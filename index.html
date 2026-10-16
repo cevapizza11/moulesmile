@@ -191,6 +191,11 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
     <div style="font-size:48px;margin-bottom:12px">🔒</div>
     <h3 id="jetonBloqueTitre" style="margin-bottom:8px">Accès protégé</h3>
     <div class="modal-sub" id="jetonBloqueTexte" style="margin-bottom:8px">Merci de scanner le QR code présent sur votre table.</div>
+    <div id="aideNavigateur" style="display:none;margin-top:14px">
+      <button type="button" onclick="copierLienCommande()" style="width:100%;padding:13px;border:none;border-radius:10px;background:#D4AF37;color:#1A1A1A;font-weight:bold;font-size:15px;margin-bottom:8px">📋 Copier le lien</button>
+      <button type="button" onclick="location.reload()" style="width:100%;padding:12px;border:1px solid #D4AF37;border-radius:10px;background:transparent;color:#D4AF37;font-weight:bold;font-size:14px">🔄 Réessayer</button>
+      <div id="lienCopieOk" style="display:none;color:#4ABA80;font-size:13px;margin-top:8px">✅ Lien copié — collez-le dans Safari ou Chrome</div>
+    </div>
   </div>
 </div>
 
@@ -392,7 +397,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
-<div class="version">v.09/10/2026 11:40 — Moule & Smile</div>
+<div class="version">v.16/10/2026 23:00 — Moule & Smile</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -402,6 +407,10 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 const firebaseConfig={apiKey:"AIzaSyDUb3LtVsMAq986DgtHwkMBeQFr8A8A2nU",authDomain:"commandemoulesmile.firebaseapp.com",projectId:"commandemoulesmile",storageBucket:"commandemoulesmile.firebasestorage.app",messagingSenderId:"303564394584",appId:"1:303564394584:web:cbde6960f99cac83517a2d"};
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
+// Mode de connexion robuste (ajouté le 16/10/2026) : si le navigateur ou le réseau bloque la
+// connexion en temps réel classique (Brave, bloqueurs de pub, certains wifi publics), Firebase
+// bascule tout seul sur une connexion de secours. Doit être réglé avant toute lecture.
+try{ db.settings({experimentalAutoDetectLongPolling:true, merge:true}); }catch(e){ console.warn('Réglage connexion',e); }
 // Connexion anonyme automatique, invisible pour le client (aucun mot de passe, aucun écran).
 // Nécessaire depuis le 20/09/2026 : les règles de sécurité Firestore exigent désormais d'être
 // connecté (même anonymement) pour lire/écrire — avant cette date, la base était ouverte à tous.
@@ -457,11 +466,31 @@ function afficherBlocageJeton(titre,texte){
 function masquerBlocageJeton(){
   document.getElementById('screenJetonBloque').classList.remove('visible');
 }
+// Si la base ne répond pas au bout de quelques secondes, le navigateur bloque sûrement la
+// connexion : on explique au client quoi faire au lieu de le laisser devant un écran figé.
+let reponseJetonRecue=false;
+function afficherBlocageNavigateur(){
+  afficherBlocageJeton('Connexion bloquée',
+    'Votre navigateur semble bloquer la commande (navigateur Brave, bloqueur de publicité…). Copiez le lien ci-dessous et ouvrez-le dans Safari ou Chrome, ou désactivez la protection pour ce site.');
+  document.getElementById('aideNavigateur').style.display='block';
+}
+function copierLienCommande(){
+  const lien=window.location.href;
+  const ok=()=>{document.getElementById('lienCopieOk').style.display='block';};
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(lien).then(ok).catch(()=>prompt('Copiez ce lien :',lien));
+  } else { prompt('Copiez ce lien :',lien); }
+}
 
 if(!jetonToken){
   afficherBlocageJeton('Accès protégé','Merci de scanner le QR code présent sur votre table pour commander.');
 } else {
+  setTimeout(()=>{ if(!reponseJetonRecue) afficherBlocageNavigateur(); },8000);
   db.collection('jetons').doc(jetonToken).onSnapshot(doc=>{
+    if(!reponseJetonRecue){
+      reponseJetonRecue=true;
+      document.getElementById('aideNavigateur').style.display='none';
+    }
     if(!doc.exists || doc.data().statut!=='actif'){
       jetonEnCours=false;
       afficherBlocageJeton('QR pas encore activé','Merci de patienter, un membre de l\'équipe va activer votre table dans un instant.');
@@ -490,6 +519,7 @@ if(!jetonToken){
       updateBadgePoints();
     }
   }, err=>{
+    reponseJetonRecue=true;
     console.error('Erreur vérification jeton',err);
     afficherBlocageJeton('Erreur de connexion','Impossible de vérifier votre accès. Rechargez la page ou appelez un membre de l\'équipe.');
   });
