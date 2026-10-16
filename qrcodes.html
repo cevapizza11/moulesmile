@@ -117,7 +117,7 @@
   <a href="outils.html">← Outils</a>
   <div style="display:flex;gap:10px;align-items:center">
     <button class="btn-deco" onclick="deconnexion()">Déconnexion</button>
-    <span class="version">v.16/10/2026 22:35</span>
+    <span class="version">v.16/10/2026 22:50</span>
   </div>
 </div>
 
@@ -165,6 +165,19 @@
     <div class="boutons">
       <button class="btn btn-outline" onclick="fermerModal('modalAvance')">Annuler</button>
       <button class="btn btn-or" onclick="validerAvance()">🖨️ Imprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal : ticket créé (QR à l'écran + impression) -->
+<div class="modal" id="modalPret">
+  <div class="modal-boite" style="text-align:center">
+    <h3 id="pretTitre">✅ Jeton créé</h3>
+    <div id="pretTexte" style="color:#ccc;font-size:14px;margin-bottom:10px"></div>
+    <div id="pretQr" style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;background:#fff;border-radius:12px;padding:12px"></div>
+    <div class="boutons">
+      <button class="btn btn-outline" onclick="fermerModal('modalPret')">Fermer</button>
+      <button class="btn btn-or" onclick="imprimerPret()">🖨️ Imprimer</button>
     </div>
   </div>
 </div>
@@ -506,10 +519,9 @@ async function validerModalTable(){
     return;
   }
 
-  // Nouvelle table : création + impression
-  const win=window.open('','_blank','width=420,height=500');
-  if(!win){ alert('Fenêtre d\'impression bloquée : autorisez les popups pour ce site.'); return; }
+  // Nouvelle table : création, puis QR affiché à l'écran avec bouton Imprimer
   fermerModal('modalTable');
+  setStatut('⏳ Création du jeton...');
   try{
     const numero=await prochainNumero();
     const token=genererToken();
@@ -518,8 +530,8 @@ async function validerModalTable(){
       timestamp:firebase.firestore.FieldValue.serverTimestamp()
     });
     setStatut(`✅ Jeton n°${numero} activé — Table ${table}`);
-    imprimerTicket(win, numero, token, {table});
-  }catch(e){ console.error(e); setStatut('❌ Erreur création jeton'); win.close(); }
+    montrerPret([{numero, token}], `Table ${table} — jeton n°${numero}`, {table});
+  }catch(e){ erreur('création du jeton', e); }
 }
 
 function ouvrirModalAvance(){
@@ -530,9 +542,8 @@ function ouvrirModalAvance(){
 async function validerAvance(){
   const nb=parseInt(document.getElementById('maNombre').value)||1;
   if(nb<1||nb>50){ alert('Entre 1 et 50 jetons à la fois.'); return; }
-  const win=window.open('','_blank','width=420,height=500');
-  if(!win){ alert('Fenêtre d\'impression bloquée : autorisez les popups pour ce site.'); return; }
   fermerModal('modalAvance');
+  setStatut('⏳ Création des jetons...');
   try{
     const depart=await prochainNumero();
     const jetons=[];
@@ -544,8 +555,8 @@ async function validerAvance(){
     }));
     await batch.commit();
     setStatut(`✅ ${nb} jeton(s) en attente créé(s) — n°${depart}${nb>1?' à n°'+(depart+nb-1):''}`);
-    imprimerPlusieurs(win, jetons);
-  }catch(e){ console.error(e); setStatut('❌ Erreur création jeton(s)'); win.close(); }
+    montrerPret(jetons, `${nb} jeton(s) en attente — n°${depart}${nb>1?' à n°'+(depart+nb-1):''}<br>Attribuez une table avec ✅ Table quand le client est installé.`, {avance:true});
+  }catch(e){ erreur('création des jetons', e); }
 }
 
 function ouvrirModalEmploye(){
@@ -557,9 +568,8 @@ function ouvrirModalEmploye(){
 async function validerEmploye(){
   const nom=document.getElementById('meNom').value.trim();
   if(!nom){ alert('Entrez le prénom de l\'employé.'); return; }
-  const win=window.open('','_blank','width=420,height=500');
-  if(!win){ alert('Fenêtre d\'impression bloquée : autorisez les popups pour ce site.'); return; }
   fermerModal('modalEmploye');
+  setStatut('⏳ Création du repas employé...');
   try{
     const numero=await prochainNumero();
     const token=genererToken();
@@ -570,8 +580,41 @@ async function validerEmploye(){
       timestamp:firebase.firestore.FieldValue.serverTimestamp()
     });
     setStatut(`✅ Repas employé activé — ${nom} (10 points)`);
-    imprimerTicket(win, numero, token, {employe:nom});
-  }catch(e){ console.error(e); setStatut('❌ Erreur création repas employé'); win.close(); }
+    montrerPret([{numero, token}], `🍽️ ${echapper(nom)} — 10 points — jeton n°${numero}`, {employe:nom});
+  }catch(e){ erreur('création du repas employé', e); }
+}
+
+// Affiche le(s) QR créé(s) à l'écran ; l'impression se lance ensuite au clic sur "Imprimer"
+// (sur iPhone, ouvrir l'impression avant la création mettait la page en pause).
+let pret=null;
+function montrerPret(jetons, texte, opt){
+  pret={jetons, opt};
+  document.getElementById('pretTitre').textContent=opt.employe?'✅ Repas employé créé':(opt.avance?'✅ Jetons créés':'✅ Jeton créé et activé');
+  document.getElementById('pretTexte').innerHTML=texte;
+  const zone=document.getElementById('pretQr');
+  zone.innerHTML='';
+  jetons.forEach(j=>{
+    const d=document.createElement('div');
+    d.style.cssText='text-align:center;color:#1A1A1A;font-size:11px;font-weight:bold';
+    d.innerHTML=`<div id="pq_${j.numero}"></div>n°${j.numero}`;
+    zone.appendChild(d);
+    new QRCode(document.getElementById(`pq_${j.numero}`),{text:`${baseUrl()}?j=${j.token}`,width:jetons.length>1?100:160,height:jetons.length>1?100:160,colorDark:"#000000",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.H});
+  });
+  document.getElementById('modalPret').classList.add('visible');
+}
+function imprimerPret(){
+  if(!pret) return;
+  const win=window.open('','_blank','width=420,height=500');
+  if(!win){ alert('Fenêtre d\'impression bloquée : autorisez les popups pour ce site.'); return; }
+  const j=pret.jetons[0];
+  if(pret.opt.avance) imprimerPlusieurs(win, pret.jetons);
+  else imprimerTicket(win, j.numero, j.token, pret.opt.employe?{employe:pret.opt.employe}:{table:pret.opt.table});
+}
+function erreur(quoi, e){
+  console.error(e);
+  const detail=(e&&(e.code||e.message))||'inconnue';
+  setStatut(`❌ Erreur pendant la ${quoi} : ${detail}`);
+  alert(`❌ Le jeton n'a pas pu être créé.\n\nDétail : ${detail}\n\nVérifiez la connexion internet, puis réessayez. Si ça continue, déconnectez-vous et reconnectez-vous.`);
 }
 
 function reimprimer(id){
