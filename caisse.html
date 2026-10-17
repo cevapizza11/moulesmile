@@ -263,7 +263,7 @@ body.cuisine-plein{overflow:hidden}
 
 <!-- HEADER -->
 <div class="header">
-  <h1>🐚 <span id="motCaisse" onclick="tapMotCaisse()" style="cursor:default;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent">CAISSE</span> — Moule & Smile<span class="build-tag">v.17/10/2026 10:15</span></h1>
+  <h1>🐚 <span id="motCaisse" onclick="tapMotCaisse()" style="cursor:default;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent">CAISSE</span> — Moule & Smile<span class="build-tag">v.17/10/2026 10:50</span></h1>
   <div class="stats-row">
     <div class="stat"><div class="num" id="statNouv">0</div><div class="lbl">Nouvelles</div></div>
     <div class="stat"><div class="num" id="statAdd">0</div><div class="lbl">Additions</div></div>
@@ -521,7 +521,7 @@ body.cuisine-plein{overflow:hidden}
 <div class="modal-overlay" id="modalPaiement">
   <div class="modal-box">
     <h3 id="paiementTitre" style="text-align:center">💰 Encaisser</h3>
-    <div class="modal-sub" style="text-align:center">Comment le client a-t-il payé ?</div>
+    <div class="modal-sub" style="text-align:center" id="paiementSousTitre">Comment le client a-t-il payé ?</div>
     <div class="paiement-total" id="paiementTotal">0,00 €</div>
     <div class="paiement-grid" id="paiementModesSimples"></div>
     <button class="btn-mixte" id="btnBasculerMixte" onclick="basculerPaiementMixte()">➗ Paiement en plusieurs fois (mixte)</button>
@@ -553,7 +553,7 @@ body.cuisine-plein{overflow:hidden}
   </div>
 </div>
 
-<div class="version">v.17/10/2026 10:15 — Moule & Smile Caisse</div>
+<div class="version">v.17/10/2026 10:50 — Moule & Smile Caisse</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -2590,7 +2590,14 @@ async function encaisser(tableNum){
   }
   const add=allAdditions[`table_${tableNum}`];
   paiementEnCours={table:tableNum,total:Math.round(((add&&add.total)||0)*100)/100};
-  document.getElementById('paiementTitre').textContent=`💰 Encaisser ${libelleTable(tableNum)}`;
+  afficherModalPaiement(`💰 Encaisser ${libelleTable(tableNum)}`,'Comment le client a-t-il payé ?');
+}
+
+// Remplit et affiche la fenêtre des moyens de paiement pour paiementEnCours
+// (utilisée pour un encaissement ET pour corriger le paiement d'une table déjà réglée).
+function afficherModalPaiement(titre,sousTitre){
+  document.getElementById('paiementTitre').textContent=titre;
+  document.getElementById('paiementSousTitre').textContent=sousTitre||'';
   document.getElementById('paiementTotal').textContent=euros(paiementEnCours.total);
   document.getElementById('paiementModesSimples').innerHTML=MODES_PAIEMENT.map(m=>
     `<button class="btn-mode-pay" onclick="choisirPaiementSimple('${m.cle}')">${m.icone}<span>${m.label}</span></button>`).join('');
@@ -2666,6 +2673,12 @@ function mettreLeReste(cle){
 function choisirPaiementSimple(cle){
   if(!paiementEnCours) return;
   const tableNum=paiementEnCours.table;
+  if(paiementEnCours.histId){
+    const histId=paiementEnCours.histId, total=paiementEnCours.total;
+    fermerModalPaiement();
+    enregistrerCorrectionPaiement(histId,[{mode:cle,montant:total}]);
+    return;
+  }
   fermerModalPaiement();
   // montant:null = "toute l'addition" — le montant exact est relu dans Firestore au moment d'encaisser
   finaliserEncaissement(tableNum,{paiements:[{mode:cle,montant:null}]});
@@ -2675,8 +2688,57 @@ function validerPaiementMixte(){
   const e=etatPaiementMixte();
   if(!e||!e.valide){showToast('⚠️ Le paiement ne correspond pas au total');return;}
   const tableNum=paiementEnCours.table, totalVu=paiementEnCours.total;
+  if(paiementEnCours.histId){
+    const histId=paiementEnCours.histId;
+    fermerModalPaiement();
+    enregistrerCorrectionPaiement(histId,e.paiements);
+    return;
+  }
   fermerModalPaiement();
   finaliserEncaissement(tableNum,{paiements:e.paiements,totalVu});
+}
+
+// ============================================================
+// CORRIGER LE MOYEN DE PAIEMENT D'UNE TABLE DÉJÀ RÉGLÉE (ajouté le 17/10/2026)
+// Historique → toucher la table → « ✏️ Modifier le paiement » (code de modification demandé).
+// Seul le moyen de paiement change : le montant total de l'addition reste le même.
+// L'appli Comptage Caisse reçoit la correction toute seule et met ses tickets à jour.
+// ⚠️ Hiboutik n'est PAS corrigé automatiquement : à corriger aussi dans Hiboutik.
+// ============================================================
+function ouvrirCorrectionPaiement(histId){
+  const h=historique.find(x=>x.id===histId);
+  if(!h){showToast('❌ Table introuvable dans l\'historique');return;}
+  if(h.type==='employe'){showToast('🍽️ Repas offert : pas de paiement à modifier');return;}
+  const total=Math.round((h.total||0)*100)/100;
+  paiementEnCours={table:h.table,total,histId};
+  const avant=(h.paiements&&h.paiements.length)
+    ?'Actuellement : '+h.paiements.map(p=>modePaiementInfo(p.mode).label+' '+euros(p.montant)).join(' + ')
+    :'Aucun moyen de paiement enregistré';
+  afficherModalPaiement(`✏️ Corriger le paiement — ${libelleTable(h.table)}`,avant);
+}
+
+async function enregistrerCorrectionPaiement(histId,paiements){
+  const h=historique.find(x=>x.id===histId);
+  if(!h){showToast('❌ Table introuvable');return;}
+  const total=Math.round((h.total||0)*100)/100;
+  const totalPaye=Math.round(paiements.reduce((s,p)=>s+p.montant,0)*100)/100;
+  const surplus=Math.max(0,Math.round((totalPaye-total)*100)/100);
+  const maj={
+    paiements,
+    modePaiement:paiements.length===1?paiements[0].mode:'mixte',
+    surplusTitres:surplus>0?surplus:firebase.firestore.FieldValue.delete(),
+    paiementCorrigeLeMs:Date.now(),
+    paiementAvantCorrection:h.paiements||[]
+  };
+  if(!h.encaisseLeMs && h.timestamp && h.timestamp.toMillis) maj.encaisseLeMs=h.timestamp.toMillis();
+  try{
+    await db.collection('historique').doc(histId).update(maj);
+    showToast(`✅ Paiement corrigé — ${libelleTable(h.table)}. Pense à corriger aussi dans Hiboutik`);
+    chargerHistorique();
+  }catch(e){
+    console.error('Correction paiement',e);
+    showToast(e&&e.code==='permission-denied'?'❌ Correction refusée par les règles Firestore':'❌ Erreur — correction non enregistrée');
+  }
 }
 
 async function finaliserEncaissement(tableNum,choix){
@@ -2855,6 +2917,11 @@ function renderHistorique(){
           style="background:#333;border:1px solid #D4AF37;color:#D4AF37;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;margin-top:4px">
           🖨️ Réimprimer
         </button>
+        ${h.type!=='employe'&&Array.isArray(h.paiements)&&h.paiements.length?`<button onclick="event.stopPropagation();demanderPwdPuis(()=>ouvrirCorrectionPaiement('${h.id}'))"
+          style="background:#1A2A3A;border:1px solid #2a6ab5;color:#8ac4ff;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;margin-top:4px;margin-left:6px">
+          ✏️ Modifier le paiement
+        </button>`:''}
+        ${h.paiementCorrigeLeMs?`<div style="font-size:10px;color:#E6B84A;margin-top:6px">✏️ Paiement corrigé à ${new Date(h.paiementCorrigeLeMs).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</div>`:''}
       </div>
     </div>`).join('');
 }
