@@ -22,10 +22,11 @@
     --gris:#9fb2c8;
   }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-  html,body{height:100%}
+  html{background:var(--bleu)}
+  html,body{min-height:100%}
   body{
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    background:radial-gradient(circle at 50% 0%, var(--bleu2) 0%, var(--bleu) 60%);
+    background:radial-gradient(circle at 50% 0%, var(--bleu2) 0%, var(--bleu) 60%) no-repeat, var(--bleu);
     color:var(--texte);
     min-height:100vh;
     padding:env(safe-area-inset-top) 16px calc(24px + env(safe-area-inset-bottom));
@@ -66,7 +67,7 @@
 
 <header>
   <div class="marque">Moule <span>&amp;</span> Smile</div>
-  <div class="version">v.17/10/2026 08:40</div>
+  <div class="version">v.17/10/2026 09:40</div>
 </header>
 
 <div class="horloge">
@@ -88,21 +89,45 @@
     <div class="ico">🌡️</div>
     <div><div class="nom">HACCP</div><div class="desc">Températures, réceptions, nettoyage</div></div>
   </a>
+  <a class="tuile" href="https://cevapizza11.github.io/etiquettes/" target="ms_etiquettes">
+    <div class="ico">🏷️</div>
+    <div><div class="nom">Étiquettes</div><div class="desc">Impression des étiquettes DLC</div></div>
+  </a>
 </div>
 
 <h2>Gestion</h2>
 <div class="grille">
   <a class="tuile" href="https://cevapizza11.github.io/planningmarmite/" target="ms_planning">
-    <div class="ico">📅</div>
+    <div class="ico">🗓️</div>
     <div><div class="nom">Planning &amp; RH</div><div class="desc">Horaires, équipe, disponibilités</div></div>
   </a>
+  <a class="tuile" href="https://cevapizza11.github.io/caisse/" target="ms_comptage">
+    <div class="ico">💶</div>
+    <div><div class="nom">Comptage caisse</div><div class="desc">Fond de caisse, espèces, écarts</div></div>
+  </a>
+  <a class="tuile" href="https://cevapizza11.github.io/commandemarmitebleue/" target="ms_commandes">
+    <div class="ico">📦</div>
+    <div><div class="nom">Commandes</div><div class="desc">Commandes fournisseurs</div></div>
+  </a>
+  <a class="tuile" href="https://cevapizza11.github.io/prevision/" target="ms_prevision">
+    <div class="ico">📈</div>
+    <div><div class="nom">Prévisions</div><div class="desc">Fréquentation et chiffre d'affaires</div></div>
+  </a>
+</div>
+
+<h2>Réglages</h2>
+<div class="grille">
   <a class="tuile" href="admin.html" target="ms_admin">
     <div class="ico">⚙️</div>
     <div><div class="nom">Admin carte</div><div class="desc">Menu, options, paramètres</div></div>
   </a>
   <a class="tuile" href="qrcodes.html" target="ms_qrcodes">
     <div class="ico">🔳</div>
-    <div><div class="nom">QR codes</div><div class="desc">Générer les jetons de table</div></div>
+    <div><div class="nom">QR codes</div><div class="desc">Jetons de table et repas employés</div></div>
+  </a>
+  <a class="tuile" href="https://cevapizza11.github.io/mouleandsmile/" target="ms_site">
+    <div class="ico">🌐</div>
+    <div><div class="nom">Site internet</div><div class="desc">Contrôle du site public</div></div>
   </a>
 </div>
 
