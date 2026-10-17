@@ -228,6 +228,24 @@ body.cuisine-plein{overflow:hidden}
 .login-box input:focus{border-color:#D4AF37;outline:none}
 .login-box button{width:100%;background:#D4AF37;border:none;color:#1A1A1A;padding:13px;border-radius:10px;font-weight:bold;font-size:14px;cursor:pointer}
 .login-erreur{color:#ff8a8a;font-size:12px;margin-top:10px;min-height:16px}
+
+/* VERSION DANS L'EN-TÊTE */
+.build-tag{display:block;font-size:9px;color:#777;font-weight:normal;margin-top:2px}
+
+/* MODAL MODE DE PAIEMENT (ajouté le 17/10/2026) */
+.paiement-total{color:#D4AF37;font-size:34px;font-weight:bold;text-align:center;margin:6px 0 14px}
+.paiement-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.btn-mode-pay{background:#2A2A2A;border:2px solid #D4AF37;border-radius:12px;color:#fff;padding:16px 8px;font-size:26px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px}
+.btn-mode-pay span{font-size:14px;font-weight:bold;color:#D4AF37}
+.btn-mode-pay:active{transform:scale(.96);background:#3A3A2A}
+.btn-mixte{width:100%;background:#1A2A3A;border:1px solid #2a6ab5;color:#8ac4ff;border-radius:10px;padding:12px;font-weight:bold;font-size:13px;cursor:pointer;margin-bottom:6px}
+.mixte-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.mixte-lbl{flex:1;font-size:13px;color:#fff}
+.mixte-input{width:90px;background:#111;border:1px solid #D4AF37;border-radius:8px;color:#D4AF37;font-weight:bold;font-size:16px;text-align:right;padding:8px}
+.btn-reste{background:#333;border:1px solid #555;color:#ccc;border-radius:8px;padding:8px;font-size:11px;cursor:pointer;white-space:nowrap}
+.mixte-reste{text-align:center;font-size:14px;margin:10px 0 4px;color:#ddd}
+.btn-valider-modal:disabled{opacity:.4;cursor:not-allowed}
+.pay-badge{display:inline-block;background:#2A2A2A;border:1px solid #444;color:#ddd;font-size:10px;padding:2px 7px;border-radius:10px;margin:3px 4px 0 0}
 </style>
 </head>
 <body>
@@ -245,7 +263,7 @@ body.cuisine-plein{overflow:hidden}
 
 <!-- HEADER -->
 <div class="header">
-  <h1>🐚 <span id="motCaisse" onclick="tapMotCaisse()" style="cursor:default;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent">CAISSE</span> — Moule & Smile</h1>
+  <h1>🐚 <span id="motCaisse" onclick="tapMotCaisse()" style="cursor:default;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent">CAISSE</span> — Moule & Smile<span class="build-tag">v.17/10/2026 10:15</span></h1>
   <div class="stats-row">
     <div class="stat"><div class="num" id="statNouv">0</div><div class="lbl">Nouvelles</div></div>
     <div class="stat"><div class="num" id="statAdd">0</div><div class="lbl">Additions</div></div>
@@ -499,6 +517,21 @@ body.cuisine-plein{overflow:hidden}
   </div>
 </div>
 
+<!-- MODAL MODE DE PAIEMENT (ajouté le 17/10/2026) -->
+<div class="modal-overlay" id="modalPaiement">
+  <div class="modal-box">
+    <h3 id="paiementTitre" style="text-align:center">💰 Encaisser</h3>
+    <div class="modal-sub" style="text-align:center">Comment le client a-t-il payé ?</div>
+    <div class="paiement-total" id="paiementTotal">0,00 €</div>
+    <div class="paiement-grid" id="paiementModesSimples"></div>
+    <button class="btn-mixte" id="btnBasculerMixte" onclick="basculerPaiementMixte()">➗ Paiement en plusieurs fois (mixte)</button>
+    <div id="paiementMixte" style="display:none"></div>
+    <div class="modal-actions">
+      <button class="btn-annuler-modal" onclick="fermerModalPaiement()">Annuler</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modalNouvelleTable">
   <div class="modal-box" style="text-align:center">
     <h3>🖨️ Nouvelle table</h3>
@@ -520,7 +553,7 @@ body.cuisine-plein{overflow:hidden}
   </div>
 </div>
 
-<div class="version">v.17/10/2026 09:00 — Moule & Smile Caisse</div>
+<div class="version">v.17/10/2026 10:15 — Moule & Smile Caisse</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -2464,7 +2497,7 @@ function renderAdditions(){
 // TRANSMISSION HIBOUTIK — appelle la Cloud Function au moment de l'encaissement.
 // Ne bloque jamais le flux local : une erreur ici n'empêche pas l'encaissement de se terminer.
 // ============================================================
-async function envoyerVenteVersHiboutik(tableNum, commandes, couverts){
+async function envoyerVenteVersHiboutik(tableNum, commandes, couverts, paiements){
   try{
     // Regroupe par (produit + prix + choix exact) : deux articles identiques au même prix
     // ET au même choix (même sauce, même supplément) → une seule ligne avec quantity=2.
@@ -2507,7 +2540,9 @@ async function envoyerVenteVersHiboutik(tableNum, commandes, couverts){
     if(!items.length) return;
 
     const appel=fonctions.httpsCallable('envoyerVenteHiboutik');
-    const result=await appel({table:tableNum, items, couverts});
+    // « paiements » est transmis en plus (ex. [{mode:'cb',montant:42.5}]) : la Cloud Function l'ignore
+    // tant qu'elle n'est pas adaptée — sans effet sur l'envoi actuel.
+    const result=await appel({table:tableNum, items, couverts, paiements:paiements||[]});
 
     if(result.data && result.data.nonMappes && result.data.nonMappes.length){
       console.warn(`Table ${tableNum} — produits non transmis à Hiboutik :`, result.data.nonMappes);
@@ -2521,14 +2556,157 @@ async function envoyerVenteVersHiboutik(tableNum, commandes, couverts){
   }
 }
 
+// ============================================================
+// MODE DE PAIEMENT À L'ENCAISSEMENT (ajouté le 17/10/2026)
+// Au clic sur « Encaissé ✓ », on demande comment le client a payé. Le détail est enregistré
+// dans l'historique (champ « paiements ») : l'appli Comptage Caisse le lit en direct et
+// remplit son onglet Tickets toute seule — plus besoin de retaper les tickets le soir.
+// Les clés ci-dessous sont IDENTIQUES à celles de l'appli Comptage : ne pas les renommer.
+// ============================================================
+const MODES_PAIEMENT=[
+  {cle:'especes',         label:'Espèces',          icone:'💶'},
+  {cle:'cb',              label:'CB',               icone:'💳'},
+  {cle:'titrerestaurant', label:'Titre-restaurant', icone:'🍽️'},
+  {cle:'chequevacances',  label:'Chèque-vacances',  icone:'🏖️'},
+  {cle:'cheque',          label:'Chèque',           icone:'📝'}
+];
+// Moyens de paiement sur lesquels on ne rend pas la monnaie : le client peut donner plus que l'addition
+const MODES_SANS_RENDU=['titrerestaurant','chequevacances'];
+function modePaiementInfo(cle){return MODES_PAIEMENT.find(m=>m.cle===cle)||{cle,label:cle,icone:'💰'};}
+function euros(n){return (Math.round((n||0)*100)/100).toFixed(2).replace('.',',')+' €';}
+function lireMontant(v){const n=parseFloat(String(v||'').replace(',','.'));return isNaN(n)?0:Math.round(n*100)/100;}
+
+let paiementEnCours=null;     // {table, total}
+let encaissementVerrou=false; // empêche un double encaissement (double appui)
+
 async function encaisser(tableNum){
   const jetonActif=Object.values(allJetons).find(j=>j.statut==='actif' && j.table===tableNum);
   const estRepasEmploye=jetonActif&&jetonActif.type==='employe';
-  if(!confirm(`Encaisser ${libelleTable(tableNum)} ?`)) return;
+  // Repas employé : ce n'est pas une vente, pas de mode de paiement à demander
+  if(estRepasEmploye){
+    if(!confirm(`Clôturer ${libelleTable(tableNum)} (repas offert) ?`)) return;
+    finaliserEncaissement(tableNum,{offert:true});
+    return;
+  }
+  const add=allAdditions[`table_${tableNum}`];
+  paiementEnCours={table:tableNum,total:Math.round(((add&&add.total)||0)*100)/100};
+  document.getElementById('paiementTitre').textContent=`💰 Encaisser ${libelleTable(tableNum)}`;
+  document.getElementById('paiementTotal').textContent=euros(paiementEnCours.total);
+  document.getElementById('paiementModesSimples').innerHTML=MODES_PAIEMENT.map(m=>
+    `<button class="btn-mode-pay" onclick="choisirPaiementSimple('${m.cle}')">${m.icone}<span>${m.label}</span></button>`).join('');
+  document.getElementById('paiementMixte').innerHTML=MODES_PAIEMENT.map(m=>`
+    <div class="mixte-row">
+      <span class="mixte-lbl">${m.icone} ${m.label}</span>
+      <input type="text" inputmode="decimal" class="mixte-input" id="mixte_${m.cle}" placeholder="0,00" oninput="majPaiementMixte()">
+      <button class="btn-reste" onclick="mettreLeReste('${m.cle}')">= reste</button>
+    </div>`).join('')+`
+    <div class="mixte-reste" id="mixteReste"></div>
+    <button class="btn-valider-modal" id="btnValiderMixte" style="width:100%;margin-top:8px" onclick="validerPaiementMixte()" disabled>✅ Valider le paiement mixte</button>`;
+  document.getElementById('paiementMixte').style.display='none';
+  document.getElementById('btnBasculerMixte').style.display='block';
+  document.getElementById('paiementModesSimples').style.display='grid';
+  majPaiementMixte();
+  document.getElementById('modalPaiement').classList.add('visible');
+}
+
+function fermerModalPaiement(){
+  paiementEnCours=null;
+  document.getElementById('modalPaiement').classList.remove('visible');
+}
+
+function basculerPaiementMixte(){
+  document.getElementById('paiementMixte').style.display='block';
+  document.getElementById('paiementModesSimples').style.display='none';
+  document.getElementById('btnBasculerMixte').style.display='none';
+  setTimeout(()=>{const el=document.getElementById('mixte_cb'); if(el) el.focus();},100);
+}
+
+// Calcule le paiement mixte saisi : total donné, reste, surplus de titres non rendu
+function etatPaiementMixte(){
+  if(!paiementEnCours) return null;
+  const paiements=[];
+  MODES_PAIEMENT.forEach(m=>{
+    const v=lireMontant(document.getElementById('mixte_'+m.cle)?.value);
+    if(v>0) paiements.push({mode:m.cle,montant:v});
+  });
+  const donne=Math.round(paiements.reduce((s,p)=>s+p.montant,0)*100)/100;
+  const titres=paiements.filter(p=>MODES_SANS_RENDU.includes(p.mode)).reduce((s,p)=>s+p.montant,0);
+  const reste=Math.round((paiementEnCours.total-donne)*100)/100;
+  const surplus=reste<0?-reste:0;
+  // Un trop-perçu n'est accepté que s'il vient des titres-restaurant / chèques-vacances (pas de rendu monnaie)
+  const surplusOk=surplus<=titres+0.001;
+  return {paiements,donne,reste,surplus,valide:paiements.length>0 && reste<=0.004 && surplusOk, surplusOk};
+}
+
+function majPaiementMixte(){
+  const e=etatPaiementMixte(); if(!e) return;
+  const el=document.getElementById('mixteReste');
+  const btn=document.getElementById('btnValiderMixte');
+  if(!el||!btn) return;
+  if(e.reste>0.004){
+    el.innerHTML=`Reste à payer : <b style="color:#ff8a8a">${euros(e.reste)}</b>`;
+  } else if(e.surplus>0.004){
+    el.innerHTML=e.surplusOk
+      ?`✅ Compte bon — <span style="color:#E6B84A">surplus titres non rendu : ${euros(e.surplus)}</span>`
+      :`<b style="color:#ff8a8a">⚠️ Trop perçu de ${euros(e.surplus)}</b> — en espèces/CB, saisis le montant NET (après rendu de monnaie)`;
+  } else {
+    el.innerHTML='<b style="color:#4ABA80">✅ Compte bon</b>';
+  }
+  btn.disabled=!e.valide;
+}
+
+function mettreLeReste(cle){
+  const input=document.getElementById('mixte_'+cle); if(!input) return;
+  input.value='';
+  const e=etatPaiementMixte();
+  if(e.reste>0) input.value=e.reste.toFixed(2).replace('.',',');
+  majPaiementMixte();
+}
+
+function choisirPaiementSimple(cle){
+  if(!paiementEnCours) return;
+  const tableNum=paiementEnCours.table;
+  fermerModalPaiement();
+  // montant:null = "toute l'addition" — le montant exact est relu dans Firestore au moment d'encaisser
+  finaliserEncaissement(tableNum,{paiements:[{mode:cle,montant:null}]});
+}
+
+function validerPaiementMixte(){
+  const e=etatPaiementMixte();
+  if(!e||!e.valide){showToast('⚠️ Le paiement ne correspond pas au total');return;}
+  const tableNum=paiementEnCours.table, totalVu=paiementEnCours.total;
+  fermerModalPaiement();
+  finaliserEncaissement(tableNum,{paiements:e.paiements,totalVu});
+}
+
+async function finaliserEncaissement(tableNum,choix){
+  if(encaissementVerrou){showToast('⏳ Encaissement déjà en cours…');return;}
+  encaissementVerrou=true;
+  const jetonActif=Object.values(allJetons).find(j=>j.statut==='actif' && j.table===tableNum);
+  const estRepasEmploye=jetonActif&&jetonActif.type==='employe';
   try{
     const addRef=db.collection('additions').doc(`table_${tableNum}`);
     const addSnap=await addRef.get();
     const addData=addSnap.exists?addSnap.data():{total:0,commandes:[]};
+    const totalAddition=Math.round((addData.total||0)*100)/100;
+
+    // Répartition du paiement par mode (vide pour un repas employé)
+    let paiements=[];
+    if(!estRepasEmploye && choix.paiements){
+      if(choix.paiements.length===1 && choix.paiements[0].montant===null){
+        paiements=[{mode:choix.paiements[0].mode,montant:totalAddition}];
+      } else {
+        // Paiement mixte : si l'addition a été modifiée entre-temps, on refuse plutôt que d'enregistrer un faux montant
+        if(choix.totalVu!==undefined && Math.abs(choix.totalVu-totalAddition)>0.004){
+          showToast(`⚠️ L'addition a changé (${euros(totalAddition)}) — refais le paiement mixte`);
+          return;
+        }
+        paiements=choix.paiements;
+      }
+    }
+    const totalPaye=Math.round(paiements.reduce((s,p)=>s+p.montant,0)*100)/100;
+    const surplusTitres=Math.max(0,Math.round((totalPaye-totalAddition)*100)/100);
+    const modePaiement=estRepasEmploye?'offert':(paiements.length===1?paiements[0].mode:'mixte');
 
     // Détecte si un vrai plat (formule à volonté ou portion fixe) a été commandé sur cette table,
     // pour distinguer "repas" de "boisson seule" dans les statistiques.
@@ -2546,6 +2724,11 @@ async function encaisser(tableNum){
       commandes:addData.commandes||[],
       heureReglement:new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}),
       timestamp:firebase.firestore.FieldValue.serverTimestamp(),
+      encaisseLeMs:Date.now(),              // heure d'encaissement (lisible tout de suite par l'appli Comptage)
+      paiements,                            // [{mode:'cb', montant:42.5}, ...] — lu par l'appli Comptage Caisse
+      modePaiement,                         // 'especes' | 'cb' | ... | 'mixte' | 'offert'
+      ...(surplusTitres>0?{surplusTitres}:{}),
+      etablissement:'moule',
       ...(estRepasEmploye?{type:'employe',employeNom:jetonActif.employeNom||null}:{})
     });
 
@@ -2554,7 +2737,7 @@ async function encaisser(tableNum){
     if(estRepasEmploye){
       console.log(`🍽️ Repas employé (${jetonActif.employeNom}) — non transmis à Hiboutik`);
     } else {
-      envoyerVenteVersHiboutik(tableNum, addData.commandes||[], jetonActif?.couverts||null);
+      envoyerVenteVersHiboutik(tableNum, addData.commandes||[], jetonActif?.couverts||null, paiements);
     }
 
     // Marquer toutes les commandes réglées + supprimer addition + supprimer alerte
@@ -2572,10 +2755,12 @@ async function encaisser(tableNum){
       ts:firebase.firestore.FieldValue.serverTimestamp()
     });
 
-    showToast(`✅ ${libelleTable(tableNum)} encaissée !`);
+    const libPay=estRepasEmploye?'repas offert':(paiements.length===1?modePaiementInfo(paiements[0].mode).label:'paiement mixte');
+    showToast(`✅ ${libelleTable(tableNum)} encaissée — ${libPay}`);
     chargerHistorique();
     liberJetonDeTable(tableNum, addData.total||0, aCommandeRepas);
   }catch(e){showToast('❌ Erreur encaissement');console.error(e);}
+  finally{encaissementVerrou=false;}
 }
 
 // Libère automatiquement le(s) jeton(s) rattaché(s) à cette table (encaissement = fin de service)
@@ -2641,7 +2826,7 @@ function renderHistorique(){
     return;
   }
   // Stocker pour impression
-  historique.forEach((h,i)=>ticketsData['hist_'+i]={table:h.table,commandes:h.commandes||[],total:h.total||0});
+  historique.forEach((h,i)=>ticketsData['hist_'+i]={table:h.table,commandes:h.commandes||[],total:h.total||0,paiements:h.paiements||[]});
 
   container.innerHTML=historique.map((h,i)=>`
     <div class="histo-card" onclick="toggleDetail('hdet_${i}')">
@@ -2649,6 +2834,7 @@ function renderHistorique(){
         <div>
           <span class="histo-table">Table ${h.table}</span>
           <div class="histo-heure">Réglé à ${h.heureReglement||'--:--'}</div>
+          <div>${badgesPaiement(h)}</div>
         </div>
         <div class="histo-total">${(h.total||0).toFixed(2).replace('.',',')} €</div>
       </div>
@@ -2671,6 +2857,14 @@ function renderHistorique(){
         </button>
       </div>
     </div>`).join('');
+}
+
+// Petites étiquettes « 💳 CB 42,50 € » sous chaque table réglée
+function badgesPaiement(h){
+  if(h.type==='employe'||h.modePaiement==='offert') return '<span class="pay-badge">🍽️ Repas offert</span>';
+  if(!h.paiements||!h.paiements.length) return h.heureReglement?'<span class="pay-badge" style="color:#888">Mode non renseigné</span>':'';
+  return h.paiements.map(p=>{const m=modePaiementInfo(p.mode);return `<span class="pay-badge">${m.icone} ${m.label} ${euros(p.montant)}</span>`;}).join('')
+    +(h.surplusTitres?`<span class="pay-badge" style="color:#E6B84A">surplus titres ${euros(h.surplusTitres)}</span>`:'');
 }
 
 function toggleDetail(id){
@@ -2768,7 +2962,9 @@ table{width:100%;border-collapse:collapse}
 <tr class="total-row">
   <td>TOTAL</td>
   <td style="text-align:right">${(data.total||0).toFixed(2).replace('.',',')} €</td>
-</tr></table>
+</tr>
+${(data.paiements||[]).map(p=>{const m=modePaiementInfo(p.mode);return `<tr><td style="font-size:10px;padding-top:3px">Réglé ${m.label}</td><td style="font-size:10px;text-align:right;padding-top:3px">${euros(p.montant)}</td></tr>`;}).join('')}
+</table>
 <div class="footer">Merci de votre visite !<br>À bientôt chez Moule & Smile 🐚</div>
 <script>window.onload=function(){window.print();setTimeout(()=>window.close(),1500);}<\/script>
 </body></html>`);
