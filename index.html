@@ -391,7 +391,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
-<div class="version">v.19/10/2026 22:55 — Moule & Smile</div>
+<div class="version">v.20/10/2026 18:45 — Moule & Smile</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -1046,27 +1046,64 @@ function rafraichirCompteursProduits(){
 function esc(s){return s.replace(/'/g,"\\'").replace(/"/g,'\\"');}
 
 // PANIER
-// IDs des adultes payants (paliers + calamars + fish)
-const IDS_ADULTES=['p1','ca1','fc1','en2'];
-
+// ============================================================
+// RÈGLE « ENFANT GRATUIT »
+// Réglable dans l'admin (cases « Ouvre droit à un enfant gratuit » / « Menu enfant gratuit »)
+// ou dans la colonne M de l'Excel (ADULTE / GRATUIT). Tant qu'aucun produit de la carte
+// n'est réglé, on garde les valeurs historiques de Moule & Smile ci-dessous.
+// Règles appliquées : 1 enfant gratuit max par menu adulte payant de la table (panier + commandes
+// déjà envoyées et non réglées) ; contrôle à l'ajout, au retrait d'un article et à l'envoi.
+// L'enfant/ado 6-17 ans (en2) n'ouvre PAS droit à un enfant gratuit.
+// ============================================================
+const IDS_ADULTES_DEFAUT=['p1','ca1','fc1','fc2'];
+const IDS_GRATUITS_DEFAUT=['en1'];
+function idsRegleEnfant(type){
+  const c=carte||carteDefaut;
+  const ids=[]; let regleReglee=false;
+  (c.categories||[]).forEach(cat=>(cat.produits||[]).forEach(p=>{
+    if(p.regleEnfant){ regleReglee=true; if(p.regleEnfant===type) ids.push(p.id); }
+  }));
+  if(regleReglee) return ids;
+  return type==='adulte'?IDS_ADULTES_DEFAUT:IDS_GRATUITS_DEFAUT;
+}
+function idBaseProduit(id){ return String(id||'').replace('_inclus',''); }
+function estAdultePayant(id){ return idsRegleEnfant('adulte').includes(idBaseProduit(id)); }
+function estEnfantGratuit(id){ return idsRegleEnfant('gratuit').includes(idBaseProduit(id)); }
+function compterEnvoyes(test){
+  let n=0;
+  (mesCommandesEnvoyees||[]).forEach(cmd=>(cmd.items||[]).forEach(it=>{ if(test(it.id)) n++; }));
+  return n;
+}
 function nbAdultesPayants(){
-  return panier.filter(p=>IDS_ADULTES.includes(p.id)).length;
+  return panier.filter(p=>estAdultePayant(p.id)).length+compterEnvoyes(estAdultePayant);
 }
 function nbEnfantsGratuits(){
-  return panier.filter(p=>p.id==='en1').length;
+  return panier.filter(p=>estEnfantGratuit(p.id)).length+compterEnvoyes(estEnfantGratuit);
+}
+// Retire du panier les enfants gratuits en trop (ex. : un menu adulte a été supprimé).
+// Renvoie le nombre de menus enfant retirés.
+function appliquerRegleEnfant(){
+  let trop=nbEnfantsGratuits()-nbAdultesPayants(), retires=0;
+  while(trop>0){
+    const idx=panier.map(p=>estEnfantGratuit(p.id)).lastIndexOf(true);
+    if(idx===-1) break;
+    panier.splice(idx,1); trop--; retires++;
+  }
+  if(retires) showToast(`⚠️ ${retires} menu${retires>1?'s':''} enfant gratuit retiré${retires>1?'s':''} : 1 enfant gratuit par menu adulte payant`);
+  return retires;
 }
 
 // Compte le nombre total de formules (adultes payantes + enfants gratuits) déjà
 // commandées pour cette table (panier en cours + commandes déjà envoyées à Firestore)
-const IDS_FORMULES=['p1','ca1','fc1','en1','en2'];
+const IDS_FORMULES=['p1','ca1','fc1','fc2','en1','en2'];
 function nbFormulesTotalTable(){
-  const nbPanier=panier.filter(p=>IDS_FORMULES.includes(p.id)).length;
+  const nbPanier=panier.filter(p=>IDS_FORMULES.includes(p.id)||estAdultePayant(p.id)||estEnfantGratuit(p.id)).length;
   let nbEnvoyees=0;
   mesCommandesEnvoyees.forEach(cmd=>{
     (cmd.items||[]).forEach(item=>{
       // Les items envoyés stockent l'id d'origine, éventuellement suffixé "_inclus" pour les menus enfant
       const idBase=(item.id||'').replace('_inclus','');
-      if(IDS_FORMULES.includes(idBase)) nbEnvoyees++;
+      if(IDS_FORMULES.includes(idBase)||estAdultePayant(idBase)||estEnfantGratuit(idBase)) nbEnvoyees++;
     });
   });
   return nbPanier+nbEnvoyees;
@@ -1076,10 +1113,10 @@ function ajouterPanier(id,nom,desc,prix,points){
   points=points||0;
   // Mode repas employé — budget de points (voir verifierBudgetPoints) : bloque l'ajout si ça
   // ferait dépasser le budget du service en cours. Ne s'applique pas au menu enfant offert (en1).
-  if(id!=='en1' && !verifierBudgetPoints(points)) return;
+  if(!estEnfantGratuit(id) && !verifierBudgetPoints(points)) return;
   // Vérification enfant gratuit
-  if(id==='en1'){
-    // Doit y avoir au moins 1 adulte payant
+  if(estEnfantGratuit(id)){
+    // Doit y avoir au moins 1 adulte payant (dans le panier ou déjà commandé pour la table)
     if(nbAdultesPayants()===0){
       showToast('⚠️ Ajoutez un menu adulte en premier !');
       return;
@@ -1090,7 +1127,7 @@ function ajouterPanier(id,nom,desc,prix,points){
       return;
     }
     // Popup confirmation âge
-    ouvrirPopupEnfant(nom, desc, prix);
+    ouvrirPopupEnfant(nom, desc, prix, id);
     return;
   }
 
@@ -1301,6 +1338,7 @@ function renderPanierItems(){
 
 function supprimerPanier(uid){
   panier=panier.filter(p=>p.uid!=uid);
+  appliquerRegleEnfant();
   updatePanierBar();renderPanierItems();
 }
 
@@ -1310,6 +1348,7 @@ function retirerUnite(id){
   const idx=panier.map(p=>p.id).lastIndexOf(id);
   if(idx===-1) return;
   panier.splice(idx,1);
+  appliquerRegleEnfant();
   updatePanierBar();
 }
 
@@ -1556,6 +1595,8 @@ function refuserDessert(){
 // ============================================================
 async function validerCommande(){
   if(!panier.length){showToast('⚠️ Panier vide');return;}
+  // Dernier contrôle de la règle enfant gratuit avant l'envoi
+  if(appliquerRegleEnfant()){ updatePanierBar(); showScreen('screenPanier'); return; }
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('loader').style.display='block';
   const total=panier.reduce((s,p)=>s+p.prix,0);
@@ -1754,15 +1795,15 @@ async function demanderAddition(){
 let enfantEnAttente = null;
 let enfantItemUid = null;
 
-function ouvrirPopupEnfant(nom, desc, prix){
-  enfantEnAttente={nom, desc, prix};
+function ouvrirPopupEnfant(nom, desc, prix, id){
+  enfantEnAttente={nom, desc, prix, id:id||'en1'};
   document.getElementById('modalEnfant').classList.add('visible');
 }
 
 function confirmerEnfantGratuit(){
   if(!enfantEnAttente) return;
   const uid=Date.now()+Math.random();
-  panier.push({id:'en1', nom:enfantEnAttente.nom, desc:enfantEnAttente.desc, prix:0, uid});
+  panier.push({id:enfantEnAttente.id||'en1', nom:enfantEnAttente.nom, desc:enfantEnAttente.desc, prix:0, uid});
   enfantItemUid=uid;
   updatePanierBar();
   document.getElementById('modalEnfant').classList.remove('visible');
