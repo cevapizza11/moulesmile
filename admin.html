@@ -392,6 +392,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
     🍳 <strong style="color:#D4AF37">Colonnes "Cuisine"</strong> : mets <b>OUI</b> en colonne K pour qu'un produit s'affiche dans l'onglet Cuisine de la caisse (un nouveau produit est ainsi pris en compte dès l'import, sans rien cocher ici). Colonne L : nom de regroupement facultatif (ex. « Nuggets » pour regrouper poulet + poisson). <b>NON</b> retire le produit de la cuisine. <b>Case vide</b> = on garde le réglage fait dans l'admin. Les plats du menu enfant se cochent à la main (Carte → Menu enfant → clique le plat).<br><br>
     <strong>Catégories valides :</strong> formules · sauces · softs · bieres · vins_blancs · vins_roses · vins_rouges · cocktails · sangria · desserts · digestifs · chauds<br><br>
     🔗 <strong style="color:#4ABA80">Colonne "ID Hiboutik"</strong> : si elle est remplie (dernière colonne de chaque onglet produit, et de l'onglet Familles Options), la Correspondance Hiboutik est mise à jour automatiquement à l'import — plus besoin de la ressaisir à la main dans l'écran "🔗 Correspondance Hiboutik".<br><br>
+    🗂️ <strong style="color:#D4AF37">Onglet "Catégories"</strong> (fichiers créés par l'Import de carte IA) : s'il est présent, il fixe les tuiles du client, leurs titres, leurs emojis et leur ordre (ex. 🍕 Pizzas, 🥞 Galettes). Sans cet onglet, les catégories habituelles de Moule & Smile sont utilisées.<br><br>
     ⚠️ <strong style="color:#C0392B">L'import remplace toute la carte.</strong> Utilisez MouleSmile_Carte_Admin.xlsx comme base.
   </div>
   <div class="import-zone" id="importZone" onclick="document.getElementById('importInput').click()"
@@ -447,7 +448,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
-<div class="version">v.17/10/2026 09:00 — Moule & Smile Admin</div>
+<div class="version">v.20/10/2026 14:45 — Moule & Smile Admin</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -537,8 +538,17 @@ function switchNav(tab,el){
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
+// Liste "Catégorie" du formulaire d'ajout : les catégories réelles de la carte (titres personnalisés compris)
+function remplirSelectCategories(){
+  const s=document.getElementById('newCat'); if(!s)return;
+  const liste=(carte&&carte.categories&&carte.categories.length)?carte.categories:CATS;
+  const v=s.value;
+  s.innerHTML=liste.map(c=>`<option value="${c.id}">${c.nom}</option>`).join('');
+  if(liste.some(c=>c.id===v)) s.value=v;
+}
 function render(){
   if(!carte)return;
+  remplirSelectCategories();
   document.getElementById('catTabs').innerHTML=carte.categories.map(c=>`<div class="cat-tab ${c.id===catActive?'active':''}" onclick="selectCat('${c.id}')">${c.nom}</div>`).join('');
   const cat=carte.categories.find(c=>c.id===catActive);
   if(!cat)return;
@@ -818,6 +828,7 @@ function handleDrop(e){e.preventDefault();document.getElementById('importZone').
 
 function handleFile(file){
   if(!file)return;
+  importedCategories=null;
   const ext=file.name.split('.').pop().toLowerCase();
   if(ext==='csv'){const r=new FileReader();r.onload=e=>parseRows(csvToRows(e.target.result));r.readAsText(file,'UTF-8');}
   else if(['xlsx','xls'].includes(ext)){
@@ -825,7 +836,7 @@ function handleFile(file){
     r.onload=e=>{
       try{
         const wb=XLSX.read(e.target.result,{type:'array'});
-        const ONGLETS_SPECIAUX=['INSTRUCTIONS','Export Firebase','Boissons Menu','Desserts Menu','Menu Enfant','Familles Options','Options Produits'];
+        const ONGLETS_SPECIAUX=['INSTRUCTIONS','Export Firebase','Boissons Menu','Desserts Menu','Menu Enfant','Familles Options','Options Produits','Catégories'];
         // Parcourir tous les onglets produits — exclut les onglets non-produits (instructions, menus spéciaux, familles d'options)
         let allRows=[];
         wb.SheetNames.filter(n=>!ONGLETS_SPECIAUX.includes(n)).forEach(n=>{
@@ -842,6 +853,7 @@ function handleFile(file){
         // Lecture séparée des Familles d'Options et de leur assignation aux produits
         importedFamillesOptions=lireFamillesOptions(wb);
         importedOptionsProduits=lireOptionsProduits(wb);
+        importedCategories=lireCategories(wb);
 
         parseRows(allRows);
       }catch(err){showToast('❌ Erreur lecture Excel');console.error(err);}
@@ -883,6 +895,33 @@ function lireFamillesOptions(wb){
   });
   Object.values(familles).forEach(f=>f.options.sort((a,b)=>a.ordre-b.ordre));
   return familles;
+}
+
+// ============================================================
+// LECTURE ONGLET "Catégories" (facultatif — fichiers créés par import-carte.html)
+// Colonnes : ID Catégorie | Titre affiché (emoji + titre) | Ordre
+// Si l'onglet existe, il fixe les tuiles et leur ordre ; sinon on garde la liste fixe CATS (Moule & Smile).
+// ============================================================
+let importedCategories=null;
+function lireCategories(wb){
+  if(!wb.SheetNames.includes('Catégories'))return null;
+  const rows=XLSX.utils.sheet_to_json(wb.Sheets['Catégories'],{header:1,defval:''});
+  let start=-1;
+  for(let i=0;i<Math.min(rows.length,10);i++){
+    if(String(rows[i][0]||'').trim().toLowerCase()==='id catégorie'){start=i+1;break;}
+  }
+  if(start<0)return null;
+  const liste=[];
+  rows.slice(start).forEach(row=>{
+    const brut=String(row[0]||'').trim();
+    if(!brut)return;
+    const id=brut.toLowerCase().replace(/\s+/g,'_').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    if(liste.some(c=>c.id===id))return;
+    const nom=String(row[1]||'').trim()||brut;
+    liste.push({id,nom,ordre:parseInt(row[2])||9999});
+  });
+  liste.sort((a,b)=>a.ordre-b.ordre);
+  return liste.length?liste:null;
 }
 
 // ============================================================
@@ -944,6 +983,9 @@ function parseRows(rows){
     const nbOptions=Object.values(importedFamillesOptions).reduce((s,f)=>s+f.options.length,0);
     extraInfo+=`<div style="color:#4ABA80;font-size:11px;padding:4px 0">🎛️ ${nbFamilles} famille(s) d'options détectée(s) (${nbOptions} choix)</div>`;
   }
+  if(importedCategories){
+    extraInfo+=`<div style="color:#4ABA80;font-size:11px;padding:4px 0">🗂️ ${importedCategories.length} catégorie(s) du fichier : ${importedCategories.map(c=>c.nom).join(' · ')}</div>`;
+  }
   if(importedOptionsProduits){
     const nbAssign=Object.keys(importedOptionsProduits).length;
     extraInfo+=`<div style="color:#4ABA80;font-size:11px;padding:4px 0">🔗 ${nbAssign} produit(s) avec options assignées</div>`;
@@ -987,13 +1029,16 @@ function confirmerImport(){
     return item;
   };
   const newCarte={categories:[]};
-  CATS.forEach(catDef=>{
-    let prods=importedData.filter(p=>p.cat===catDef.id||catDef.id.includes(p.cat));
+  // Onglet "Catégories" présent (carte d'un autre restaurant) → ses tuiles, ses titres et son ordre.
+  // Sinon → liste fixe CATS, comme avant (carte Moule & Smile).
+  const defsCategories=importedCategories&&importedCategories.length?importedCategories:CATS;
+  defsCategories.forEach(catDef=>{
+    let prods=importedData.filter(p=>p.cat===catDef.id||(!importedCategories&&catDef.id.includes(p.cat)));
     prods.sort((a,b)=>(a.ordre||9999)-(b.ordre||9999));
     const mapped=prods.map(construireItem);
     if(mapped.length)newCarte.categories.push({id:catDef.id,nom:catDef.nom,produits:mapped});
   });
-  const knownIds=CATS.map(c=>c.id);
+  const knownIds=defsCategories.map(c=>c.id);
   const others=importedData.filter(p=>!knownIds.includes(p.cat));
   if(others.length){
     others.sort((a,b)=>(a.ordre||9999)-(b.ordre||9999));
@@ -1017,7 +1062,7 @@ function confirmerImport(){
 
     // Réappliquer l'ordre des catégories personnalisé par l'admin (sinon l'import
     // reconstruit toujours dans l'ordre fixe de CATS et écrase le réordonnancement)
-    if(carte.categories&&carte.categories.length){
+    if(!importedCategories&&carte.categories&&carte.categories.length){
       const ordrePrecedent=carte.categories.map(c=>c.id);
       newCarte.categories.sort((a,b)=>{
         let idxA=ordrePrecedent.indexOf(a.id); if(idxA===-1)idxA=9999;

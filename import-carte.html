@@ -33,6 +33,7 @@
   .btn-or{background:var(--or);color:var(--bleu)}
   .btn-or:disabled{opacity:.45;cursor:not-allowed}
   .btn-ligne{background:transparent;color:var(--or)}
+  .btn-ligne:disabled,.btn-or:disabled{opacity:.35;cursor:not-allowed}
   .btn-petit{padding:6px 10px;font-size:13px;border-radius:8px}
   .depot{border:2px dashed var(--ligne);border-radius:12px;padding:22px;text-align:center;cursor:pointer}
   .depot.survol{border-color:var(--or);background:rgba(212,166,60,.08)}
@@ -116,6 +117,13 @@
   .t-opt:active{border-color:#D4AF37}
   .t-annul{width:100%;background:none;border:1px solid #555;color:#aaa;border-radius:10px;padding:10px;font:inherit;cursor:pointer;margin-top:4px}
   .t-toast{position:absolute;left:12px;right:12px;bottom:70px;background:#1A7A50;color:#fff;font-size:12px;font-weight:bold;text-align:center;padding:10px;border-radius:10px;z-index:6}
+  .cats-edit{display:flex;flex-direction:column;gap:6px;margin:6px 0 10px}
+  .cat-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;background:var(--bleu);border:1px solid var(--ligne);border-radius:10px;padding:6px 8px}
+  .cat-row .ce{width:58px;text-align:center;font-size:18px;padding:6px}
+  .cat-row .ct{flex:1;min-width:140px}
+  .cat-row .cn{color:var(--gris);font-size:12px;min-width:74px}
+  .cat-row .cid{color:var(--gris);font-size:11px;font-family:ui-monospace,Menlo,monospace}
+  .titre-cat{font-size:15px;color:var(--or-clair);margin:4px 0 4px}
   footer{color:var(--gris);font-size:12px;margin-top:28px;text-align:center}
   .cache{display:none!important}
 </style>
@@ -124,7 +132,7 @@
 <div class="wrap">
 <header>
   <div class="marque">Import de carte <span>· IA</span></div>
-  <div class="version">v.19/10/2026 16:05</div>
+  <div class="version">v.20/10/2026 14:45</div>
 </header>
 
 <h2><span class="num">1</span>Clé API Claude</h2>
@@ -153,7 +161,7 @@
   <div class="vignettes" id="vignettes"></div>
   <div class="ligne" style="margin-top:14px">
     <input type="text" id="nomResto" placeholder="Nom du restaurant (pour le fichier)" style="flex:1;min-width:200px">
-    <button class="btn-or" id="btnLire" type="button" disabled>✨ Lire la carte</button>
+    <button class="btn-or" id="btnLire" type="button">✨ Lire la carte</button>
   </div>
   <div class="ou">ou</div>
   <div class="ligne" style="justify-content:center">
@@ -161,6 +169,7 @@
     <input type="file" id="fichierXl" accept=".xlsx,.xls" class="cache">
   </div>
   <p class="aide" style="text-align:center">Pour revoir ou tester une carte au format de l'admin (par exemple un fichier téléchargé ici plus tôt), sans relancer la lecture IA.</p>
+  <p class="aide" id="aideLire"></p>
   <div class="etat" id="etat"></div>
   <div class="cout" id="cout"></div>
 </div>
@@ -170,6 +179,13 @@
   <div class="bloc">
     <div class="resume" id="resume"></div>
     <div id="remarques" class="remarques cache"></div>
+    <h3 class="titre-cat">Tuiles du client (catégories)</h3>
+    <p class="aide" style="margin:0 0 4px">Les catégories sont proposées selon le type de restaurant (pizzeria : Pizzas ; crêperie : Galettes et Crêpes sucrées…). Change l'emoji, le titre ou l'ordre : l'aperçu suit en direct.</p>
+    <div class="cats-edit" id="categoriesEdit"></div>
+    <div class="ligne" style="margin-bottom:14px">
+      <button class="btn-ligne btn-petit" id="btnPropCat" type="button">✨ Proposer des catégories adaptées</button>
+      <button class="btn-ligne btn-petit" id="btnNouvCat" type="button">+ Nouvelle catégorie</button>
+    </div>
     <p class="aide" style="margin:0 0 6px">Les lignes surlignées en jaune sont celles où l'IA a un doute : vérifie le prix ou le nom. Tout se corrige directement dans le tableau.</p>
     <div id="groupes"></div>
     <div class="ligne" style="margin-top:14px">
@@ -197,7 +213,7 @@
     <div class="ligne">
       <button class="btn-or" id="btnExcel" type="button">📥 Télécharger le fichier Excel</button>
     </div>
-    <p class="aide">Ensuite : Admin carte → onglet 📥 Excel → dépose ce fichier → vérifie l'aperçu → Confirmer. Attention, l'import remplace toute la carte du restaurant. Les photos, les menus spéciaux (boissons menu, desserts, menu enfant) et la correspondance Hiboutik se règlent ensuite dans l'admin.</p>
+    <p class="aide">Ensuite : Admin carte → onglet 📥 Excel → dépose ce fichier → vérifie l'aperçu → Confirmer. Attention, l'import remplace toute la carte du restaurant. Les photos, les menus spéciaux (boissons menu, desserts, menu enfant) et la correspondance Hiboutik se règlent ensuite dans l'admin. Pour garder les titres des catégories, l'admin doit être à jour (version du 20/10/2026 ou plus récente).</p>
   </div>
 </div>
 
@@ -228,6 +244,25 @@ const CATS = [
   {id:"autres",    nom:"📦 Autres",             prefixe:"a",  onglet:"Autres"}
 ];
 const CAT_IDS = CATS.map(c=>c.id);
+const CAT_DEF = {}; CATS.forEach(c=>CAT_DEF[c.id]=c);
+// Identifiants « à fonction » : le logiciel leur associe des comportements (menu ado, suggestions avant addition, groupe apéro…).
+// On garde ces identifiants et on change seulement leur titre ; les autres groupes reçoivent un identifiant libre.
+const REGLES_CAT = [
+  {id:"galettes", emoji:"🥞", titre:"Galettes",       re:/galette|sarrasin/,                                   dans:["formules"]},
+  {id:"crepes",   emoji:"🍓", titre:"Crêpes sucrées", re:/cr[eê]pe/,                                           dans:["desserts","formules"]},
+  {id:"gaufres",  emoji:"🧇", titre:"Gaufres",        re:/gaufre/,                                             dans:["desserts"]},
+  {id:"glaces",   emoji:"🍨", titre:"Glaces",         re:/glace|sorbet|\bboules?\b|coupe|li[eé]geois|sundae/, dans:["desserts"]},
+  {id:"pizzas",   emoji:"🍕", titre:"Pizzas",         re:/pizza|calzone/, desc:/mozzarella/,                   dans:["formules"]},
+  {id:"burgers",  emoji:"🍔", titre:"Burgers",        re:/burger/,                                             dans:["formules"]},
+  {id:"pates",    emoji:"🍝", titre:"Pâtes",          re:/p[aâ]tes|pasta|spaghetti|tagliatelle|lasagne|penne|risotto/, dans:["formules"]},
+  {id:"salades",  emoji:"🥗", titre:"Salades",        re:/^salade|\bsalades\b/,                               dans:["formules"]},
+  {id:"sushis",   emoji:"🍣", titre:"Sushis",         re:/sushi|maki|california|sashimi|chirashi/,             dans:["formules"]},
+  {id:"tacos",    emoji:"🌮", titre:"Tacos",          re:/tacos|burrito|quesadilla/,                           dans:["formules"]},
+  {id:"planches", emoji:"🧀", titre:"Planches",       re:/planche/,                                            dans:["formules"]},
+  {id:"tartines", emoji:"🥖", titre:"Tartines",       re:/tartine|bruschetta/,                                 dans:["formules"]},
+  {id:"entrees",  emoji:"🥗", titre:"Entrées",        re:/entr[ée]e|tapas|starter/,                            dans:["formules"]},
+  {id:"enfants",  emoji:"🧒", titre:"Menu enfant",    re:/enfant|kids/,                                        dans:["formules"]}
+];
 
 // ============================================================
 // OUTILS
@@ -235,7 +270,16 @@ const CAT_IDS = CATS.map(c=>c.id);
 const $ = id => document.getElementById(id);
 const esc = s => String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 const slug = s => String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"_").replace(/^_|_$/g,"").slice(0,30) || "famille";
-function lireCle(){ try{ return localStorage.getItem(CLE_STOCKAGE)||""; }catch(e){ return ""; } }
+let cleMemoire="", lectureEnCours=false;
+function idCat(v){ return String(v||"").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"") || "autres"; }
+function separerTitre(nom){ const m=String(nom||"").trim().match(/^([^\p{L}\p{N}\s]+)\s+(.+)$/u); return m?{emoji:m[1],titre:m[2]}:{emoji:"",titre:String(nom||"").trim()}; }
+function nomCat(c){ return ((c.emoji?c.emoji+" ":"")+(c.titre||c.id)).trim(); }
+function catParDefaut(id){
+  if(CAT_DEF[id]) return {id,...separerTitre(CAT_DEF[id].nom)};
+  const r=REGLES_CAT.find(x=>x.id===id);
+  return r?{id,emoji:r.emoji,titre:r.titre}:{id,emoji:"🍽️",titre:id.replace(/_/g," ").replace(/^./,c=>c.toUpperCase())};
+}
+function lireCle(){ let k=""; try{ k=localStorage.getItem(CLE_STOCKAGE)||""; }catch(e){} return k||cleMemoire; }
 function etat(txt, type){ const e=$("etat"); e.className="etat "+(type||""); e.innerHTML=txt; }
 
 // ============================================================
@@ -249,12 +293,15 @@ function majCle(){
   majBouton();
 }
 $("btnCle").onclick = ()=>{
-  const k=$("cle").value.trim();
-  if(!k.startsWith("sk-ant-")){ alertePage("Cette clé ne ressemble pas à une clé Anthropic (elle commence par sk-ant-)."); return; }
-  try{ localStorage.setItem(CLE_STOCKAGE,k); }catch(e){ alertePage("Ce navigateur bloque l'enregistrement. Désactive la navigation privée."); return; }
+  const k=$("cle").value.replace(/\s+/g,"");
+  if(!k){ alertePage("Colle d'abord ta clé API dans le champ, puis touche « Enregistrer sur cet appareil »."); return; }
+  if(!k.startsWith("sk-ant-")){ alertePage("Cette clé ne ressemble pas à une clé Anthropic : elle doit commencer par sk-ant-. Vérifie que tu l'as copiée en entier."); return; }
+  cleMemoire=k;
+  let garde=false; try{ localStorage.setItem(CLE_STOCKAGE,k); garde=localStorage.getItem(CLE_STOCKAGE)===k; }catch(e){}
   $("cle").value=""; majCle();
+  etat(garde?"✅ Clé enregistrée sur cet appareil.":"✅ Clé acceptée pour cette visite. Ce navigateur ne permet pas de la garder (navigation privée ?) : il faudra la recoller la prochaine fois.","ok");
 };
-$("btnOublier").onclick = ()=>{ try{ localStorage.removeItem(CLE_STOCKAGE); }catch(e){} majCle(); };
+$("btnOublier").onclick = ()=>{ cleMemoire=""; try{ localStorage.removeItem(CLE_STOCKAGE); }catch(e){} majCle(); };
 function alertePage(t){ etat("⚠️ "+esc(t),"err"); }
 
 // ============================================================
@@ -302,7 +349,17 @@ function dessinerVignettes(){
   $("vignettes").innerHTML = pieces.map((p,i)=>`<div class="vignette">${p.apercu?`<img src="${p.apercu}" alt="">`:`📄<br>${esc(p.nom).slice(0,18)}`}<button type="button" aria-label="Retirer" data-i="${i}">✕</button></div>`).join("");
   $("vignettes").querySelectorAll("button").forEach(b=>b.onclick=()=>{ pieces.splice(+b.dataset.i,1); dessinerVignettes(); majBouton(); });
 }
-function majBouton(){ $("btnLire").disabled = !(lireCle() && pieces.length); }
+function manquePourLire(){
+  const m=[];
+  if(!lireCle()) m.push("la clé API (étape 1 : colle-la puis touche « Enregistrer sur cet appareil »)");
+  if(!pieces.length) m.push("une photo ou un PDF de la carte (la vignette doit apparaître sous la zone photo)");
+  return m;
+}
+function majBouton(){
+  $("btnLire").disabled = lectureEnCours;
+  const m=manquePourLire();
+  $("aideLire").textContent = lectureEnCours ? "" : (m.length ? "Avant de lire la carte, il manque : "+m.join(" et ")+"." : "Tout est prêt : touche « Lire la carte ».");
+}
 
 // ============================================================
 // 3. APPEL À CLAUDE
@@ -311,7 +368,9 @@ const CONSIGNES = `Tu lis la carte d'un restaurant français (photos ou PDF, év
 
 Règles :
 - Relève CHAQUE article vendu : plats, formules, menus, boissons, desserts. N'invente rien, ne complète rien qui n'est pas écrit.
-- Catégories autorisées (champ "categorie") : formules (formules, menus, à volonté, entrées, plats, burgers, pizzas, salades… tout ce qui se mange en plat), sauces, softs (sodas, eaux, jus, sirops, boissons sans alcool), bieres, vins (vins, champagnes, verres et bouteilles), cocktails (cocktails, sangria, apéritifs, mocktails), desserts, digestifs, chauds (cafés, thés, chocolats chauds), autres.
+- Catégories : dans "categories", propose les tuiles que le client verra, avec un titre adapté à CE restaurant et un emoji. Exemples : pizzeria → "Pizzas" 🍕 ; crêperie → "Galettes" 🥞 et "Crêpes sucrées" 🍓, plus "Glaces" 🍨 s'il y en a ; burger → "Burgers" 🍔.
+- Identifiants de catégorie ("id") : le logiciel associe des fonctions à ces identifiants, utilise-les dès qu'ils correspondent, même avec un autre titre : formules (le groupe principal de plats salés : pizzas d'une pizzeria, galettes d'une crêperie, formules, plats), sauces, softs (sodas, eaux, jus, sirops), bieres, vins (vins, champagnes, cidres), cocktails (cocktails, sangria, apéritifs, mocktails), desserts (le groupe principal de desserts : crêpes sucrées d'une crêperie), digestifs, chauds (cafés, thés, chocolats chauds). Pour un autre groupe bien distinct sur la carte (glaces, entrées, salades, menu enfant…), crée un identifiant court en minuscules sans accent ni espace (ex. "glaces", "menu_enfant").
+- Entre 3 et 12 catégories, dans l'ordre logique : plats salés, puis desserts, puis boissons. Chaque produit indique dans "categorie" l'identifiant d'une catégorie de la liste.
 - Pour les vins, mets "Rouge", "Rosé", "Blanc" ou "Champagne" dans "sous_categorie". Ailleurs, utilise "sous_categorie" seulement si la carte regroupe clairement (ex. "Pizzas blanches"), sinon chaîne vide.
 - Prix TTC en euros, en nombre (12.5 pour 12,50 €). Prix 0 si l'article est indiqué inclus ou offert. Si le prix est illisible ou absent, mets null et explique dans "doute".
 - Si un même article existe en plusieurs formats (25 cl / 50 cl, verre / bouteille, petite / grande), crée UNE ligne par format, avec le format à la fin du nom (ex. "Heineken 50 cl").
@@ -329,7 +388,7 @@ const OUTIL = {
     type:"object",
     properties:{
       produits:{type:"array",items:{type:"object",properties:{
-        categorie:{type:"string",enum:CAT_IDS},
+        categorie:{type:"string"},
         sous_categorie:{type:"string"},
         nom:{type:"string"},
         description:{type:"string"},
@@ -337,6 +396,9 @@ const OUTIL = {
         emoji:{type:"string"},
         doute:{type:"string"}
       },required:["categorie","nom","prix"]}},
+      categories:{type:"array",items:{type:"object",properties:{
+        id:{type:"string"}, titre:{type:"string"}, emoji:{type:"string"}
+      },required:["id","titre","emoji"]}},
       familles_options:{type:"array",items:{type:"object",properties:{
         nom:{type:"string"},
         options:{type:"array",items:{type:"object",properties:{nom:{type:"string"},supplement:{type:"number"}},required:["nom"]}}
@@ -344,14 +406,20 @@ const OUTIL = {
       liens_options:{type:"array",items:{type:"object",properties:{produit:{type:"string"},famille:{type:"string"}},required:["produit","famille"]}},
       remarques:{type:"string"}
     },
-    required:["produits"]
+    required:["categories","produits"]
   }
 };
 
 $("btnLire").onclick = lireCarte;
 async function lireCarte(){
-  const cle=lireCle(); if(!cle||!pieces.length) return;
-  $("btnLire").disabled=true;
+  const m=manquePourLire();
+  if(m.length){
+    alertePage("Il manque "+m.join(" et ")+".");
+    if(!lireCle()){ $("cle").focus(); $("cleAbsente").scrollIntoView({behavior:"smooth",block:"center"}); }
+    return;
+  }
+  const cle=lireCle();
+  lectureEnCours=true; majBouton();
   etat('<span class="spin"></span>Lecture de la carte en cours… (30 secondes à 2 minutes selon le nombre de pages)',"attente");
   $("cout").textContent="";
   const contenu = pieces.map(p=> p.type==="pdf"
@@ -392,22 +460,75 @@ async function lireCarte(){
   }catch(err){
     const m = String(err.message||err);
     etat("❌ "+esc(/Failed to fetch|NetworkError|Load failed/i.test(m)?"Pas de connexion à l'API. Vérifie internet, puis réessaie.":m),"err");
-  }finally{ majBouton(); }
+  }finally{ lectureEnCours=false; majBouton(); }
 }
 
 // ============================================================
 // 4. TABLEAU DE VÉRIFICATION
 // ============================================================
-let produits=[], familles=[], liens=[];
+let produits=[], familles=[], liens=[], categories=[];
+
+// ---------- Catégories ----------
+function assurerCategories(){
+  produits.forEach(p=>{ if(!categories.some(c=>c.id===p.cat)) categories.push(catParDefaut(p.cat)); });
+}
+function categoriesUtilisees(){ return categories.filter(c=>produits.some(p=>p.cat===c.id)); }
+function regleDe(p,catId){
+  const txt=(p.sub+" "+p.nom).toLowerCase(), d=(p.desc||"").toLowerCase();
+  return REGLES_CAT.find(r=>r.dans.includes(catId) && (r.re.test(txt) || (r.desc && r.desc.test(d))));
+}
+// Évalue les plats et propose des titres adaptés au restaurant (sans IA, par mots-clés)
+function proposerCategories(){
+  const res=[], parent={};
+  const pris=new Set(categories.map(c=>c.id));
+  categoriesUtilisees().forEach(c=>{
+    const cat={...c}; res.push(cat);
+    if(!CAT_DEF[c.id]) return;                       // catégorie libre déjà créée : on n'y touche pas
+    const prods=produits.filter(p=>p.cat===c.id);
+    const groupes={};
+    prods.forEach(p=>{ const r=regleDe(p,c.id); if(r) (groupes[r.id]=groupes[r.id]||{r,items:[]}).items.push(p); });
+    const liste=Object.values(groupes).sort((a,b)=>b.items.length-a.items.length);
+    const dominant=liste[0] && liste[0].items.length/prods.length>=0.6 ? liste[0] : null;
+    let separes=0;
+    liste.forEach(g=>{
+      if(g===dominant || g.items.length<2) return;
+      let id=g.r.id, n=2; while(pris.has(id) && !(res.some(x=>x.id===id))) id=g.r.id+"_"+(n++);
+      if(!res.some(x=>x.id===id)){ res.push({id,emoji:g.r.emoji,titre:g.r.titre}); pris.add(id); parent[id]=c.id; }
+      g.items.forEach(p=>p.cat=id); separes++;
+    });
+    if(dominant){ cat.emoji=dominant.r.emoji; cat.titre=dominant.r.titre; }
+    else if(separes && c.id==="formules"){ cat.emoji="🍽️"; cat.titre="Plats"; }
+  });
+  categories.filter(c=>!res.some(x=>x.id===c.id)).forEach(c=>res.push(c));
+  // Ordre des tuiles : plats salés, sauces, desserts, puis boissons ; à l'intérieur d'un groupe, l'ordre de la carte
+  const RANG={formules:0,sauces:1,desserts:2,softs:3,bieres:4,vins:5,cocktails:6,digestifs:7,chauds:8,autres:9};
+  const rang=c=>{ const r=RANG[parent[c.id]||c.id]; return r===undefined?9:r; };
+  const premier=c=>{ const i=produits.findIndex(p=>p.cat===c.id); return i<0?9999:i; };
+  categories=res.map((c,i)=>({c,i})).sort((a,b)=>rang(a.c)-rang(b.c)||(rang(a.c)<=2?premier(a.c)-premier(b.c):0)||a.i-b.i).map(x=>x.c);
+}
+function trierProduitsParCategorie(){
+  const ordre=id=>{ const i=categories.findIndex(c=>c.id===id); return i<0?9999:i; };
+  produits=produits.map((p,i)=>({p,i})).sort((a,b)=>ordre(a.p.cat)-ordre(b.p.cat)||a.i-b.i).map(x=>x.p);
+}
+
 function chargerResultat(r){
+  categories=[];
+  (r.categories||[]).forEach(c=>{
+    const id=idCat(c.id||c.titre); if(categories.some(x=>x.id===id)) return;
+    categories.push({id,emoji:(c.emoji||"").trim(),titre:(c.titre||"").trim()||catParDefaut(id).titre});
+  });
+  const iaACategorise=categories.length>0;
   produits=(r.produits||[]).map(p=>({
-    cat: CAT_IDS.includes(p.categorie)?p.categorie:"autres",
+    cat: idCat(p.categorie),
     sub: p.sous_categorie||"", nom:(p.nom||"").trim(), desc:(p.description||"").trim(),
     emoji:p.emoji||"", prix:(typeof p.prix==="number")?p.prix:null,
     actif:true, doute:(p.doute||"").trim()||((typeof p.prix==="number")?"":"Prix manquant")
   })).filter(p=>p.nom);
   familles=(r.familles_options||[]).filter(f=>f.nom&&f.options&&f.options.length);
   liens=(r.liens_options||[]).filter(l=>l.produit&&l.famille);
+  assurerCategories();
+  if(!iaACategorise) proposerCategories();
+  trierProduitsParCategorie();
   const rq=(r.remarques||"").trim();
   $("remarques").textContent = rq ? "À vérifier : "+rq : "";
   $("remarques").classList.toggle("cache",!rq);
@@ -420,12 +541,14 @@ function chargerResultat(r){
 function dessinerTableau(){
   const nbDoutes=produits.filter(p=>p.doute).length;
   $("resume").innerHTML = `<span class="pastille">${produits.length} produits</span>
-    <span class="pastille">${new Set(produits.map(p=>p.cat)).size} catégories</span>
+    <span class="pastille">${categoriesUtilisees().length} catégories</span>
     <span class="pastille">${familles.length} familles d'options</span>
     ${nbDoutes?`<span class="pastille alerte">${nbDoutes} à vérifier</span>`:""}`;
-  const optsCat = c => CATS.map(x=>`<option value="${x.id}"${x.id===c?" selected":""}>${esc(x.nom)}</option>`).join("");
-  $("groupes").innerHTML = CATS.filter(c=>produits.some(p=>p.cat===c.id)).map(c=>`
-    <div class="groupe"><h3>${esc(c.nom)}</h3><div class="tab"><table>
+  assurerCategories();
+  dessinerCategories();
+  const optsCat = c => categories.map(x=>`<option value="${x.id}"${x.id===c?" selected":""}>${esc(nomCat(x))}</option>`).join("");
+  $("groupes").innerHTML = categoriesUtilisees().map(c=>`
+    <div class="groupe"><h3 data-titre-cat="${c.id}">${esc(nomCat(c))}</h3><div class="tab"><table>
       <thead><tr><th>Nom</th><th>Description</th><th>Prix €</th><th>Emoji</th><th>Catégorie</th><th>Sous-cat.</th><th>Actif</th><th></th></tr></thead>
       <tbody>${produits.map((p,i)=>p.cat!==c.id?"":`
         <tr class="${p.doute?"doute":""}">
@@ -457,7 +580,40 @@ function dessinerTableau(){
     }).join("") : "";
   renderApercu();
 }
-$("btnAjout").onclick = ()=>{ produits.push({cat:"formules",sub:"",nom:"Nouveau produit",desc:"",emoji:"",prix:null,actif:true,doute:"Ajouté à la main"}); dessinerTableau(); };
+function dessinerCategories(){
+  $("categoriesEdit").innerHTML = categories.map((c,i)=>{
+    const n=produits.filter(p=>p.cat===c.id).length;
+    return `<div class="cat-row">
+      <input type="text" class="ce" id="ce${i}" data-ci="${i}" data-ck="emoji" value="${esc(c.emoji)}" aria-label="Emoji de la catégorie">
+      <input type="text" class="ct" id="ct${i}" data-ci="${i}" data-ck="titre" value="${esc(c.titre)}" aria-label="Titre de la catégorie">
+      <span class="cn">${n} produit${n>1?"s":""}</span>
+      <span class="cid" title="Identifiant (relie les produits à la catégorie)">${esc(c.id)}</span>
+      <button type="button" class="btn-ligne btn-petit" data-cm="${i}" data-dir="-1" ${i===0?"disabled":""} aria-label="Monter">▲</button>
+      <button type="button" class="btn-ligne btn-petit" data-cm="${i}" data-dir="1" ${i===categories.length-1?"disabled":""} aria-label="Descendre">▼</button>
+      <button type="button" class="btn-ligne btn-petit" data-cs="${i}" ${n?"disabled title=\"Déplace d'abord ses produits dans une autre catégorie\"":""} aria-label="Supprimer la catégorie">🗑</button>
+    </div>`;
+  }).join("");
+  $("categoriesEdit").querySelectorAll("input").forEach(el=>{
+    el.addEventListener("input",()=>{
+      const c=categories[+el.dataset.ci]; c[el.dataset.ck]=el.value.trim();
+      const h=$("groupes").querySelector(`[data-titre-cat="${c.id}"]`); if(h) h.textContent=nomCat(c);
+      planifierApercu();
+    });
+    el.addEventListener("change",()=>dessinerTableau());
+  });
+  $("categoriesEdit").querySelectorAll("[data-cm]").forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.cm, j=i+(+b.dataset.dir); if(j<0||j>=categories.length) return;
+    [categories[i],categories[j]]=[categories[j],categories[i]]; trierProduitsParCategorie(); dessinerTableau();
+  });
+  $("categoriesEdit").querySelectorAll("[data-cs]").forEach(b=>b.onclick=()=>{ categories.splice(+b.dataset.cs,1); dessinerTableau(); });
+}
+$("btnPropCat").onclick = ()=>{ proposerCategories(); trierProduitsParCategorie(); dessinerTableau(); etat("✨ Catégories proposées selon les plats. Vérifie les titres et l'ordre.","ok"); };
+$("btnNouvCat").onclick = ()=>{
+  let n=1, id="categorie_"+n; while(categories.some(c=>c.id===id)) id="categorie_"+(++n);
+  categories.push({id,emoji:"🍽️",titre:"Nouvelle catégorie"}); dessinerTableau();
+  const inp=$("ct"+(categories.length-1)); if(inp){ inp.focus(); inp.select(); }
+};
+$("btnAjout").onclick = ()=>{ produits.push({cat:(categories[0]&&categories[0].id)||"formules",sub:"",nom:"Nouveau produit",desc:"",emoji:"",prix:null,actif:true,doute:"Ajouté à la main"}); dessinerTableau(); };
 
 // ============================================================
 // 5. EXPORT EXCEL (même format que MouleSmile_Carte_Admin.xlsx)
@@ -477,23 +633,32 @@ function construireClasseur(){
     ["3","Ajoute ensuite les photos, les menus spéciaux et la correspondance Hiboutik dans l'admin"]
   ];
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(instr),"INSTRUCTIONS");
-  const idsParNom={};
-  CATS.forEach(c=>{
+  const idsParNom={}, prefixesPris=new Set(), ongletsPris=new Set([...ONGLETS_SPECIAUX,"Catégories"].map(x=>x.toLowerCase()));
+  const cats=categoriesUtilisees();
+  const catSheet=[["CATÉGORIES (tuiles affichées au client, dans cet ordre)"],["Titre affiché = emoji + titre. L'identifiant relie chaque produit à sa catégorie."],["ID Catégorie","Titre affiché","Ordre"]];
+  cats.forEach((c,k)=>catSheet.push([c.id,nomCat(c),k+1]));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(catSheet),"Catégories");
+  cats.forEach(c=>{
     const lignes=produits.filter(p=>p.cat===c.id);
-    if(!lignes.length) return;
+    let prefixe=(CAT_DEF[c.id]&&CAT_DEF[c.id].prefixe)||c.id.replace(/_/g,"").slice(0,3)||"c", n=2;
+    while(prefixesPris.has(prefixe)) prefixe=prefixe.replace(/\d+$/,"")+(n++);
+    prefixesPris.add(prefixe);
+    let onglet=(c.titre||c.id).replace(/[\[\]:*?\/\\]/g," ").trim().slice(0,28)||c.id, m=2;
+    while(ongletsPris.has(onglet.toLowerCase())) onglet=onglet.slice(0,26)+" "+(m++);
+    ongletsPris.add(onglet.toLowerCase());
     const aoa=[
-      [nomResto.toUpperCase()+" — "+c.onglet.toUpperCase()],
+      [nomResto.toUpperCase()+" — "+(c.titre||c.id).toUpperCase()],
       ["Cellules modifiables · Actif = OUI/NON · Ordre = position d'affichage"],
       ["ID","Catégorie","Sous-catégorie","Nom","Description","Emoji","Prix (EUR)","Actif (OUI/NON)","Ordre","ID Hiboutik","Cuisine","Libellé cuisine"]
     ];
     lignes.forEach((p,k)=>{
-      const id=c.prefixe+(k+1);
+      const id=prefixe+(k+1);
       idsParNom[p.nom.toLowerCase()]=id;
       aoa.push([id,c.id,p.sub,p.nom,p.desc,p.emoji,p.prix??0,p.actif?"OUI":"NON",k+1,"","",""]);
     });
     const ws=XLSX.utils.aoa_to_sheet(aoa);
     ws["!cols"]=[{wch:6},{wch:11},{wch:13},{wch:30},{wch:40},{wch:6},{wch:10},{wch:9},{wch:6},{wch:11},{wch:8},{wch:14}];
-    XLSX.utils.book_append_sheet(wb,ws,c.onglet);
+    XLSX.utils.book_append_sheet(wb,ws,onglet);
   });
   if(familles.length){
     const fam=[["FAMILLES D'OPTIONS (choix proposés dans les plats)"],["Une famille = un groupe de choix, reliée aux produits dans l'onglet suivant."],
@@ -528,13 +693,10 @@ $("btnExcel").onclick = ()=>{
 // ============================================================
 // 6. OUVRIR UN EXCEL DÉJÀ PRÊT (même lecture que l'admin)
 // ============================================================
-const ONGLETS_SPECIAUX=['INSTRUCTIONS','Export Firebase','Boissons Menu','Desserts Menu','Menu Enfant','Familles Options','Options Produits'];
+const ONGLETS_SPECIAUX=['INSTRUCTIONS','Export Firebase','Boissons Menu','Desserts Menu','Menu Enfant','Familles Options','Options Produits','Catégories'];
 $("btnOuvrirXl").onclick = ()=>$("fichierXl").click();
 $("fichierXl").onchange = ()=>{ const f=$("fichierXl").files[0]; $("fichierXl").value=""; if(f) ouvrirExcel(f); };
-function normCat(v){
-  const c=String(v||"").trim().toLowerCase().replace(/\s+/g,"_").normalize("NFD").replace(/[̀-ͯ]/g,"");
-  return CAT_IDS.includes(c)?c:"autres";
-}
+function normCat(v){ return idCat(v); }
 function lignesApresEntete(rows,test){
   for(let i=0;i<Math.min(rows.length,10);i++){ if(test(rows[i])) return rows.slice(i+1); }
   return [];
@@ -559,7 +721,14 @@ function ouvrirExcel(file){
         });
       });
       if(!lus.length){ alertePage("Aucun produit trouvé dans ce fichier. Est-ce bien un fichier de carte au format de l'admin ?"); return; }
-      lus.sort((a,b)=>CAT_IDS.indexOf(a.cat)-CAT_IDS.indexOf(b.cat)||a.ordre-b.ordre);
+      // Catégories : onglet « Catégories » s'il existe, sinon proposition automatique selon les plats
+      const catsLues=[];
+      if(wb.SheetNames.includes("Catégories")){
+        const rows=XLSX.utils.sheet_to_json(wb.Sheets["Catégories"],{header:1,defval:""});
+        lignesApresEntete(rows,row=>String(row[0]||"").trim().toLowerCase()==="id catégorie")
+          .sort((a,b)=>(parseInt(a[2])||9999)-(parseInt(b[2])||9999))
+          .forEach(row=>{ const id=idCat(row[0]); if(!String(row[0]||"").trim()||catsLues.some(c=>c.id===id)) return; catsLues.push({id,...separerTitre(row[1]||id)}); });
+      }
       const fams={}, nomFam={};
       if(wb.SheetNames.includes("Familles Options")){
         const rows=XLSX.utils.sheet_to_json(wb.Sheets["Familles Options"],{header:1,defval:""});
@@ -588,12 +757,17 @@ function ouvrirExcel(file){
         const m=String(titre).match(/IMPORT DE CARTE — (.+)/);
         $("nomResto").value = m ? m[1].replace(/\w\S*/g,w=>w[0]+w.slice(1).toLowerCase()) : file.name.replace(/\.xlsx?$/i,"").replace(/^Carte_/,"").replace(/_/g," ");
       }
-      produits=lus.map(({ordre,...p})=>p); familles=Object.values(fams).map(f=>({nom:f.nom,options:f.options.map(({ordre,...o})=>o)})); liens=ln;
+      lus.sort((a,b)=>{ const ia=catsLues.findIndex(c=>c.id===a.cat), ib=catsLues.findIndex(c=>c.id===b.cat);
+        return ((ia<0?100+CAT_IDS.indexOf(a.cat):ia)-(ib<0?100+CAT_IDS.indexOf(b.cat):ib))||a.ordre-b.ordre; });
+      produits=lus.map(({ordre,...p})=>p);
+      categories=catsLues.map(c=>({...c})); assurerCategories();
+      if(!catsLues.length){ proposerCategories(); trierProduitsParCategorie(); }
+      familles=Object.values(fams).map(f=>({nom:f.nom,options:f.options.map(({ordre,...o})=>o)})); liens=ln;
       tel={ecran:"accueil",cat:null,panier:[],modal:null,toast:""};
       $("remarques").classList.add("cache"); $("cout").textContent="";
       $("zoneResultat").classList.remove("cache");
       dessinerTableau();
-      etat(`✅ Fichier ouvert : ${produits.length} produits. Rien n'a été envoyé à l'admin.`,"ok");
+      etat(`✅ Fichier ouvert : ${produits.length} produits${catsLues.length?"":", catégories proposées selon les plats"}. Rien n'a été envoyé à l'admin.`,"ok");
       $("zoneResultat").scrollIntoView({behavior:"smooth",block:"start"});
     }catch(err){ console.error(err); alertePage("Impossible de lire ce fichier Excel."); }
   };
@@ -607,15 +781,15 @@ let tel={ecran:"accueil",cat:null,panier:[],modal:null,toast:""};
 let minuteurApercu=null, minuteurToast=null;
 function planifierApercu(){ clearTimeout(minuteurApercu); minuteurApercu=setTimeout(renderApercu,250); }
 const eurTel=n=>n.toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" €";
-function catEmoji(c){ return c.nom.split(" ")[0]; }
-function catLibelle(c){ return c.nom.split(" ").slice(1).join(" "); }
+function catEmoji(c){ return c.emoji||"🍽️"; }
+function catLibelle(c){ return c.titre||c.id; }
 function famillesDe(nomProduit){
   return liens.filter(l=>l.produit===nomProduit).map(l=>familles.find(f=>f.nom===l.famille)).filter(Boolean);
 }
 function renderApercu(){
   const zone=$("tel"); if(!zone) return;
   const actifs=produits.map((p,i)=>({...p,i})).filter(p=>p.actif&&p.nom.trim());
-  const cats=CATS.filter(c=>actifs.some(p=>p.cat===c.id));
+  const cats=categories.filter(c=>actifs.some(p=>p.cat===c.id));
   if(tel.ecran==="cat"&&!cats.some(c=>c.id===tel.cat)) tel.ecran="accueil";
   const total=tel.panier.reduce((t,x)=>t+x.prix,0), nb=tel.panier.length;
   const nomR=($("nomResto").value||"Votre restaurant").trim().toUpperCase();
@@ -629,7 +803,7 @@ function renderApercu(){
     const liste=actifs.filter(p=>p.cat===tel.cat);
     const groupes=[]; liste.forEach(p=>{ let g=groupes.find(x=>x.sub===p.sub); if(!g) groupes.push(g={sub:p.sub,items:[]}); g.items.push(p); });
     corps=`<button type="button" class="t-retour" data-act="accueil">← Toutes les catégories</button>
-      <div class="t-tabs">${cats.map(c=>`<button type="button" class="t-tab${c.id===tel.cat?" on":""}" data-act="cat" data-v="${c.id}">${esc(c.nom)}</button>`).join("")}</div>
+      <div class="t-tabs">${cats.map(c=>`<button type="button" class="t-tab${c.id===tel.cat?" on":""}" data-act="cat" data-v="${c.id}">${esc(nomCat(c))}</button>`).join("")}</div>
       ${groupes.map(g=>`${g.sub?`<div class="t-sub">${esc(g.sub)}</div>`:""}<div class="t-liste">${g.items.map(p=>{
         const fs=famillesDe(p.nom);
         const prix = p.prix===null ? `<span class="t-inclus" style="color:#f2c94c">Prix ?</span>` : p.prix===0 ? `<span class="t-inclus">Inclus</span>` : `<span class="t-prix">${eurTel(p.prix)}</span>`;
