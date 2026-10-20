@@ -54,11 +54,11 @@
   .groupe{margin-top:16px}
   .groupe h3{font-size:15px;color:var(--or-clair);margin-bottom:6px}
   .tab{overflow-x:auto;border:1px solid var(--ligne);border-radius:10px}
-  table{border-collapse:collapse;width:100%;min-width:820px}
+  table{border-collapse:collapse;width:100%;min-width:940px}
   th{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--gris);text-align:left;padding:8px;background:var(--bleu2)}
   td{padding:5px 6px;border-top:1px solid rgba(212,166,60,.15);vertical-align:middle}
   td input,td select{width:100%}
-  td.c-emoji{width:58px} td.c-prix{width:92px} td.c-cat{width:150px} td.c-sub{width:110px} td.c-act{width:56px;text-align:center} td.c-sup{width:40px}
+  td.c-emoji{width:58px} td.c-prix{width:92px} td.c-cat{width:150px} td.c-sub{width:110px} td.c-act{width:56px;text-align:center} td.c-enf{width:120px} td.c-sup{width:40px}
   tr.doute td{background:rgba(242,201,76,.10)}
   tr.doute td:first-child{box-shadow:inset 3px 0 0 var(--jaune)}
   .doute-txt{font-size:11px;color:var(--jaune);padding:2px 2px 0}
@@ -132,7 +132,7 @@
 <div class="wrap">
 <header>
   <div class="marque">Import de carte <span>· IA</span></div>
-  <div class="version">v.20/10/2026 14:45</div>
+  <div class="version">v.20/10/2026 18:45</div>
 </header>
 
 <h2><span class="num">1</span>Clé API Claude</h2>
@@ -187,6 +187,7 @@
       <button class="btn-ligne btn-petit" id="btnNouvCat" type="button">+ Nouvelle catégorie</button>
     </div>
     <p class="aide" style="margin:0 0 6px">Les lignes surlignées en jaune sont celles où l'IA a un doute : vérifie le prix ou le nom. Tout se corrige directement dans le tableau.</p>
+    <p class="aide" style="margin:0 0 6px">Colonne « Enfant gratuit » : 🧑 <b>Ouvre droit</b> = ce menu adulte donne droit à 1 enfant gratuit ; 👧 <b>Gratuit</b> = menu enfant offert, 1 maximum par menu adulte de la table. L'aperçu applique la règle : enfant refusé sans menu adulte, retiré si l'adulte est retiré.</p>
     <div id="groupes"></div>
     <div class="ligne" style="margin-top:14px">
       <button class="btn-ligne btn-petit" id="btnAjout" type="button">+ Ajouter un produit</button>
@@ -378,6 +379,7 @@ Règles :
 - "emoji" : un seul emoji pertinent.
 - Les choix proposés à l'intérieur d'un plat (sauce au choix, cuisson, accompagnement, nappage, parfum) deviennent des familles d'options dans "familles_options" (avec le supplément éventuel, 0 sinon), et chaque produit concerné est relié à sa famille dans "liens_options" (nom du produit exactement comme dans "produits"). Ne crée pas de produit séparé pour ces choix, sauf s'ils sont aussi vendus seuls avec un prix.
 - Respecte l'ordre de la carte.
+- "regle_enfant" : si la carte annonce un menu enfant offert avec un menu adulte (ex. « enfant de moins de 6 ans gratuit pour un adulte »), mets "gratuit" sur ce menu enfant et "adulte" sur chaque menu adulte qui y donne droit. Un menu enfant ou ado payant ne donne pas droit. Sinon chaîne vide.
 - "doute" : chaîne vide si tout est sûr, sinon une courte phrase (prix illisible, nom coupé, catégorie incertaine…).
 - "remarques" : ce que tu n'as pas pu lire ou ce que le restaurateur doit vérifier (en français, court). Chaîne vide sinon.`;
 
@@ -394,6 +396,7 @@ const OUTIL = {
         description:{type:"string"},
         prix:{type:["number","null"]},
         emoji:{type:"string"},
+        regle_enfant:{type:"string",enum:["","adulte","gratuit"]},
         doute:{type:"string"}
       },required:["categorie","nom","prix"]}},
       categories:{type:"array",items:{type:"object",properties:{
@@ -522,6 +525,7 @@ function chargerResultat(r){
     cat: idCat(p.categorie),
     sub: p.sous_categorie||"", nom:(p.nom||"").trim(), desc:(p.description||"").trim(),
     emoji:p.emoji||"", prix:(typeof p.prix==="number")?p.prix:null,
+    regle:(p.regle_enfant==="adulte"||p.regle_enfant==="gratuit")?p.regle_enfant:"",
     actif:true, doute:(p.doute||"").trim()||((typeof p.prix==="number")?"":"Prix manquant")
   })).filter(p=>p.nom);
   familles=(r.familles_options||[]).filter(f=>f.nom&&f.options&&f.options.length);
@@ -549,7 +553,7 @@ function dessinerTableau(){
   const optsCat = c => categories.map(x=>`<option value="${x.id}"${x.id===c?" selected":""}>${esc(nomCat(x))}</option>`).join("");
   $("groupes").innerHTML = categoriesUtilisees().map(c=>`
     <div class="groupe"><h3 data-titre-cat="${c.id}">${esc(nomCat(c))}</h3><div class="tab"><table>
-      <thead><tr><th>Nom</th><th>Description</th><th>Prix €</th><th>Emoji</th><th>Catégorie</th><th>Sous-cat.</th><th>Actif</th><th></th></tr></thead>
+      <thead><tr><th>Nom</th><th>Description</th><th>Prix €</th><th>Emoji</th><th>Catégorie</th><th>Sous-cat.</th><th>Enfant gratuit</th><th>Actif</th><th></th></tr></thead>
       <tbody>${produits.map((p,i)=>p.cat!==c.id?"":`
         <tr class="${p.doute?"doute":""}">
           <td><input type="text" id="n${i}" data-i="${i}" data-k="nom" value="${esc(p.nom)}" aria-label="Nom">${p.doute?`<div class="doute-txt">⚠️ ${esc(p.doute)}</div>`:""}</td>
@@ -558,6 +562,7 @@ function dessinerTableau(){
           <td class="c-emoji"><input type="text" id="e${i}" data-i="${i}" data-k="emoji" value="${esc(p.emoji)}" aria-label="Emoji"></td>
           <td class="c-cat"><select id="c${i}" data-i="${i}" data-k="cat" aria-label="Catégorie">${optsCat(p.cat)}</select></td>
           <td class="c-sub"><input type="text" id="s${i}" data-i="${i}" data-k="sub" value="${esc(p.sub)}" aria-label="Sous-catégorie"></td>
+          <td class="c-enf"><select id="r${i}" data-i="${i}" data-k="regle" aria-label="Règle enfant gratuit"><option value=""${!p.regle?" selected":""}>—</option><option value="adulte"${p.regle==="adulte"?" selected":""}>🧑 Ouvre droit</option><option value="gratuit"${p.regle==="gratuit"?" selected":""}>👧 Gratuit</option></select></td>
           <td class="c-act"><input type="checkbox" id="a${i}" data-i="${i}" data-k="actif" ${p.actif?"checked":""} aria-label="Actif"></td>
           <td class="c-sup"><button type="button" class="btn-ligne btn-petit" data-sup="${i}" aria-label="Supprimer">🗑</button></td>
         </tr>`).join("")}</tbody></table></div></div>`).join("");
@@ -568,6 +573,7 @@ function dessinerTableau(){
       if(k==="prix"){ const v=parseFloat(el.value); p.prix=isNaN(v)?null:v; if(p.prix!==null && p.doute==="Prix manquant") p.doute=""; }
       else if(k==="actif") p.actif=el.checked;
       else p[k]=el.value;
+      if(k==="regle") tel.panier=[];
       if(k==="cat") dessinerTableau(); else planifierApercu();
     });
   });
@@ -649,15 +655,15 @@ function construireClasseur(){
     const aoa=[
       [nomResto.toUpperCase()+" — "+(c.titre||c.id).toUpperCase()],
       ["Cellules modifiables · Actif = OUI/NON · Ordre = position d'affichage"],
-      ["ID","Catégorie","Sous-catégorie","Nom","Description","Emoji","Prix (EUR)","Actif (OUI/NON)","Ordre","ID Hiboutik","Cuisine","Libellé cuisine"]
+      ["ID","Catégorie","Sous-catégorie","Nom","Description","Emoji","Prix (EUR)","Actif (OUI/NON)","Ordre","ID Hiboutik","Cuisine","Libellé cuisine","Enfant gratuit (ADULTE/GRATUIT/NON)"]
     ];
     lignes.forEach((p,k)=>{
       const id=prefixe+(k+1);
       idsParNom[p.nom.toLowerCase()]=id;
-      aoa.push([id,c.id,p.sub,p.nom,p.desc,p.emoji,p.prix??0,p.actif?"OUI":"NON",k+1,"","",""]);
+      aoa.push([id,c.id,p.sub,p.nom,p.desc,p.emoji,p.prix??0,p.actif?"OUI":"NON",k+1,"","","",p.regle==="adulte"?"ADULTE":p.regle==="gratuit"?"GRATUIT":""]);
     });
     const ws=XLSX.utils.aoa_to_sheet(aoa);
-    ws["!cols"]=[{wch:6},{wch:11},{wch:13},{wch:30},{wch:40},{wch:6},{wch:10},{wch:9},{wch:6},{wch:11},{wch:8},{wch:14}];
+    ws["!cols"]=[{wch:6},{wch:11},{wch:13},{wch:30},{wch:40},{wch:6},{wch:10},{wch:9},{wch:6},{wch:11},{wch:8},{wch:14},{wch:18}];
     XLSX.utils.book_append_sheet(wb,ws,onglet);
   });
   if(familles.length){
@@ -715,7 +721,8 @@ function ouvrirExcel(file){
           const prixTxt=String(row[6]??"").replace(",",".").trim();
           const prix=prixTxt===""?null:(parseFloat(prixTxt)||0);
           const p={cat:normCat(row[1]),sub:String(row[2]||"").trim(),nom,desc:String(row[4]||"").trim(),emoji:String(row[5]||"").trim(),
-            prix,actif:String(row[7]||"OUI").trim().toUpperCase()!=="NON",doute:prix===null?"Prix manquant":"",ordre:parseInt(row[8])||9999};
+            prix,actif:String(row[7]||"OUI").trim().toUpperCase()!=="NON",
+            regle:({ADULTE:"adulte",GRATUIT:"gratuit"})[String(row[12]||"").trim().toUpperCase()]||"",doute:prix===null?"Prix manquant":"",ordre:parseInt(row[8])||9999};
           lus.push(p);
           const id=String(row[0]||"").trim(); if(id) nomParId[id]=nom;
         });
@@ -827,10 +834,17 @@ function renderApercu(){
     ${nb&&tel.ecran!=="panier"?`<button type="button" class="t-barre" data-act="panier"><span><span class="tb1">${nb} article${nb>1?"s":""}</span><br><span class="tb2">${eurTel(total)}</span></span><span class="tb3">Voir la commande →</span></button>`:""}
     ${modal}${tel.toast?`<div class="t-toast">${esc(tel.toast)}</div>`:""}`;
 }
+// Règle « enfant gratuit » dans l'aperçu (même principe que la page de commande)
+const nbRegleTel=type=>tel.panier.filter(x=>x.regle===type).length;
+function appliquerRegleTel(){
+  let trop=nbRegleTel("gratuit")-nbRegleTel("adulte"), n=0;
+  while(trop>0){ const i=tel.panier.map(x=>x.regle==="gratuit").lastIndexOf(true); if(i<0) break; tel.panier.splice(i,1); trop--; n++; }
+  return n;
+}
 function toastTel(t){ tel.toast=t; renderApercu(); clearTimeout(minuteurToast); minuteurToast=setTimeout(()=>{ tel.toast=""; renderApercu(); },2200); }
 function ajouterAuPanier(idx,choix,supp){
   const p=produits[idx];
-  tel.panier.push({nom:p.nom,choix:choix.join(" · "),prix:(p.prix||0)+supp});
+  tel.panier.push({nom:p.nom,choix:choix.join(" · "),prix:(p.prix||0)+supp,regle:p.regle||""});
   toastTel("✓ "+p.nom+" ajouté");
 }
 $("tel").addEventListener("click",e=>{
@@ -842,6 +856,10 @@ $("tel").addEventListener("click",e=>{
   else if(act==="panier"){ tel.ecran="panier"; renderApercu(); }
   else if(act==="ajout"){
     const idx=+v, fs=famillesDe(produits[idx].nom);
+    if(produits[idx].regle==="gratuit"){
+      if(!nbRegleTel("adulte")){ toastTel("⚠️ Ajoutez un menu adulte en premier !"); return; }
+      if(nbRegleTel("gratuit")>=nbRegleTel("adulte")){ toastTel("⚠️ 1 enfant gratuit maximum par menu adulte"); return; }
+    }
     if(fs.length){ tel.modal={idx,familles:fs,etape:0,choix:[],supp:0}; renderApercu(); }
     else ajouterAuPanier(idx,[],0);
   }
@@ -852,7 +870,7 @@ $("tel").addEventListener("click",e=>{
     else renderApercu();
   }
   else if(act==="fermer"){ tel.modal=null; renderApercu(); }
-  else if(act==="retirer"){ tel.panier.splice(+v,1); renderApercu(); }
+  else if(act==="retirer"){ tel.panier.splice(+v,1); const n=appliquerRegleTel(); if(n) toastTel(`⚠️ ${n} enfant gratuit retiré : 1 par menu adulte`); else renderApercu(); }
   else if(act==="envoyer"){ toastTel("Aperçu : rien n'est envoyé en cuisine"); }
 });
 $("btnRazTel").onclick=()=>{ tel={ecran:"accueil",cat:null,panier:[],modal:null,toast:""}; renderApercu(); };

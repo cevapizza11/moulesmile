@@ -154,6 +154,17 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
     <div class="form-row" id="editPointsRow">
       <div class="form-group" style="flex:1"><label>🍽️ Points repas employé</label><input type="number" id="editPoints" step="1" min="0" placeholder="0"></div>
     </div>
+    <div class="form-row" id="editRegleEnfantRow" style="flex-direction:column;align-items:stretch;gap:6px">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#ddd;cursor:pointer">
+        <input type="checkbox" id="editRegleAdulte" onchange="if(this.checked)document.getElementById('editRegleGratuit').checked=false" style="width:20px;height:20px;flex:none">
+        🧑 Menu adulte : ouvre droit à 1 enfant gratuit
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#ddd;cursor:pointer">
+        <input type="checkbox" id="editRegleGratuit" onchange="if(this.checked)document.getElementById('editRegleAdulte').checked=false" style="width:20px;height:20px;flex:none">
+        👧 Menu enfant gratuit : 1 par menu adulte commandé
+      </label>
+      <div style="font-size:11px;color:#888;line-height:1.5">Le détail de la règle est dans Réglages → Règle « enfant gratuit ».</div>
+    </div>
     <div class="form-row" id="editCuisineRow" style="flex-direction:column;align-items:stretch;gap:6px">
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#ddd;cursor:pointer">
         <input type="checkbox" id="editCuisine" onchange="document.getElementById('editCuisineLabelGroup').style.display=this.checked?'flex':'none'" style="width:20px;height:20px;flex:none">
@@ -265,6 +276,11 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
       </div>
       <label class="toggle"><input type="checkbox" id="compteurToggle" onchange="toggleCompteurGlobal(this.checked)"><span class="toggle-slider"></span></label>
     </div>
+  </div>
+
+  <div class="section" style="margin-top:14px">
+    <h2>🧒 Règle « enfant gratuit »</h2>
+    <div id="regleEnfantInfo"></div>
   </div>
 
   <div class="section" style="margin-top:14px">
@@ -392,6 +408,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
     🍳 <strong style="color:#D4AF37">Colonnes "Cuisine"</strong> : mets <b>OUI</b> en colonne K pour qu'un produit s'affiche dans l'onglet Cuisine de la caisse (un nouveau produit est ainsi pris en compte dès l'import, sans rien cocher ici). Colonne L : nom de regroupement facultatif (ex. « Nuggets » pour regrouper poulet + poisson). <b>NON</b> retire le produit de la cuisine. <b>Case vide</b> = on garde le réglage fait dans l'admin. Les plats du menu enfant se cochent à la main (Carte → Menu enfant → clique le plat).<br><br>
     <strong>Catégories valides :</strong> formules · sauces · softs · bieres · vins_blancs · vins_roses · vins_rouges · cocktails · sangria · desserts · digestifs · chauds<br><br>
     🔗 <strong style="color:#4ABA80">Colonne "ID Hiboutik"</strong> : si elle est remplie (dernière colonne de chaque onglet produit, et de l'onglet Familles Options), la Correspondance Hiboutik est mise à jour automatiquement à l'import — plus besoin de la ressaisir à la main dans l'écran "🔗 Correspondance Hiboutik".<br><br>
+    🧒 <strong style="color:#D4AF37">Colonne M "Enfant gratuit"</strong> (facultative) : <b>ADULTE</b> = ce menu ouvre droit à 1 enfant gratuit · <b>GRATUIT</b> = menu enfant gratuit (1 par menu adulte) · <b>NON</b> = hors règle · <b>case vide</b> = on garde le réglage de l'admin (Réglages → Règle « enfant gratuit »).<br><br>
     🗂️ <strong style="color:#D4AF37">Onglet "Catégories"</strong> (fichiers créés par l'Import de carte IA) : s'il est présent, il fixe les tuiles du client, leurs titres, leurs emojis et leur ordre (ex. 🍕 Pizzas, 🥞 Galettes). Sans cet onglet, les catégories habituelles de Moule & Smile sont utilisées.<br><br>
     ⚠️ <strong style="color:#C0392B">L'import remplace toute la carte.</strong> Utilisez MouleSmile_Carte_Admin.xlsx comme base.
   </div>
@@ -448,7 +465,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
-<div class="version">v.20/10/2026 14:45 — Moule & Smile Admin</div>
+<div class="version">v.20/10/2026 18:45 — Moule & Smile Admin</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -654,6 +671,11 @@ function ouvrirModalEdition(catId,idx,source='carte'){
   document.getElementById('editPoints').value=p.points||0;
   // Onglet Cuisine de la caisse : produits de la carte et plats du menu enfant (pas les options)
   document.getElementById('editCuisineRow').style.display=(source==='carte'||source==='enfantMenu')?'flex':'none';
+  // Règle « enfant gratuit » : seulement pour les produits de la carte
+  document.getElementById('editRegleEnfantRow').style.display=(source==='carte')?'flex':'none';
+  const regleP=(source==='carte')?regleEnfantEffective(p):'';
+  document.getElementById('editRegleAdulte').checked=regleP==='adulte';
+  document.getElementById('editRegleGratuit').checked=regleP==='gratuit';
   document.getElementById('editCuisine').checked=!!p.cuisine;
   document.getElementById('editCuisineLabel').value=p.cuisineLabel||'';
   document.getElementById('editCuisineLabelGroup').style.display=p.cuisine?'flex':'none';
@@ -778,6 +800,13 @@ function validerEdition(){
   }
   if(editionSource!=='enfantMenu'){
     p.points=parseInt(document.getElementById('editPoints').value)||0;
+  }
+  if(editionSource==='carte'){
+    const nouvelle=document.getElementById('editRegleAdulte').checked?'adulte':(document.getElementById('editRegleGratuit').checked?'gratuit':'');
+    if(nouvelle!==regleEnfantEffective(p)){
+      materialiserRegleEnfant();
+      if(nouvelle) p.regleEnfant=nouvelle; else delete p.regleEnfant;
+    }
   }
   if(editionSource==='carte'||editionSource==='enfantMenu'){
     if(document.getElementById('editCuisine').checked){
@@ -971,8 +1000,10 @@ function parseRows(rows){
     const idHiboutik=parseInt(row[9])||null;
     // Colonnes optionnelles K « Cuisine » (OUI/NON, vide = ne rien changer) et L « Libellé cuisine »
     const cuisineXl=String(row[10]||'').trim().toUpperCase();
+    // Colonne M facultative « Enfant gratuit » : ADULTE / GRATUIT / NON (vide = réglage de l'admin conservé)
+    const regleXl=String(row[12]||'').trim().toUpperCase();
     const cuisineLabelXl=String(row[11]||'').trim();
-    produits.push({id,cat,subcat,nom,desc,emoji,prix,actif,ordre,idHiboutik,cuisineXl,cuisineLabelXl});
+    produits.push({id,cat,subcat,nom,desc,emoji,prix,actif,ordre,idHiboutik,cuisineXl,cuisineLabelXl,regleXl});
   });
   if(!produits.length){showToast('⚠️ Aucun produit trouvé');return;}
   importedData=produits;
@@ -1006,7 +1037,7 @@ function confirmerImport(){
   // Conserver les réglages faits dans l'admin : l'Excel ne contient NI la photo, NI les points repas
   // employé, NI le réglage "Afficher en cuisine" — sans ça, un réimport (même pour juste changer un
   // prix) les effacerait tous. On les retrouve via l'ID produit, qui ne change pas d'un import à l'autre.
-  const CHAMPS_ADMIN=['photo','points','cuisine','cuisineLabel'];
+  const CHAMPS_ADMIN=['photo','points','cuisine','cuisineLabel','regleEnfant'];
   const reglagesExistants={};
   if(carte&&carte.categories){
     carte.categories.forEach(c=>(c.produits||[]).forEach(p=>{
@@ -1026,6 +1057,10 @@ function confirmerImport(){
     } else if(p.cuisineXl==='NON'){
       delete item.cuisine; delete item.cuisineLabel;
     }
+    // Excel : colonne M « Enfant gratuit » = ADULTE / GRATUIT → réglé ; NON → retiré ; vide → réglage de l'admin conservé
+    if(p.regleXl==='ADULTE') item.regleEnfant='adulte';
+    else if(p.regleXl==='GRATUIT') item.regleEnfant='gratuit';
+    else if(p.regleXl==='NON') delete item.regleEnfant;
     return item;
   };
   const newCarte={categories:[]};
@@ -1446,7 +1481,68 @@ function ajouterOptionFamille(fid){
 // ============================================================
 // RÉGLAGES GLOBAUX
 // ============================================================
+// ============================================================
+// RÈGLE « ENFANT GRATUIT » — même logique que index.html
+// Tant qu'aucun produit n'est réglé, valeurs historiques Moule & Smile (comme côté client).
+// ============================================================
+const REGLE_ADULTES_DEFAUT=['p1','ca1','fc1','fc2'];
+const REGLE_GRATUITS_DEFAUT=['en1'];
+function regleEnfantReglee(){
+  return !!(carte&&carte.categories||[]).some(c=>(c.produits||[]).some(p=>p.regleEnfant));
+}
+function regleEnfantEffective(p){
+  if(regleEnfantReglee()) return p.regleEnfant||'';
+  if(REGLE_ADULTES_DEFAUT.includes(p.id)) return 'adulte';
+  if(REGLE_GRATUITS_DEFAUT.includes(p.id)) return 'gratuit';
+  return '';
+}
+// Avant le premier changement : on écrit les valeurs par défaut sur les produits, pour ne rien perdre
+function materialiserRegleEnfant(){
+  if(!carte||regleEnfantReglee()) return;
+  // On calcule tout AVANT d'écrire : dès le premier produit réglé, les valeurs par défaut ne s'appliquent plus
+  const aRegler=[]; carte.categories.forEach(c=>(c.produits||[]).forEach(p=>{ const r=regleEnfantEffective(p); if(r) aRegler.push([p,r]); }));
+  aRegler.forEach(([p,r])=>p.regleEnfant=r);
+}
+function changerRegleEnfant(catId,idx,type,coche){
+  const cat=carte.categories.find(c=>c.id===catId); if(!cat)return;
+  const p=cat.produits[idx]; if(!p)return;
+  materialiserRegleEnfant();
+  if(coche) p.regleEnfant=type; else if(p.regleEnfant===type) delete p.regleEnfant;
+  sauvegarder(); renderRegleEnfant();
+  showToast(`✅ ${p.nom} : ${p.regleEnfant==='adulte'?'ouvre droit à 1 enfant gratuit':p.regleEnfant==='gratuit'?'menu enfant gratuit':'hors règle'}`);
+}
+const CATS_BOISSONS_REGLE=['sauces','softs','bieres','vins','vins_blancs','vins_roses','vins_rouges','cocktails','sangria','digestifs','chauds'];
+function renderRegleEnfant(){
+  const zone=document.getElementById('regleEnfantInfo'); if(!zone||!carte)return;
+  const tous=[]; carte.categories.forEach(c=>(c.produits||[]).forEach((p,idx)=>tous.push({c,p,idx})));
+  const adultes=tous.filter(x=>regleEnfantEffective(x.p)==='adulte');
+  const gratuits=tous.filter(x=>regleEnfantEffective(x.p)==='gratuit');
+  const nomsListe=l=>l.length?l.map(x=>`<strong style="color:#D4AF37">${x.p.nom}</strong>`).join(', '):'<em style="color:#C0392B">aucun</em>';
+  const lignes=tous.filter(x=>!CATS_BOISSONS_REGLE.includes(x.c.id)||regleEnfantEffective(x.p));
+  zone.innerHTML=`
+    <div style="color:#ccc;font-size:12px;line-height:1.7;margin-bottom:10px">
+      <strong style="color:#D4AF37">Règles actives (contrôlées sur le téléphone du client) :</strong><br>
+      • <b>1 menu enfant gratuit maximum par menu adulte payant</b> de la table.<br>
+      • Les menus adultes comptés : ceux du panier <b>et</b> ceux déjà envoyés pour la table (commandes non réglées).<br>
+      • Ajout d'un enfant gratuit <b>refusé sans menu adulte</b> (« Ajoutez un menu adulte en premier ! »).<br>
+      • Si un menu adulte est <b>retiré du panier</b>, les enfants gratuits en trop sont <b>retirés automatiquement</b>.<br>
+      • <b>Nouveau contrôle à l'envoi</b> de la commande.<br>
+      • <b>Confirmation d'âge</b> demandée au parent (0 à 5 ans) avant l'ajout.<br>
+      • Le menu enfant/ado payant n'ouvre pas droit à un enfant gratuit (sauf si vous cochez la case).<br><br>
+      🧑 Ouvrent droit à 1 enfant gratuit : ${nomsListe(adultes)}<br>
+      👧 Menus enfant gratuits : ${nomsListe(gratuits)}<br>
+      <span style="color:#888">${regleEnfantReglee()?'Réglage : cases cochées ci-dessous (ou colonne M de l\'Excel).':'Réglage par défaut Moule & Smile (aucune case encore modifiée).'}</span>
+    </div>
+    ${lignes.map(x=>{const r=regleEnfantEffective(x.p);return `
+      <div class="item-row" style="flex-wrap:wrap;gap:6px">
+        <div class="item-info" style="cursor:default;min-width:140px"><div class="item-nom">${x.p.emoji||''} ${x.p.nom}</div><div class="item-detail">${x.c.nom}${x.p.prix?' · '+Number(x.p.prix).toFixed(2).replace('.',',')+' €':' · gratuit'}</div></div>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#ddd;cursor:pointer"><input type="checkbox" ${r==='adulte'?'checked':''} onchange="changerRegleEnfant('${x.c.id}',${x.idx},'adulte',this.checked)" style="width:18px;height:18px">🧑 Adulte</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#ddd;cursor:pointer"><input type="checkbox" ${r==='gratuit'?'checked':''} onchange="changerRegleEnfant('${x.c.id}',${x.idx},'gratuit',this.checked)" style="width:18px;height:18px">👧 Enfant gratuit</label>
+      </div>`;}).join('')}`;
+}
+
 function renderReglages(){
+  renderRegleEnfant();
   if(!carte)return;
   document.getElementById('compteurToggle').checked=carte.compteurActif!==false;
   document.getElementById('groupeAperoToggle').checked=carte.groupeApero!==false;
