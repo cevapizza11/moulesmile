@@ -465,7 +465,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
-<div class="version">v.20/10/2026 18:45 — Moule & Smile Admin</div>
+<div class="version">v.21/10/2026 10:25 — Moule & Smile Admin</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -501,6 +501,8 @@ async function connexionEquipe(){
 }
 
 let carte=null,catActive=null,importedData=null;
+// Correspondance Hiboutik : déclarée dès le départ (avant, elle n'existait qu'après ouverture de Réglages → erreur à l'import)
+let mappingHiboutik={},mappingHiboutikCharge=false;
 
 const CATS=[
   {id:"formules",nom:"🐚 Formules"},{id:"sauces",nom:"🌿 Sauces"},{id:"softs",nom:"🥤 Softs"},
@@ -1137,15 +1139,19 @@ function confirmerImport(){
 
   carte=newCarte;catActive=newCarte.categories[0]?.id;
   const nbImportes=importedData?importedData.length:0;
-  const nbMappes=fusionnerMappingHiboutikImport();
-  confirmerImportSauvegarde(nbImportes,nbMappes);
+  fusionnerMappingHiboutikImport()
+    .catch(e=>{console.error('Fusion Hiboutik',e);return 0;})
+    .then(nbMappes=>confirmerImportSauvegarde(nbImportes,nbMappes));
 }
 
 // Colonne "ID Hiboutik" de l'Excel (produits + options) → fusion automatique dans
 // la Correspondance Hiboutik (config/hiboutikMapping), pour ne plus avoir à la
 // ressaisir à la main à chaque import. Ne touche que les ID présents dans le fichier ;
 // les entrées existantes non concernées sont conservées.
-function fusionnerMappingHiboutikImport(){
+async function fusionnerMappingHiboutikImport(){
+  // On charge d'abord la correspondance existante, sinon on l'écraserait avec seulement les ID du fichier
+  if(!mappingHiboutikCharge) await lireMappingHiboutik();
+  if(!mappingHiboutikCharge) return 0;
   let nb=0;
   (importedData||[]).forEach(p=>{
     if(p.idHiboutik){ mappingHiboutik[p.id]=p.idHiboutik; nb++; }
@@ -1697,7 +1703,7 @@ const MAPPING_HIBOUTIK_INITIAL={
   "SUPPLEMENT": 79
 };
 
-async function chargerMappingHiboutik(){
+async function lireMappingHiboutik(){
   try{
     const doc=await db.collection('config').doc('hiboutikMapping').get();
     if(doc.exists && doc.data().mapping && Object.keys(doc.data().mapping).length){
@@ -1709,7 +1715,11 @@ async function chargerMappingHiboutik(){
       await db.collection('config').doc('hiboutikMapping').set({mapping:mappingHiboutik});
       showToast('✅ Correspondance Hiboutik initialisée automatiquement');
     }
-  }catch(e){console.error('Erreur chargement correspondance Hiboutik',e);mappingHiboutik={};}
+    mappingHiboutikCharge=true;
+  }catch(e){console.error('Erreur chargement correspondance Hiboutik',e);mappingHiboutik={};mappingHiboutikCharge=false;}
+}
+async function chargerMappingHiboutik(){
+  await lireMappingHiboutik();
   renderMappingHiboutik();
 }
 
