@@ -263,7 +263,7 @@ body.cuisine-plein{overflow:hidden}
 
 <!-- HEADER -->
 <div class="header">
-  <h1>🐚 <span id="motCaisse" onclick="tapMotCaisse()" style="cursor:default;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent">CAISSE</span> — Moule & Smile<span class="build-tag">v.22/10/2026 11:40</span></h1>
+  <h1>🐚 <span id="motCaisse" onclick="tapMotCaisse()" style="cursor:default;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent">CAISSE</span> — Moule & Smile<span class="build-tag">v.22/10/2026 18:05</span></h1>
   <div class="stats-row">
     <div class="stat"><div class="num" id="statNouv">0</div><div class="lbl">Nouvelles</div></div>
     <div class="stat"><div class="num" id="statAdd">0</div><div class="lbl">Additions</div></div>
@@ -553,7 +553,7 @@ body.cuisine-plein{overflow:hidden}
   </div>
 </div>
 
-<div class="version">v.22/10/2026 11:40 — Moule & Smile Caisse</div>
+<div class="version">v.22/10/2026 18:05 — Moule & Smile Caisse</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -1104,7 +1104,10 @@ async function chargerStats(jours){
       else buckets['9+ pers.'].push(v);
     });
 
-    const moyenne=arr=>arr.length?Math.round(arr.reduce((s,v)=>s+(v.dureeMinutes||0),0)/arr.length):null;
+    // Durées en secondes (dureeSecondes depuis le 22/10/2026 ; avant : minutes entières) → affichage h:mm:ss
+    const secondesVisite=v=>(typeof v.dureeSecondes==='number')?v.dureeSecondes:(v.dureeMinutes||0)*60;
+    const moyenne=arr=>arr.length?Math.round(arr.reduce((s,v)=>s+secondesVisite(v),0)/arr.length):null;
+    const hms=sec=>{sec=Math.max(0,Math.round(sec||0));const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),x=sec%60;return h+':'+String(m).padStart(2,'0')+':'+String(x).padStart(2,'0');};
     const dureeGlobale=moyenne(visites);
 
     // Recharges sur la même période
@@ -1191,7 +1194,7 @@ async function chargerStats(jours){
           <div class="ca-lbl">table(s) sur la période</div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
-          <div class="ca-box"><div class="ca-num">${dureeGlobale!==null?dureeGlobale+' min':'—'}</div><div class="ca-lbl">Durée moyenne globale</div></div>
+          <div class="ca-box"><div class="ca-num">${dureeGlobale!==null?hms(dureeGlobale):'—'}</div><div class="ca-lbl">Durée moyenne globale</div></div>
           <div class="ca-box"><div class="ca-num">${rechargesParTable}</div><div class="ca-lbl">Recharges / table</div></div>
         </div>
         <h3 style="color:#D4AF37;font-size:14px;margin-bottom:10px">⏱️ Durée moyenne par taille de table</h3>
@@ -1199,7 +1202,7 @@ async function chargerStats(jours){
       Object.entries(buckets).forEach(([label,arr])=>{
         if(!arr.length)return;
         const m=moyenne(arr);
-        html+=`<div class="cmd-item-row"><span>${label}</span><span style="color:#D4AF37;font-weight:bold">${m} min <span style="color:#888;font-weight:normal;font-size:11px">(${arr.length} table${arr.length>1?'s':''})</span></span></div>`;
+        html+=`<div class="cmd-item-row"><span>${label}</span><span style="color:#D4AF37;font-weight:bold">${hms(m)} <span style="color:#888;font-weight:normal;font-size:11px">(${arr.length} table${arr.length>1?'s':''})</span></span></div>`;
       });
     }
 
@@ -2848,11 +2851,13 @@ async function liberJetonDeTable(tableNum, totalAddition, aCommandeRepas){
       if(data.timestamp){
         const arrivee=data.timestamp.toDate?data.timestamp.toDate():new Date(data.timestamp);
         const dureeMinutes=Math.round((maintenant-arrivee.getTime())/60000);
+        const dureeSecondes=Math.round((maintenant-arrivee.getTime())/1000);
         db.collection('visites').add({
           table:tableNum,
           couverts:data.couverts||null,
           type:aCommandeRepas?'repas':'boisson',
           dureeMinutes,
+          dureeSecondes,
           total:totalAddition||0,
           heureArrivee:data.timestamp,
           heureDepart:firebase.firestore.FieldValue.serverTimestamp()
