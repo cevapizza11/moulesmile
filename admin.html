@@ -447,6 +447,18 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
     <div id="statsJour" style="color:#aaa;font-size:13px;margin-top:8px">Chargement...</div>
   </div>
   <div class="section" style="margin-top:14px">
+    <h2>📅 CA du mois</h2>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px">
+      <input type="month" id="moisCA" style="background:#2A2A2A;border:1px solid #444;border-radius:8px;color:#fff;padding:8px 10px;font-size:14px">
+      <button class="btn-vert" style="padding:9px 14px" onclick="chargerCAMois()">📊 Afficher</button>
+    </div>
+    <div id="statsMois" style="color:#aaa;font-size:13px;margin-top:12px"></div>
+    <div style="color:#777;font-size:11px;margin-top:10px;line-height:1.5">
+      Calculé sur les <b>tables encaissées</b> (historique de la caisse) du mois choisi. Les repas employés et les additions offertes ne comptent pas dans le CA (ils sont indiqués à part).<br>
+      ⚠️ Ne pas utiliser « Vider l'historique » dans la caisse : les mois passés seraient perdus.
+    </div>
+  </div>
+  <div class="section" style="margin-top:14px">
     <h2>🎫 Sécurité — Jetons de table</h2>
     <div style="color:#aaa;font-size:12px;margin-bottom:12px;line-height:1.6">
       L'accès à la commande client est désormais protégé par des jetons physiques réutilisables (un par table), plutôt que par un token global.<br><br>
@@ -465,7 +477,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
-<div class="version">v.21/10/2026 10:25 — Moule & Smile Admin</div>
+<div class="version">v.22/10/2026 18:20 — Moule & Smile Admin</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -553,6 +565,7 @@ function switchNav(tab,el){
   if(tab==='EnfantMenu') renderEnfantMenu();
   if(tab==='Options') renderFamillesOptions();
   if(tab==='Reglages') renderReglages();
+  if(tab==='Actions' && !document.getElementById('statsMois').innerHTML) chargerCAMois();
 }
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
@@ -1950,6 +1963,53 @@ function toggleMenuAdoOption(prodId,val){
 }
 
 // ============================================================
+
+// ============================================================
+// CA DU MOIS — à partir de l'historique des encaissements (caisse)
+// ============================================================
+const MODES_CA={especes:'💶 Espèces',cb:'💳 CB',titrerestaurant:'🍽️ Titre-restaurant',chequevacances:'🏖️ Chèque-vacances',cheque:'📝 Chèque'};
+function eurosCA(n){return (Math.round((n||0)*100)/100).toFixed(2).replace('.',',')+' €';}
+async function chargerCAMois(){
+  const champ=document.getElementById('moisCA'), zone=document.getElementById('statsMois');
+  if(!champ.value){ const d=new Date(); champ.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+  const [a,m]=champ.value.split('-').map(Number);
+  const debut=new Date(a,m-1,1,0,0,0), fin=new Date(a,m,1,0,0,0);
+  zone.textContent='Chargement…';
+  try{
+    const snap=await db.collection('historique')
+      .where('timestamp','>=',firebase.firestore.Timestamp.fromDate(debut))
+      .where('timestamp','<',firebase.firestore.Timestamp.fromDate(fin)).get();
+    let ca=0,nb=0,nbEmploye=0,montantEmploye=0,nbOffert=0,montantOffert=0,sansMode=0;
+    const parMode={}, parJour={};
+    snap.forEach(doc=>{
+      const h=doc.data(), total=h.total||0;
+      if(h.type==='employe'){ nbEmploye++; montantEmploye+=total; return; }
+      if(h.modePaiement==='offert'){ nbOffert++; montantOffert+=total; return; }
+      ca+=total; nb++;
+      if(Array.isArray(h.paiements)&&h.paiements.length) h.paiements.forEach(p=>{ parMode[p.mode]=(parMode[p.mode]||0)+(parseFloat(p.montant)||0); });
+      else sansMode+=total;
+      const t=h.timestamp&&h.timestamp.toDate?h.timestamp.toDate():null;
+      if(t){ const j=t.getDate(); parJour[j]=(parJour[j]||0)+total; }
+    });
+    const nomMois=debut.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+    if(!nb&&!nbEmploye&&!nbOffert){ zone.innerHTML=`Aucun encaissement en ${nomMois}.`; return; }
+    const lignesModes=Object.entries(parMode).sort((x,y)=>y[1]-x[1]).map(([k,v])=>`<div class="item-row" style="padding:6px 10px"><span>${MODES_CA[k]||k}</span><b style="color:#D4AF37">${eurosCA(v)}</b></div>`).join('')
+      +(sansMode>0.004?`<div class="item-row" style="padding:6px 10px"><span>❔ Sans moyen de paiement (anciens encaissements)</span><b style="color:#D4AF37">${eurosCA(sansMode)}</b></div>`:'');
+    const jours=Object.keys(parJour).map(Number).sort((x,y)=>x-y);
+    const maxJ=Math.max(...jours.map(j=>parJour[j]),1);
+    const lignesJours=jours.map(j=>`<div style="display:flex;align-items:center;gap:8px;font-size:12px;margin:3px 0"><span style="width:58px;color:#aaa">${String(j).padStart(2,'0')}/${String(m).padStart(2,'0')}</span><span style="flex:1;background:#2A2A2A;border-radius:4px;height:10px;overflow:hidden"><span style="display:block;height:100%;width:${Math.round(parJour[j]/maxJ*100)}%;background:#D4AF37"></span></span><span style="width:80px;text-align:right;color:#ddd">${eurosCA(parJour[j])}</span></div>`).join('');
+    zone.innerHTML=`
+      <div style="color:#D4AF37;font-weight:bold;margin-bottom:8px;text-transform:capitalize">${nomMois}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+        <div style="text-align:center"><div style="font-size:22px;font-weight:bold;color:#D4AF37">${eurosCA(ca)}</div><div style="font-size:10px;color:#888">CA du mois</div></div>
+        <div style="text-align:center"><div style="font-size:22px;font-weight:bold;color:#D4AF37">${nb}</div><div style="font-size:10px;color:#888">Tables encaissées</div></div>
+        <div style="text-align:center"><div style="font-size:22px;font-weight:bold;color:#D4AF37">${nb?eurosCA(ca/nb):'—'}</div><div style="font-size:10px;color:#888">Ticket moy. / table</div></div>
+      </div>
+      <div style="font-size:12px;color:#888;margin-bottom:4px">Par moyen de paiement</div>${lignesModes||'<div style="color:#777">—</div>'}
+      ${(nbEmploye||nbOffert)?`<div style="font-size:12px;color:#888;margin-top:8px">Hors CA : ${nbEmploye?`🍽️ ${nbEmploye} repas employé(s) (${eurosCA(montantEmploye)})`:''}${nbEmploye&&nbOffert?' · ':''}${nbOffert?`🎁 ${nbOffert} addition(s) offerte(s) (${eurosCA(montantOffert)})`:''}</div>`:''}
+      <div style="font-size:12px;color:#888;margin:12px 0 4px">Par jour</div>${lignesJours}`;
+  }catch(e){ console.error('CA du mois',e); zone.textContent='❌ Erreur chargement : '+(e.code||e.message); }
+}
 
 async function loadStats(){
   try{
