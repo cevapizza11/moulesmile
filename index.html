@@ -391,7 +391,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
-<div class="version">v.20/10/2026 18:45 — Moule & Smile</div>
+<div class="version">v.22/10/2026 15:15 — Moule & Smile</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -406,7 +406,14 @@ const db=firebase.firestore();
 // connecté (même anonymement) pour lire/écrire — avant cette date, la base était ouverte à tous.
 // Les lectures/écritures ci-dessous (jetons, commandes, config...) attendent automatiquement
 // cette connexion avant de partir — pas besoin d'attendre nous-mêmes la fin de signInAnonymously().
-firebase.auth().signInAnonymously().catch(e=>console.error('Erreur connexion anonyme',e));
+// ⚠️ 22/10/2026 : en réalité, une écoute lancée AVANT la fin de la connexion anonyme est refusée
+// (1re visite d'un client) et ne redémarre jamais → « Erreur de connexion ». On attend donc la connexion.
+const authPret=new Promise(resolve=>{
+  const stop=firebase.auth().onAuthStateChanged(user=>{
+    if(user){ stop(); resolve(user); }
+    else firebase.auth().signInAnonymously().catch(e=>{ console.error('Erreur connexion anonyme',e); stop(); resolve(null); });
+  });
+});
 
 let tableNum=null, panier=[], catActive=null, carte=null;
 let refuserSuggestionFormule=false; // "C'est juste pour boire" — mémorisé pour toute la session client
@@ -459,7 +466,7 @@ function masquerBlocageJeton(){
 
 if(!jetonToken){
   afficherBlocageJeton('Accès protégé','Merci de scanner le QR code présent sur votre table pour commander.');
-} else {
+} else authPret.then(()=>{
   db.collection('jetons').doc(jetonToken).onSnapshot(doc=>{
     if(!doc.exists || doc.data().statut!=='actif'){
       jetonEnCours=false;
@@ -492,7 +499,7 @@ if(!jetonToken){
     console.error('Erreur vérification jeton',err);
     afficherBlocageJeton('Erreur de connexion','Impossible de vérifier votre accès. Rechargez la page ou appelez un membre de l\'équipe.');
   });
-}
+});
 
 // ============================================================
 // CARTE PAR DÉFAUT — ordre logique de prise de commande
@@ -621,8 +628,8 @@ const carteDefaut={
   categoriesConsultationSeule:{sauces:true}
 };
 
-// Firebase
-db.collection('config').doc('carte_v2').onSnapshot(doc=>{
+// Firebase (après la connexion anonyme)
+authPret.then(()=>db.collection('config').doc('carte_v2').onSnapshot(doc=>{
   if(doc.exists&&doc.data().categories&&doc.data().categories.length){
     carte=doc.data();
     if(!carte.boissonsMenu) carte.boissonsMenu=carteDefaut.boissonsMenu;
@@ -644,7 +651,7 @@ db.collection('config').doc('carte_v2').onSnapshot(doc=>{
   if(catActive) renderProduits(catActive);
   renderTabs();
   renderTuilesAccueil();
-});
+}, err=>console.error('[carte] écoute refusée',err)));
 
 // Écouter notifications caisse → téléphone client
 function ecouterNotifications(){
