@@ -263,7 +263,7 @@ body.cuisine-plein{overflow:hidden}
 
 <!-- HEADER -->
 <div class="header">
-  <h1>🐚 <span id="motCaisse" onclick="tapMotCaisse()" style="cursor:default;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent">CAISSE</span> — Moule & Smile<span class="build-tag">v.22/10/2026 18:05</span></h1>
+  <h1>🐚 <span id="motCaisse" onclick="tapMotCaisse()" style="cursor:default;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent">CAISSE</span> — Moule & Smile<span class="build-tag">v.22/10/2026 18:25</span></h1>
   <div class="stats-row">
     <div class="stat"><div class="num" id="statNouv">0</div><div class="lbl">Nouvelles</div></div>
     <div class="stat"><div class="num" id="statAdd">0</div><div class="lbl">Additions</div></div>
@@ -553,7 +553,7 @@ body.cuisine-plein{overflow:hidden}
   </div>
 </div>
 
-<div class="version">v.22/10/2026 18:05 — Moule & Smile Caisse</div>
+<div class="version">v.22/10/2026 18:25 — Moule & Smile Caisse</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -2951,15 +2951,22 @@ function toggleDetail(id){
   if(el) el.classList.toggle('open');
 }
 
-async function viderHistorique(){
-  if(!confirm('Vider tout l\'historique ?')) return;
-  const snap=await db.collection('historique').get();
-  const b=db.batch();
-  snap.forEach(d=>b.delete(d.ref));
-  await b.commit();
-  historique=[];
-  renderHistorique();
-  showToast('🗑️ Historique vidé');
+// « Vider l'historique » : protégé (22/10/2026). Sert UNE fois, avant l'ouverture, pour effacer les essais.
+// L'historique alimente le CA du mois (admin), le comptage caisse et les stats : ne plus jamais le vider ensuite.
+// Double protection : code de modification, puis taper EFFACER.
+function viderHistorique(){
+  demanderPwdPuis(async ()=>{
+    const mot=prompt("⚠️ Vider TOUT l'historique des encaissements ?\n\nLe CA du mois, les stats et les données du comptage caisse seront perdus définitivement.\nÀ faire uniquement avant l'ouverture, pour effacer les essais.\n\nPour confirmer, tapez : EFFACER");
+    if((mot||'').trim().toUpperCase()!=='EFFACER'){ showToast('Annulé — historique conservé'); return; }
+    try{
+      const snap=await db.collection('historique').get();
+      const docs=snap.docs;
+      for(let i=0;i<docs.length;i+=400){ const b=db.batch(); docs.slice(i,i+400).forEach(d=>b.delete(d.ref)); await b.commit(); }
+      historique=[];
+      renderHistorique();
+      showToast(`🗑️ Historique vidé (${docs.length} encaissement(s))`);
+    }catch(e){ console.error('Vider historique',e); showToast('❌ Erreur : historique non vidé'); }
+  });
 }
 
 // ============================================================
