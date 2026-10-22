@@ -263,7 +263,7 @@ body.cuisine-plein{overflow:hidden}
 
 <!-- HEADER -->
 <div class="header">
-  <h1>🐚 <span id="motCaisse" onclick="tapMotCaisse()" style="cursor:default;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent">CAISSE</span> — Moule & Smile<span class="build-tag">v.22/10/2026 18:25</span></h1>
+  <h1>🐚 <span id="motCaisse" onclick="tapMotCaisse()" style="cursor:default;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent">CAISSE</span> — Moule & Smile<span class="build-tag">v.22/10/2026 18:30</span></h1>
   <div class="stats-row">
     <div class="stat"><div class="num" id="statNouv">0</div><div class="lbl">Nouvelles</div></div>
     <div class="stat"><div class="num" id="statAdd">0</div><div class="lbl">Additions</div></div>
@@ -553,7 +553,7 @@ body.cuisine-plein{overflow:hidden}
   </div>
 </div>
 
-<div class="version">v.22/10/2026 18:25 — Moule & Smile Caisse</div>
+<div class="version">v.22/10/2026 18:30 — Moule & Smile Caisse</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -2953,9 +2953,15 @@ function toggleDetail(id){
 
 // « Vider l'historique » : protégé (22/10/2026). Sert UNE fois, avant l'ouverture, pour effacer les essais.
 // L'historique alimente le CA du mois (admin), le comptage caisse et les stats : ne plus jamais le vider ensuite.
-// Double protection : code de modification, puis taper EFFACER.
+// Double protection : code de suppression (propre à ce bouton), puis taper EFFACER.
+// Code propre à ce bouton (différent du code de modification). Seule son empreinte SHA-256 est dans le fichier.
+const EMPREINTE_CODE_VIDER='31ce1b898402a051bbb1ff26862932f36c186c7e638a27c9638a479491dfa4cc';
+async function empreinteCode(c){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('VIDER:'+c));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');}
 function viderHistorique(){
-  demanderPwdPuis(async ()=>{
+  (async ()=>{
+    const code=prompt("🔒 Code de suppression de l'historique :");
+    if(code===null) return;
+    if(await empreinteCode(code.trim())!==EMPREINTE_CODE_VIDER){ showToast('❌ Code incorrect'); return; }
     const mot=prompt("⚠️ Vider TOUT l'historique des encaissements ?\n\nLe CA du mois, les stats et les données du comptage caisse seront perdus définitivement.\nÀ faire uniquement avant l'ouverture, pour effacer les essais.\n\nPour confirmer, tapez : EFFACER");
     if((mot||'').trim().toUpperCase()!=='EFFACER'){ showToast('Annulé — historique conservé'); return; }
     try{
@@ -2966,7 +2972,7 @@ function viderHistorique(){
       renderHistorique();
       showToast(`🗑️ Historique vidé (${docs.length} encaissement(s))`);
     }catch(e){ console.error('Vider historique',e); showToast('❌ Erreur : historique non vidé'); }
-  });
+  })();
 }
 
 // ============================================================
