@@ -406,7 +406,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
-<div class="version">v.23/10/2026 16:35 — Moule & Smile</div>
+<div class="version">v.23/10/2026 20:15 — Moule & Smile</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -1433,6 +1433,7 @@ async function appelerServeur(){
     await db.collection('alertes').add({
       type:'serveur',
       table:tableNum,
+      jeton:jetonToken||null, // vérifié par les règles : jeton ouvert pour cette table
       heure:new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}),
       timestamp:firebase.firestore.FieldValue.serverTimestamp(),
       statut:'nouvelle'
@@ -1609,6 +1610,7 @@ async function validerAvantAddition(){
   try{
     await db.collection('commandes').add({
       table:tableNum,
+      jeton:jetonToken||null, // vérifié par les règles : jeton ouvert pour cette table
       couverts:nbCouverts||null,
       nbAdultes:nbAdultes!=null?nbAdultes:null,
       nbEnfants:nbEnfants!=null?nbEnfants:0,
@@ -1648,6 +1650,7 @@ async function validerCommande(){
   try{
     await db.collection('commandes').add({
       table:tableNum,
+      jeton:jetonToken||null, // vérifié par les règles : jeton ouvert pour cette table
       couverts:nbCouverts||null,
       nbAdultes:nbAdultes!=null?nbAdultes:null,
       nbEnfants:nbEnfants!=null?nbEnfants:0,
@@ -1820,6 +1823,7 @@ async function demanderAddition(){
     await db.collection('alertes').doc(`addition_table_${tableNum}`).set({
       type:'addition',
       table:tableNum,
+      jeton:jetonToken||null, // vérifié par les règles : jeton ouvert pour cette table
       total,
       heure:new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}),
       timestamp:firebase.firestore.FieldValue.serverTimestamp(),
@@ -1836,6 +1840,7 @@ async function demanderAddition(){
     }catch(e){}
     await db.collection('additions').doc(`table_${tableNum}`).set({
       table:tableNum,
+      jeton:jetonToken||null, // vérifié par les règles : jeton ouvert pour cette table
       total,
       commandes:commandes.map(c=>({heure:c.heure||'--:--',items:c.items||[],total:c.total||0})),
       timestamp:firebase.firestore.FieldValue.serverTimestamp(),
