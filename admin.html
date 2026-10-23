@@ -279,6 +279,30 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 
   <div class="section" style="margin-top:14px">
+    <h2>⭐ Avis Google</h2>
+    <div class="item-row">
+      <div class="item-info" style="cursor:default"><div class="item-nom">Demander un avis Google</div>
+        <div class="item-detail" style="white-space:normal;line-height:1.5">En fin de repas, quand l'addition est encaissée (le jeton de la table se ferme), le téléphone du client affiche « 🙏 Merci de votre visite ! » avec un bouton qui ouvre directement la page d'avis Google du restaurant.</div></div>
+      <label class="toggle"><input type="checkbox" id="toggleAvisGoogle" onchange="majAvisGoogle('actif',this.checked)"><span class="toggle-slider"></span></label>
+    </div>
+    <div style="margin-top:10px">
+      <div style="color:#aaa;font-size:12px;margin-bottom:4px">Lien d'avis Google (commence par https://)</div>
+      <input type="url" id="avisGoogleLien" placeholder="https://g.page/r/…/review" onchange="majAvisGoogle('lien',this.value)" style="width:100%;box-sizing:border-box;background:#2A2A2A;border:1px solid #444;border-radius:8px;color:#fff;padding:10px;font-size:13px">
+      <div style="color:#aaa;font-size:12px;margin:10px 0 4px">Message affiché au client</div>
+      <input type="text" id="avisGoogleTexte" maxlength="120" onchange="majAvisGoogle('texte',this.value)" style="width:100%;box-sizing:border-box;background:#2A2A2A;border:1px solid #444;border-radius:8px;color:#fff;padding:10px;font-size:13px">
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <button class="btn-vert" style="padding:8px 12px" onclick="testerLienAvis()">🔗 Tester le lien</button>
+        <span id="avisGoogleStats" style="color:#D4AF37;font-size:12px;align-self:center"></span>
+      </div>
+      <div style="color:#777;font-size:11px;margin-top:10px;line-height:1.6">
+        <b>Règles actives :</b> l'encadré s'affiche sur l'écran « Merci de votre visite » (après l'encaissement) seulement si l'interrupteur est activé <b>et</b> qu'un lien est renseigné · interrupteur coupé = simple écran de remerciement · après un clic, il affiche « Merci pour votre avis 🙏 » · le téléphone reste sur cet écran même si le jeton est rouvert pour d'autres clients · chaque clic est compté (ci-dessus, mois en cours).<br>
+        <b>Règles Google à respecter :</b> la même invitation pour tous les clients (ne pas demander d'abord s'ils sont satisfaits) et rien offert en échange d'un avis.<br>
+        <b>Trouver le lien :</b> fiche Google Business Profile → « Demander des avis » → « Copier le lien ».
+      </div>
+    </div>
+  </div>
+
+  <div class="section" style="margin-top:14px">
     <h2>🧒 Règle « enfant gratuit »</h2>
     <div id="regleEnfantInfo"></div>
   </div>
@@ -477,7 +501,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
-<div class="version">v.22/10/2026 18:20 — Moule & Smile Admin</div>
+<div class="version">v.23/10/2026 16:35 — Moule & Smile Admin</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -1109,6 +1133,7 @@ function confirmerImport(){
     newCarte.boissonsMenu=carte.boissonsMenu;
     newCarte.enfantMenu=carte.enfantMenu;
     newCarte.dessertsMenu=carte.dessertsMenu;
+    newCarte.avisGoogle=carte.avisGoogle; // réglage « Avis Google », jamais écrasé par l'import
 
     // Réappliquer l'ordre des catégories personnalisé par l'admin (sinon l'import
     // reconstruit toujours dans l'ordre fixe de CATS et écrase le réordonnancement)
@@ -1593,6 +1618,7 @@ function renderReglages(){
   }).join('');
 
   chargerMappingHiboutik();
+  renderAvisGoogle();
   renderConsignesService();
   renderFamillesSuggestionAddition();
   renderSuggestionAddition();
@@ -1675,6 +1701,40 @@ function toggleCategorieActive(catId,val){
   showToast(`${cat?cat.nom:catId} ${val?'✅ visible':'❌ masquée'} côté client`);
 }
 
+// ⭐ Avis Google (carte.avisGoogle = {actif, lien, texte}) — lu par index.html sur l'écran de l'addition
+const TEXTE_AVIS_DEFAUT="Vous avez passé un bon moment ? Laissez-nous un avis sur Google ⭐";
+function majAvisGoogle(champ,val){
+  if(!carte)return;
+  carte.avisGoogle=Object.assign({actif:false,lien:'',texte:TEXTE_AVIS_DEFAUT},carte.avisGoogle||{});
+  if(champ==='lien'){
+    val=String(val||'').trim();
+    if(val && !/^https:\/\//i.test(val)){ showToast('⚠️ Le lien doit commencer par https://'); renderAvisGoogle(); return; }
+  }
+  if(champ==='texte') val=String(val||'').trim()||TEXTE_AVIS_DEFAUT;
+  carte.avisGoogle[champ]=val;
+  sauvegarder();
+  if(champ==='actif') showToast(val?(carte.avisGoogle.lien?'⭐ Demande d\'avis Google activée':'⭐ Activé — ajoutez le lien pour qu\'il s\'affiche'):'Demande d\'avis Google désactivée');
+  else showToast('✅ Enregistré');
+  renderAvisGoogle();
+}
+function testerLienAvis(){
+  const l=(carte&&carte.avisGoogle&&carte.avisGoogle.lien)||'';
+  if(!l){ showToast('⚠️ Aucun lien renseigné'); return; }
+  window.open(l,'_blank','noopener');
+}
+async function renderAvisGoogle(){
+  if(!carte)return;
+  const a=Object.assign({actif:false,lien:'',texte:TEXTE_AVIS_DEFAUT},carte.avisGoogle||{});
+  const t=document.getElementById('toggleAvisGoogle'); if(t) t.checked=a.actif===true;
+  const l=document.getElementById('avisGoogleLien'); if(l&&document.activeElement!==l) l.value=a.lien||'';
+  const x=document.getElementById('avisGoogleTexte'); if(x&&document.activeElement!==x) x.value=a.texte||TEXTE_AVIS_DEFAUT;
+  const st=document.getElementById('avisGoogleStats'); if(!st)return;
+  try{
+    const d=new Date(), debut=new Date(d.getFullYear(),d.getMonth(),1);
+    const snap=await db.collection('avis_clics').where('timestamp','>=',firebase.firestore.Timestamp.fromDate(debut)).get();
+    st.textContent=`👆 ${snap.size} clic(s) vers Google ce mois-ci`;
+  }catch(e){ st.textContent=''; }
+}
 function toggleConsultationSeule(catId,val){
   if(!carte)return;
   if(!carte.categoriesConsultationSeule) carte.categoriesConsultationSeule={};
