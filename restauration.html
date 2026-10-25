@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Restauration d'une sauvegarde</title>
+<style>
+  :root{--or:#D4AF37;--vert:#4ABA80;--rouge:#E06666}
+  *{box-sizing:border-box}
+  body{margin:0;background:#111;color:#eee;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;padding:16px}
+  header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;border-bottom:2px solid var(--or);padding-bottom:10px;margin-bottom:16px;flex-wrap:wrap}
+  h1{margin:0;color:var(--or);font-size:22px} h2{font-size:16px;margin:0 0 8px;color:var(--or)}
+  .version{font-size:11px;color:#999}
+  .carte{background:#1c1c1c;border:1px solid #333;border-radius:12px;padding:14px;margin-bottom:12px;max-width:900px}
+  .petit{font-size:12px;color:#aaa;line-height:1.6}
+  .danger{border-color:var(--rouge)}
+  input,select{background:#2a2a2a;border:1px solid #444;border-radius:8px;color:#fff;padding:9px 10px;font-size:14px;margin:4px 0;max-width:100%}
+  button{border:none;border-radius:8px;padding:10px 14px;font-weight:700;cursor:pointer;font-size:14px;background:var(--or);color:#111}
+  button.gris{background:#333;color:#ddd}
+  button:disabled{opacity:.4;cursor:default}
+  .cible{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;border-top:1px solid #2a2a2a;padding:8px 0}
+  .ok{color:var(--vert)} .ko{color:var(--rouge)}
+  #journal{background:#000;border:1px solid #333;border-radius:10px;padding:10px;font:12px/1.5 monospace;color:#9fd29f;white-space:pre-wrap;max-width:900px;min-height:40px}
+  label{display:block;margin:6px 0}
+  ol{margin:6px 0 0 18px;padding:0} li{margin:3px 0}
+  code{background:#2a2a2a;padding:1px 5px;border-radius:4px}
+</style>
+</head>
+<body>
+<header><h1>♻️ Restauration d'une sauvegarde</h1><div class="version">v.25/10/2026 13:00</div></header>
+
+<div class="carte petit">
+  Cette page remet en place les données d'une <b>sauvegarde automatique</b> (fichier <i>Sauvegarde_Auto_AAAA-MM-JJ.json</i>, dans Google Drive › « Sauvegardes applis »).<br>
+  Chaque document est réécrit <b>à l'identique</b> (même identifiant, mêmes dates, mêmes nombres). Un document qui existe déjà avec le même identifiant est <b>remplacé</b> par celui de la sauvegarde ; les documents plus récents que la sauvegarde ne sont <b>pas</b> effacés.<br>
+  👉 <b>Toujours essayer d'abord vers la base de TEST</b>, puis vers les vraies applis seulement en cas de vrai problème.
+</div>
+
+<div class="carte">
+  <h2>1. Le fichier</h2>
+  <input type="file" id="fichier" accept=".json,application/json">
+  <div id="infoFichier" class="petit"></div>
+</div>
+
+<div class="carte">
+  <h2>2. Ce qu'on restaure et où</h2>
+  <label>Applis : <select id="projet" disabled></select></label>
+  <label>Vers :
+    <select id="mode">
+      <option value="test">🧪 La base de TEST (menutest) — sans risque</option>
+      <option value="reel">🚨 Les VRAIES applis (en cas de plantage)</option>
+    </select>
+  </label>
+  <div id="detail" class="petit"></div>
+</div>
+
+<div class="carte" id="carteConnexions">
+  <h2>3. Connexions nécessaires</h2>
+  <div class="petit">Il faut être connecté au compte gérant de chaque base qui va recevoir les données (une seule fois sur cet appareil).</div>
+  <div id="cibles"></div>
+</div>
+
+<div class="carte" id="carteGo">
+  <h2>4. Lancer</h2>
+  <div id="zoneConfirmReel" style="display:none" class="petit">
+    🚨 <b>Restauration dans les VRAIES applis.</b> Pour confirmer, tape <code>RESTAURER</code> :
+    <input type="text" id="motConfirm" autocomplete="off" placeholder="RESTAURER">
+  </div>
+  <label class="petit"><input type="checkbox" id="confirm"> J'ai vérifié le fichier, les applis et la destination ci-dessus</label>
+  <button id="btnGo" disabled>♻️ Restaurer</button>
+</div>
+
+<div id="journal">Prêt.</div>
+
+<div class="carte petit" style="margin-top:12px">
+  <h2>🆘 Après une restauration : si une liste reste vide</h2>
+  Les <b>données</b> sont dans la sauvegarde, mais pas les <b>index</b> (le « classement » que Firebase prépare pour certaines listes). Sur une base neuve ou de test, une appli peut donc afficher une liste vide alors que tout est bien là. Pour le réparer, une seule fois par base :
+  <ol>
+    <li>Ouvre l'appli qui reste vide, appuie sur <b>F12</b> → onglet <b>Console</b>.</li>
+    <li>Cherche un message rouge <i>« The query requires an index »</i> et clique sur le <b>lien bleu</b> qui commence par <code>https://console.firebase.google.com/…create_composite=</code>.</li>
+    <li>Firebase s'ouvre avec l'index déjà rempli : clique sur <b>Créer</b>, attends 1 à 3 minutes (« Activé »), puis recharge l'appli (Ctrl + F5).</li>
+  </ol>
+  <b>Index connus :</b> Pointeuse / Planning → collection <code>employees</code> : <code>active</code> croissant + <code>name</code> croissant.<br><br>
+  <b>Ce que la sauvegarde ne contient pas</b> (à refaire à la main sur une base neuve) : les <b>règles de sécurité</b> (fichiers <i>regles-firestore-….txt</i>), les <b>comptes de connexion</b> (Authentication), les <b>photos et documents</b> (Storage). Le <b>code des applis</b> est sur GitHub.
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+const PROJETS = [
+  { id:'pointage', nom:'⏱️ Pointeuse + 🗓️ Planning', email:'tmjumeaux@gmail.com',
+    config:{apiKey:"AIzaSyBZ03rRzX8DL5Xgqn7U1p8PfiL83Zqtmvc",authDomain:"pointagemarmitebleue.firebaseapp.com",projectId:"pointagemarmitebleue",storageBucket:"pointagemarmitebleue.firebasestorage.app",messagingSenderId:"483578019330",appId:"1:483578019330:web:f15b69bfd7d652b773711b"},
+    collections:['employees','punches','anomalies','settings','employees-private','absences','contrats-modeles','marmite-planning'] },
+  { id:'moule', nom:'🐚 Moule & Smile (commande, caisse, admin, comptage)', email:'mouleandsmile11@gmail.com',
+    config:{apiKey:"AIzaSyDUb3LtVsMAq986DgtHwkMBeQFr8A8A2nU",authDomain:"commandemoulesmile.firebaseapp.com",projectId:"commandemoulesmile",storageBucket:"commandemoulesmile.firebasestorage.app",messagingSenderId:"303564394584",appId:"1:303564394584:web:cbde6960f99cac83517a2d"},
+    collections:['config','historique','commandes','additions','jetons','alertes','recharges','visites','avis_clics','notifications','push_tokens','comptages','tickets','petiteCaisse','comptage_config'] },
+  { id:'smoke', nom:'🟢 Comptage caisse Smoke & Smile', email:'tmjumeaux@gmail.com',
+    config:{apiKey:"AIzaSyAcxFEGVmuzwnnsKVNY40oJG6PZfzTuCTE",authDomain:"caisse-marmite-bleue-6a67b.firebaseapp.com",projectId:"caisse-marmite-bleue-6a67b",storageBucket:"caisse-marmite-bleue-6a67b.firebasestorage.app",messagingSenderId:"33627481275",appId:"1:33627481275:web:38dbab3f2f61c5cadcb59e"},
+    collections:['comptages','tickets','petiteCaisse','config'] },
+  { id:'haccp', nom:'🌡️ HACCP', email:'tmjumeaux@gmail.com',
+    config:{apiKey:"AIzaSyAz_OIdXYp7j4iYJouHp9RjMAVxJosj6-A",authDomain:"haccp-marmite-bleue.firebaseapp.com",projectId:"haccp-marmite-bleue",storageBucket:"haccp-marmite-bleue.firebasestorage.app",messagingSenderId:"618304598368",appId:"1:618304598368:web:63a93b6bfa7ac257e5ee05"},
+    collections:['haccp_records','users','config','classeurConfig','classeurDocuments'] },
+  { id:'etiquettes', nom:'🏷️ Étiquettes DLC', email:'tmjumeaux@gmail.com',
+    config:{apiKey:"AIzaSyAn48FFLjXUuQBgmKhm2lJVDiTrU_tE3Uw",authDomain:"etiquettes-96653.firebaseapp.com",projectId:"etiquettes-96653",storageBucket:"etiquettes-96653.firebasestorage.app",messagingSenderId:"769824154965",appId:"1:769824154965:web:e40d7af59a3c1b0bdc7bdc"},
+    collections:['etiquettes'] },
+  { id:'fournisseurs', nom:'📦 Commandes fournisseurs', email:'tmjumeaux@gmail.com',
+    config:{apiKey:"AIzaSyCH0SWbvOCD81PrVV_NAcOsZVpP1OIB1ck",authDomain:"commande-marmite-bleue.firebaseapp.com",projectId:"commande-marmite-bleue",storageBucket:"commande-marmite-bleue.firebasestorage.app",messagingSenderId:"384263307693",appId:"1:384263307693:web:550660f9e6ef9a085ba124"},
+    collections:['fournisseurs','commandes'] },
+  { id:'previsions', nom:'📈 Prévisions / tableau de bord', email:'tmjumeaux@gmail.com',
+    config:{apiKey:"AIzaSyDhqKmCJJx5ScXUxaoip1eMiy10P0BvD9U",authDomain:"marmite-bleue.firebaseapp.com",projectId:"marmite-bleue",storageBucket:"marmite-bleue.firebasestorage.app",messagingSenderId:"938472624829",appId:"1:938472624829:web:edd7453c2589c820dfddd4"},
+    collections:['previsions','stats','avis','config','imports_caisse'] }
+];
+const TEST = { id:'test', nom:'🧪 Base de TEST (menutest)', email:'tmjumeaux@gmail.com',
+  config:{apiKey:"AIzaSyCRZDRNtVF95yX7qYCvc__9NjGa41JTdMQ",authDomain:"menutest-f4629.firebaseapp.com",projectId:"menutest-f4629",storageBucket:"menutest-f4629.firebasestorage.app",messagingSenderId:"834088175472",appId:"1:834088175472:web:d45de5bc283c205608b1b5"} };
+const TOUTES = PROJETS.concat([TEST]);
+TOUTES.forEach(p=>{ p.app=firebase.initializeApp(p.config,'restau-'+p.id); p.auth=p.app.auth(); p.db=p.app.firestore(); p.user=null;
+  p.auth.onAuthStateChanged(u=>{ p.user=(u&&!u.isAnonymous)?u:null; dessinerCibles(); majBouton(); }); });
+const parProjectId = id => TOUTES.find(p=>p.config.projectId===id);
+let sauvegarde=null;
+
+function esc(t){ return String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function log(t){ const j=document.getElementById('journal'); j.textContent=(j.textContent==='Prêt.'?'':j.textContent+'\n')+t; j.scrollTop=j.scrollHeight; }
+function sourcesChoisies(){ if(!sauvegarde) return []; const v=document.getElementById('projet').value; return v==='__tous__'?Object.keys(sauvegarde.projets):[v]; }
+function mode(){ return document.getElementById('mode').value; }
+// Cible de chaque projet source : la base de test, ou son propre vrai projet
+function cibleDe(sourceId){ return mode()==='test' ? TEST : parProjectId(sourceId); }
+function ciblesNecessaires(){ const s=new Map(); sourcesChoisies().forEach(id=>{ const c=cibleDe(id); if(c) s.set(c.id,c); }); return [...s.values()]; }
+
+function dessinerCibles(){
+  const zone=document.getElementById('cibles'); if(!zone) return;
+  const cibles=ciblesNecessaires();
+  if(!cibles.length){ zone.innerHTML='<div class="petit">Choisis d\'abord un fichier.</div>'; return; }
+  zone.innerHTML=cibles.map(p=>`<div class="cible"><div><b>${p.nom}</b><br><span class="petit">${p.config.projectId}</span> — ${p.user?'<span class="ok">✅ '+esc(p.user.email)+'</span>':'<span class="ko">🔒 non connecté</span>'}</div>
+    <div>${p.user?'':`<input type="email" id="em-${p.id}" value="${esc(p.email)}" style="width:200px"><br><input type="password" id="pw-${p.id}" placeholder="Mot de passe" style="width:200px" onkeydown="if(event.key==='Enter')connecter('${p.id}')"> <button onclick="connecter('${p.id}')">🔓</button>`}</div></div>`).join('');
+}
+async function connecter(id){
+  const p=TOUTES.find(x=>x.id===id);
+  try{ await p.auth.signInWithEmailAndPassword(document.getElementById('em-'+id).value.trim(), document.getElementById('pw-'+id).value); }
+  catch(e){ alert('Connexion refusée pour '+p.nom+' : '+(e.code==='auth/too-many-requests'?'trop d\'essais':'e-mail ou mot de passe incorrect')); }
+}
+function afficherDetail(){
+  const d=document.getElementById('detail');
+  if(!sauvegarde){ d.textContent=''; return; }
+  d.innerHTML=sourcesChoisies().map(id=>{ const p=sauvegarde.projets[id]; const c=cibleDe(id);
+    const n=Object.values(p.collections||{}).reduce((s,x)=>s+(Array.isArray(x)?x.length:0),0);
+    return `• <b>${esc(p.nom)}</b> (${n} documents) → <b>${c?c.config.projectId:'⚠️ projet inconnu'}</b>`; }).join('<br>');
+  document.getElementById('zoneConfirmReel').style.display = mode()==='reel'?'block':'none';
+  document.getElementById('carteGo').classList.toggle('danger', mode()==='reel');
+}
+function majBouton(){
+  const ok = sauvegarde && document.getElementById('confirm').checked
+    && ciblesNecessaires().every(c=>c.user) && sourcesChoisies().every(id=>cibleDe(id))
+    && (mode()==='test' || document.getElementById('motConfirm').value.trim().toUpperCase()==='RESTAURER');
+  document.getElementById('btnGo').disabled=!ok;
+}
+['projet','mode'].forEach(id=>document.getElementById(id).addEventListener('change',()=>{ afficherDetail(); dessinerCibles(); majBouton(); }));
+document.getElementById('confirm').addEventListener('change',majBouton);
+document.getElementById('motConfirm').addEventListener('input',majBouton);
+
+document.getElementById('fichier').addEventListener('change', async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  try{
+    const s=JSON.parse(await f.text());
+    if(s.format!=='firestore-rest'||!s.projets) throw new Error('ce n\'est pas un fichier de sauvegarde automatique (Sauvegarde_Auto_…json)');
+    sauvegarde=s;
+    const sel=document.getElementById('projet');
+    sel.innerHTML='<option value="__tous__">🗂️ Toutes les applis</option>'+Object.entries(s.projets).map(([id,p])=>`<option value="${id}">${esc(p.nom)}</option>`).join('');
+    sel.disabled=false;
+    document.getElementById('infoFichier').innerHTML='📂 Sauvegarde du <b>'+new Date(s.creeLe).toLocaleString('fr-FR')+'</b> — '+Object.keys(s.projets).length+' applis.';
+  }catch(err){ sauvegarde=null; alert('Fichier illisible : '+err.message); }
+  afficherDetail(); dessinerCibles(); majBouton();
+});
+
+// Format de la sauvegarde (Firestore REST) → valeurs Firestore
+function valeur(v,db){
+  if('nullValue' in v) return null;
+  if('booleanValue' in v) return v.booleanValue;
+  if('integerValue' in v) return Number(v.integerValue);
+  if('doubleValue' in v) return Number(v.doubleValue);
+  if('stringValue' in v) return v.stringValue;
+  if('timestampValue' in v) return firebase.firestore.Timestamp.fromDate(new Date(v.timestampValue));
+  if('mapValue' in v) return champs(v.mapValue.fields||{},db);
+  if('arrayValue' in v) return (v.arrayValue.values||[]).map(x=>valeur(x,db));
+  if('geoPointValue' in v) return new firebase.firestore.GeoPoint(v.geoPointValue.latitude||0,v.geoPointValue.longitude||0);
+  if('bytesValue' in v) return firebase.firestore.Blob.fromBase64String(v.bytesValue);
+  if('referenceValue' in v) return db.doc(v.referenceValue.split('/documents/')[1]);
+  return null;
+}
+function champs(f,db){ const o={}; Object.keys(f).forEach(k=>o[k]=valeur(f[k],db)); return o; }
+
+document.getElementById('btnGo').addEventListener('click', async ()=>{
+  const ids=sourcesChoisies();
+  const resume=ids.map(id=>sauvegarde.projets[id].nom+' → '+cibleDe(id).config.projectId).join('\n');
+  if(!confirm((mode()==='reel'?'🚨 RESTAURATION DANS LES VRAIES APPLIS\n\n':'Restauration vers la base de TEST\n\n')+resume+'\n\nContinuer ?')) return;
+  const btn=document.getElementById('btnGo'); btn.disabled=true;
+  document.getElementById('journal').textContent='';
+  let total=0, erreurs=0;
+  for(const id of ids){
+    const p=sauvegarde.projets[id], c=cibleDe(id);
+    log('▶ '+p.nom+' → '+c.config.projectId);
+    for(const [col,docs] of Object.entries(p.collections||{})){
+      if(!Array.isArray(docs)){ log('   ⏭️ '+col+' : ignorée (erreur dans la sauvegarde)'); continue; }
+      try{
+        for(let i=0;i<docs.length;i+=400){
+          const b=c.db.batch();
+          docs.slice(i,i+400).forEach(d=>b.set(c.db.doc(d.name.split('/documents/')[1]), champs(d.fields||{},c.db)));
+          await b.commit();
+        }
+        total+=docs.length; log('   ✓ '+col+' : '+docs.length);
+      }catch(e){ erreurs++; log('   ❌ '+col+' : '+(e.code||e.message)); }
+    }
+  }
+  log('\n'+(erreurs?'⚠️':'✅')+' Terminé : '+total+' document(s) restauré(s)'+(erreurs?' — '+erreurs+' collection(s) en erreur':'')+'.');
+  log('➡️ Ouvre les applis (Ctrl + F5) pour vérifier. Si une liste reste vide : voir « Après une restauration » plus bas.');
+  majBouton();
+});
+afficherDetail(); dessinerCibles();
+</script>
+</body>
+</html>
