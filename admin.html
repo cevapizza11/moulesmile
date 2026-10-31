@@ -279,6 +279,42 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 
   <div class="section" style="margin-top:14px">
+    <h2>🔁 Recharge à volonté depuis l'appli</h2>
+    <div class="item-row">
+      <div class="item-info" style="cursor:default">
+        <div class="item-nom">Le client recommande sa cocotte dans l'appli</div>
+        <div class="item-detail">Bouton « Je reprends » : plat, sauce, frites → envoyé en cuisine à 0 €</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="rechargeActif" onchange="majRecharge('actif',this.checked)"><span class="toggle-slider"></span></label>
+    </div>
+    <div class="item-row" style="border-bottom:none">
+      <div class="item-info" style="cursor:default">
+        <div class="item-nom">Demander « avec ou sans frites »</div>
+        <div class="item-detail">Désactivé : les frites ne passent pas par l'appli (service libre au comptoir frites)</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="rechargeFrites" onchange="majRecharge('frites',this.checked)"><span class="toggle-slider"></span></label>
+    </div>
+    <div id="rechargeExplication" style="font-size:12px;color:#aaa;line-height:1.6;margin-top:10px"></div>
+  </div>
+
+  <div class="section" style="margin-top:14px">
+    <h2>🍻 Relance boisson « On remet ça ? »</h2>
+    <div class="item-row">
+      <div class="item-info" style="cursor:default">
+        <div class="item-nom">Proposer de reprendre la même boisson</div>
+        <div class="item-detail">Un seul popup par table et par repas, avec les boissons de la 1re commande (même marque, même taille)</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="relanceActif" onchange="majRelance('actif',this.checked)"><span class="toggle-slider"></span></label>
+    </div>
+    <div class="item-row"><div class="item-info" style="cursor:default"><div class="item-nom">Verre (bière 25 cl, soft, verre de vin, sirop)</div><div class="item-detail">minutes après la commande</div></div><input type="number" min="1" max="120" id="relanceVerre" onchange="majRelance('verre',this.value)" style="width:70px;padding:8px;border-radius:8px;border:1px solid #444;background:#111;color:#fff;text-align:center"></div>
+    <div class="item-row"><div class="item-info" style="cursor:default"><div class="item-nom">Bière 50 cl</div><div class="item-detail">minutes après la commande</div></div><input type="number" min="1" max="120" id="relanceBiere50" onchange="majRelance('biere50',this.value)" style="width:70px;padding:8px;border-radius:8px;border:1px solid #444;background:#111;color:#fff;text-align:center"></div>
+    <div class="item-row"><div class="item-info" style="cursor:default"><div class="item-nom">Cocktail (spritz, mojito, mule…)</div><div class="item-detail">minutes après la commande</div></div><input type="number" min="1" max="120" id="relanceCocktail" onchange="majRelance('cocktail',this.value)" style="width:70px;padding:8px;border-radius:8px;border:1px solid #444;background:#111;color:#fff;text-align:center"></div>
+    <div class="item-row"><div class="item-info" style="cursor:default"><div class="item-nom">Bouteille de vin</div><div class="item-detail">minutes après la commande</div></div><input type="number" min="1" max="180" id="relanceBouteille" onchange="majRelance('bouteille',this.value)" style="width:70px;padding:8px;border-radius:8px;border:1px solid #444;background:#111;color:#fff;text-align:center"></div>
+    <div class="item-row"><div class="item-info" style="cursor:default"><div class="item-nom">Fenêtre d'affichage</div><div class="item-detail">minutes après l'heure prévue ; au-delà, plus de popup (repas sans doute fini)</div></div><input type="number" min="1" max="180" id="relanceFenetre" onchange="majRelance('fenetre',this.value)" style="width:70px;padding:8px;border-radius:8px;border:1px solid #444;background:#111;color:#fff;text-align:center"></div>
+    <div id="relanceExplication" style="font-size:12px;color:#aaa;line-height:1.6;margin-top:10px"></div>
+  </div>
+
+  <div class="section" style="margin-top:14px">
     <h2>⭐ Avis Google</h2>
     <div class="item-row">
       <div class="item-info" style="cursor:default"><div class="item-nom">Demander un avis Google</div>
@@ -501,7 +537,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
-<div class="version">v.23/10/2026 16:35 — Moule & Smile Admin</div>
+<div class="version">v.31/10/2026 18:15 — Moule & Smile Admin</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -1134,6 +1170,8 @@ function confirmerImport(){
     newCarte.enfantMenu=carte.enfantMenu;
     newCarte.dessertsMenu=carte.dessertsMenu;
     newCarte.avisGoogle=carte.avisGoogle; // réglage « Avis Google », jamais écrasé par l'import
+    newCarte.relanceBoisson=carte.relanceBoisson; // réglage « Relance boisson », jamais écrasé par l'import
+    newCarte.rechargeAppli=carte.rechargeAppli; // réglage « Recharge à volonté », idem
 
     // Réappliquer l'ordre des catégories personnalisé par l'admin (sinon l'import
     // reconstruit toujours dans l'ordre fixe de CATS et écrase le réordonnancement)
@@ -1617,12 +1655,79 @@ function renderReglages(){
     </div>`;
   }).join('');
 
+  renderRelanceBoisson();
+  renderRechargeAppli();
   chargerMappingHiboutik();
   renderAvisGoogle();
   renderConsignesService();
   renderFamillesSuggestionAddition();
   renderSuggestionAddition();
   renderMenuAdoOptions();
+}
+
+
+// ============================================================
+// RECHARGE À VOLONTÉ DEPUIS L'APPLI CLIENT
+// ============================================================
+const RECHARGE_DEFAUT={actif:true,frites:true};
+function reglagesRechargeAdmin(){ return Object.assign({},RECHARGE_DEFAUT,(carte&&carte.rechargeAppli)||{}); }
+function renderRechargeAppli(){
+  if(!carte) return;
+  const r=reglagesRechargeAdmin();
+  document.getElementById('rechargeActif').checked=r.actif!==false;
+  document.getElementById('rechargeFrites').checked=r.frites!==false;
+  document.getElementById('rechargeExplication').innerHTML=
+    `<b style="color:#D4AF37">Règles actives${r.actif===false?' (recharge par l\'appli désactivée)':''} :</b><br>`+
+    `• Le bouton « 🔁 Je reprends » apparaît dès que la table a commandé une formule <b>à volonté</b> payante (nom ou description contenant « volonté »).<br>`+
+    `• Le client choisit le plat, la <b>sauce</b> (famille d'options du plat) ${r.frites!==false?'et <b>avec ou sans frites</b>':'(frites non demandées)'} ; la recharge part en cuisine à <b>0 €</b>.<br>`+
+    `• Limite : <b>1 recharge en cours par couvert à volonté</b> (adultes et enfants) ; « en cours » = pas encore marquée « ✓ Prêt » en cuisine.<br>`+
+    `• Quand la cuisine marque « ✓ Prêt », le client reçoit « Votre cocotte est prête ! ».<br>`+
+    `• Chaque recharge est enregistrée dans les stats de recharges de la caisse (comme une recharge saisie en caisse).<br>`+
+    `• Plus de bouton après la demande d'addition, ni en mode repas employé. L'équipe peut toujours saisir une recharge depuis la caisse.`;
+}
+function majRecharge(cle,val){
+  if(!carte) return;
+  const r=reglagesRechargeAdmin(); r[cle]=!!val; carte.rechargeAppli=r;
+  sauvegarder(); renderRechargeAppli();
+  showToast(cle==='actif'?(val?'✅ Recharge par l\'appli activée':'✅ Recharge par l\'appli désactivée'):(val?'✅ Choix des frites activé':'✅ Choix des frites désactivé'));
+}
+
+// ============================================================
+// RELANCE BOISSON « On remet ça ? » (appli client)
+// ============================================================
+const RELANCE_DEFAUT={actif:true,verre:20,biere50:30,cocktail:25,bouteille:50,fenetre:40};
+function reglagesRelanceAdmin(){ return Object.assign({},RELANCE_DEFAUT,(carte&&carte.relanceBoisson)||{}); }
+function renderRelanceBoisson(){
+  if(!carte) return;
+  const r=reglagesRelanceAdmin();
+  document.getElementById('relanceActif').checked=r.actif!==false;
+  document.getElementById('relanceVerre').value=r.verre;
+  document.getElementById('relanceBiere50').value=r.biere50;
+  document.getElementById('relanceCocktail').value=r.cocktail;
+  document.getElementById('relanceBouteille').value=r.bouteille;
+  document.getElementById('relanceFenetre').value=r.fenetre;
+  document.getElementById('relanceExplication').innerHTML=
+    `<b style="color:#D4AF37">Règles actives${r.actif===false?' (relance désactivée)':''} :</b><br>`+
+    `• Délais après la 1re commande de boissons : verre <b>${r.verre} min</b> · bière 50 cl <b>${r.biere50} min</b> · cocktail <b>${r.cocktail} min</b> · bouteille de vin <b>${r.bouteille} min</b>. Si la table a pris plusieurs types, c'est le délai le plus court qui compte.<br>`+
+    `• Fenêtre d'affichage : <b>${r.fenetre} min</b> après l'heure prévue, puis plus de popup.<br>`+
+    `• <b>1 seul popup</b> par table et par repas (par téléphone).<br>`+
+    `• Pas de popup si la table a déjà recommandé des boissons d'elle-même, après la demande d'addition, en mode repas employé, ni par-dessus un autre popup.<br>`+
+    `• Boissons concernées : celles des catégories regroupées dans la tuile « Apéro / Boissons », sauf les boissons chaudes ; les boissons offertes (0 €) sont ignorées.<br>`+
+    `• Vérification toutes les <b>30 secondes</b> quand l'appli est ouverte.`;
+}
+function majRelance(cle,val){
+  if(!carte) return;
+  const r=reglagesRelanceAdmin();
+  if(cle==='actif') r.actif=!!val;
+  else{
+    const n=parseInt(val,10);
+    if(!n||n<1){ showToast('⚠️ Saisissez un nombre de minutes'); renderRelanceBoisson(); return; }
+    r[cle]=n;
+  }
+  carte.relanceBoisson=r;
+  sauvegarder();
+  renderRelanceBoisson();
+  showToast(cle==='actif'?(val?'✅ Relance boisson activée':'✅ Relance boisson désactivée'):'✅ Délai enregistré');
 }
 
 function renderOrdreCategories(){

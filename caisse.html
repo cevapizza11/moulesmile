@@ -263,7 +263,7 @@ body.cuisine-plein{overflow:hidden}
 
 <!-- HEADER -->
 <div class="header">
-  <h1>🐚 <span id="motCaisse" onclick="tapMotCaisse()" style="cursor:default;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent">CAISSE</span> — Moule & Smile<span class="build-tag">v.22/10/2026 18:30</span></h1>
+  <h1>🐚 <span id="motCaisse" onclick="tapMotCaisse()" style="cursor:default;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent">CAISSE</span> — Moule & Smile<span class="build-tag">v.31/10/2026 18:15</span></h1>
   <div class="stats-row">
     <div class="stat"><div class="num" id="statNouv">0</div><div class="lbl">Nouvelles</div></div>
     <div class="stat"><div class="num" id="statAdd">0</div><div class="lbl">Additions</div></div>
@@ -553,7 +553,7 @@ body.cuisine-plein{overflow:hidden}
   </div>
 </div>
 
-<div class="version">v.22/10/2026 18:30 — Moule & Smile Caisse</div>
+<div class="version">v.31/10/2026 18:15 — Moule & Smile Caisse</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -750,6 +750,7 @@ function demarrerEcouteCommandes(){
         }
       });
       if(hasNew) playBeep(1);
+      snap.docChanges().forEach(change=>{ if(change.type==='added') enregistrerRechargesAppli(change.doc.id,change.doc.data()); });
       renderCommandes();
       renderCommandesDeux();
       renderCuisine();
@@ -1940,6 +1941,13 @@ function platMenuDe(choix){
 function lignesCuisineDe(cmd){
   const lignes=[];
   (cmd.items||[]).forEach(it=>{
+    // Recharge à volonté commandée depuis l'appli client : toujours affichée en cuisine
+    if(it.recharge||String(it.id||'').startsWith('recharge_')){
+      const plat=String(it.plat||it.nom||'').replace(/^🔁\s*Recharge\s*/i,'').replace(/\s*à volonté/i,'');
+      const det=[it.sauce?it.sauce:'',it.frites===true?'+ frites':(it.frites===false?'sans frites':'')].filter(Boolean).join(' ');
+      lignes.push({...it,label:'🔁 '+plat+(det?' — '+det:''),recharge:true});
+      return;
+    }
     const idBase=(it.id||'').replace('_inclus','');
     const labelItem=carteCuisine[idBase];
     const pm=platMenuDe(it.choix);
@@ -2177,7 +2185,37 @@ async function marquerCuisinePret(id){
       cuisineFait:true,
       cuisineHeure:firebase.firestore.FieldValue.serverTimestamp()
     });
+    // Recharge commandée depuis l'appli : on prévient le client que sa cocotte est prête
+    const cmd=allCommandes[id];
+    if(cmd&&(cmd.items||[]).some(it=>it.recharge)){
+      const n=(cmd.items||[]).filter(it=>it.recharge).length;
+      await db.collection('notifications').doc(`table_${cmd.table}`).set({
+        message:`🐚 ${n>1?'Vos '+n+' cocottes sont prêtes':'Votre cocotte est prête'} ! Venez ${n>1?'les':'la'} chercher au comptoir 😊`,
+        ts:firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
   }catch(e){showToast('❌ Erreur');console.error(e);}
+}
+
+// Recharges commandées depuis l'appli client → enregistrées dans « recharges » (mêmes stats que les
+// recharges saisies en caisse). Identifiant fixe (commande + numéro de ligne) : si plusieurs caisses
+// sont ouvertes, l'écriture est simplement répétée à l'identique, sans doublon.
+async function enregistrerRechargesAppli(cmdId,data){
+  try{
+    const items=(data&&data.items)||[];
+    if(!items.some(it=>it.recharge)) return;
+    const b=db.batch(); let n=0;
+    items.forEach((it,i)=>{
+      if(!it.recharge) return;
+      b.set(db.collection('recharges').doc(`appli_${cmdId}_${i}`),{
+        table:data.table, plat:it.plat||it.nom, sauce:it.sauce||null,
+        frites:it.frites===undefined?null:it.frites, source:'appli',
+        timestamp:data.timestamp||firebase.firestore.FieldValue.serverTimestamp()
+      });
+      n++;
+    });
+    if(n) await b.commit();
+  }catch(e){console.error('Enregistrement recharge appli',e);}
 }
 
 // ============================================================

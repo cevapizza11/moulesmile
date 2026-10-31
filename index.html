@@ -74,6 +74,12 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 .gratuit{color:#1A7A50;font-size:13px;font-weight:bold}
 
 /* PANIER */
+.btn-recharge{position:fixed;right:14px;bottom:78px;z-index:210;background:#D4AF37;color:#111;border:none;border-radius:30px;padding:12px 18px;font-size:15px;font-weight:bold;box-shadow:0 4px 18px rgba(0,0,0,.6);cursor:pointer;display:none}
+.btn-recharge.visible{display:block}
+.rc-chips{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 14px}
+.rc-chip{background:#2A2A2A;border:2px solid #333;border-radius:20px;padding:9px 14px;color:#fff;font-size:13px;cursor:pointer}
+.rc-chip.actif{border-color:#D4AF37;background:#2E2A1A;color:#D4AF37;font-weight:bold}
+.rc-titre{color:#aaa;font-size:12px;margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
 .panier-bar{position:fixed;bottom:0;left:0;right:0;background:#D4AF37;padding:12px 20px;display:none;justify-content:space-between;align-items:center;z-index:200;cursor:pointer}
 .panier-bar.visible{display:flex}
 .panier-bar .panier-nb{font-size:12px;font-weight:bold;color:#1A1A1A}
@@ -381,6 +387,29 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
+<!-- MODAL RELANCE BOISSON « On remet ça ? » (une seule fois par table et par repas) -->
+<div class="modal-overlay" id="modalRelanceBoisson" style="z-index:650">
+  <div class="modal-box">
+    <h3>On remet ça ? 🍻</h3>
+    <p style="text-align:center;color:#aaa;font-size:12px;margin-bottom:12px">Touchez + pour reprendre la même boisson, servie à table</p>
+    <div class="modal-list" id="relanceBoissonList"></div>
+    <button id="relanceBoissonValider" onclick="validerRelanceBoisson()" style="width:100%;margin:14px 0 8px;padding:14px;border:none;border-radius:12px;background:#D4AF37;color:#111;font-size:15px;font-weight:bold;cursor:pointer" disabled>Commander</button>
+    <button class="modal-close" onclick="fermerRelanceBoisson()">Non merci</button>
+  </div>
+</div>
+
+<!-- RECHARGE À VOLONTÉ depuis l'appli -->
+<button class="btn-recharge" id="btnRecharge" onclick="ouvrirRecharge()">🔁 Je reprends des moules</button>
+<div class="modal-overlay" id="modalRecharge" style="z-index:660">
+  <div class="modal-box">
+    <h3>🔁 On vous ressert !</h3>
+    <p style="text-align:center;color:#aaa;font-size:12px;margin-bottom:10px" id="rcInfo"></p>
+    <div id="rcContenu"></div>
+    <button id="rcValider" onclick="validerRecharge()" style="width:100%;margin:10px 0 8px;padding:14px;border:none;border-radius:12px;background:#D4AF37;color:#111;font-size:15px;font-weight:bold;cursor:pointer">Envoyer en cuisine</button>
+    <button class="modal-close" onclick="fermerRecharge()">Annuler</button>
+  </div>
+</div>
+
 <!-- MODAL CHOIX MENU ADO 6-17 ANS -->
 <!-- POPUP SUGGESTION FORMULE (non-bloquant) -->
 <div class="modal-overlay" id="modalSuggestionFormule">
@@ -406,7 +435,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
-<div class="version">v.23/10/2026 20:15 — Moule & Smile</div>
+<div class="version">v.31/10/2026 18:15 — Moule & Smile</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -1298,14 +1327,18 @@ function ecouterMesCommandes(){
     let points=0;
     const commandes=[];
     snap.forEach(doc=>{
-      const d=doc.data();
+      const d=doc.data({serverTimestamps:'estimate'});
       if(d.statut==='regle') return;
       total+=d.total||0;
       points+=d.totalPoints||(d.items||[]).reduce((s,it)=>s+(it.points||0),0);
-      if((d.items||[]).length) commandes.push({id:doc.id,heure:d.heure||'--:--',items:d.items||[],total:d.total||0});
+      // ts + statut : utilisés par la relance boisson « On remet ça ? »
+      const ts=(d.timestamp&&d.timestamp.toMillis)?d.timestamp.toMillis():Date.now();
+      if((d.items||[]).length) commandes.push({id:doc.id,heure:d.heure||'--:--',items:d.items||[],total:d.total||0,ts,statut:d.statut||'',cuisineFait:!!d.cuisineFait});
     });
     commandes.sort((a,b)=>a.heure.localeCompare(b.heure));
     totalDejaCommande=total;
+    setTimeout(verifierRelanceBoisson,500);
+    majBoutonRecharge();
     pointsEnvoyes=points;
     mesCommandesEnvoyees=commandes;
     updateTotalBadgeHeader();
@@ -1782,6 +1815,7 @@ function ouvrirAvisGoogle(){
 }
 
 async function demanderAddition(){
+  relanceAdditionDemandee=true; // plus de relance boisson ni de recharge après la demande d'addition
   document.getElementById('additionTable').textContent=tableNum;
   try{
     // Requête simple sans index composite
@@ -1858,6 +1892,282 @@ async function demanderAddition(){
 
 
 
+
+// ============================================================
+// RECHARGE À VOLONTÉ DEPUIS L'APPLI
+// Le client recommande sa cocotte (plat, sauce, frites) : ligne à 0 € envoyée en cuisine.
+// Limite : une recharge en cours (pas encore « Prêt » en cuisine) par formule à volonté de la table.
+// Réglages (admin → Réglages → Recharge à volonté) : carte.rechargeAppli
+// ============================================================
+const RECHARGE_DEFAUT={actif:true,frites:true};
+let rcEtat=null; // {platId, sauce, frites, qte}
+function reglagesRecharge(){ const c=carte||carteDefaut; return Object.assign({},RECHARGE_DEFAUT,c.rechargeAppli||{}); }
+function estAVolonte(it){ return /volont/i.test((it.nom||'')+' '+(it.desc||'')); }
+function produitCarte(id){
+  const c=carte||carteDefaut; const base=idBaseProduit(id);
+  for(const cat of (c.categories||[])) for(const p of (cat.produits||[])) if(p.id===base) return p;
+  return null;
+}
+function itemsTableEnvoyes(){ const l=[]; (mesCommandesEnvoyees||[]).forEach(c=>(c.items||[]).forEach(it=>l.push({it,cmd:c}))); return l; }
+// Nombre de couverts « à volonté » de la table (adultes et enfants)
+function nbCouvertsAVolonte(){ return itemsTableEnvoyes().filter(x=>!x.it.recharge&&estAVolonte(x.it)).length; }
+// Plats proposés à la recharge : formules à volonté payantes commandées par la table
+function platsRechargeables(){
+  const vus={},liste=[];
+  itemsTableEnvoyes().forEach(({it})=>{
+    if(it.recharge||!estAVolonte(it)||!(it.prix>0)) return;
+    const base=idBaseProduit(it.id); if(vus[base]) return; vus[base]=1;
+    const p=produitCarte(base)||it;
+    liste.push({id:base,nom:p.nom||it.nom,emoji:p.emoji||'🐚'});
+  });
+  return liste;
+}
+function nbRechargesEnCours(){
+  return itemsTableEnvoyes().filter(x=>x.it.recharge&&!x.cmd.cuisineFait&&x.cmd.statut!=='regle').length;
+}
+function rechargesDisponibles(){ return Math.max(0,nbCouvertsAVolonte()-nbRechargesEnCours()); }
+function rechargeAutorisee(){
+  const r=reglagesRecharge();
+  return r.actif&&!modeEmploye&&!!tableNum&&!relanceAdditionDemandee&&platsRechargeables().length>0
+    &&!(typeof finRepasRecente==='function'&&finRepasRecente());
+}
+function majBoutonRecharge(){
+  const b=document.getElementById('btnRecharge'); if(!b) return;
+  const ok=rechargeAutorisee();
+  b.classList.toggle('visible',ok);
+  if(ok){ const p=platsRechargeables(); b.textContent=p.length===1&&!/moule/i.test(p[0].nom)?`🔁 Je reprends : ${p[0].nom.replace(/\s*à volonté/i,'')}`:'🔁 Je reprends des moules'; }
+}
+function famillesSauce(platId){
+  const c=carte||carteDefaut, fam=c.famillesOptions||{};
+  return getEtapesOptions(platId).map(e=>fam[e.idFamille]).filter(f=>f&&(f.options||[]).some(o=>o.actif));
+}
+function ouvrirRecharge(){
+  if(!rechargeAutorisee()) return;
+  const dispo=rechargesDisponibles();
+  if(dispo<=0){ showToast('⏳ Votre cocotte précédente est en préparation — une recharge à la fois par personne'); return; }
+  const plats=platsRechargeables();
+  rcEtat={platId:plats[0].id,sauce:null,frites:reglagesRecharge().frites,qte:1};
+  renderRecharge();
+  document.getElementById('modalRecharge').classList.add('visible');
+}
+function renderRecharge(){
+  const plats=platsRechargeables(), dispo=rechargesDisponibles(), r=reglagesRecharge();
+  rcEtat.qte=Math.max(1,Math.min(rcEtat.qte,dispo));
+  let h='';
+  if(plats.length>1){
+    h+='<div class="rc-titre">Plat</div><div class="rc-chips">'+plats.map(p=>`<div class="rc-chip ${p.id===rcEtat.platId?'actif':''}" onclick="rcChoix('platId','${p.id}')">${p.emoji} ${p.nom.replace(/\s*à volonté/i,'')}</div>`).join('')+'</div>';
+  }
+  const fams=famillesSauce(rcEtat.platId);
+  if(fams.length){
+    const f=fams[0], opts=f.options.filter(o=>o.actif);
+    if(!rcEtat.sauce||!opts.some(o=>o.nom===rcEtat.sauce)) rcEtat.sauce=null;
+    h+=`<div class="rc-titre">${f.nom||'Sauce'}</div><div class="rc-chips">`+opts.map(o=>`<div class="rc-chip ${o.nom===rcEtat.sauce?'actif':''}" onclick="rcChoix('sauce','${esc(o.nom)}')">${o.nom}</div>`).join('')+'</div>';
+  } else rcEtat.sauce='';
+  if(r.frites){
+    h+='<div class="rc-titre">Frites</div><div class="rc-chips">'+
+      `<div class="rc-chip ${rcEtat.frites?'actif':''}" onclick="rcChoix('frites',true)">🍟 Avec frites</div>`+
+      `<div class="rc-chip ${!rcEtat.frites?'actif':''}" onclick="rcChoix('frites',false)">Sans frites</div></div>`;
+  }
+  if(dispo>1){
+    h+=`<div class="rc-titre">Combien de cocottes ?</div><div style="display:flex;align-items:center;gap:12px;margin:8px 0 6px">
+      <button class="qty-btn qty-minus" onclick="rcQte(-1)">−</button><span class="qty-num" style="font-size:18px">${rcEtat.qte}</span><button class="qty-btn qty-plus" onclick="rcQte(1)">+</button>
+      <span style="color:#888;font-size:12px">max ${dispo} (1 par personne)</span></div>`;
+  }
+  document.getElementById('rcContenu').innerHTML=h;
+  document.getElementById('rcInfo').textContent='Choisissez, on prépare, vous venez la chercher au comptoir quand elle est prête.';
+  const manqueSauce=fams.length&&!rcEtat.sauce;
+  const b=document.getElementById('rcValider');
+  b.disabled=!!manqueSauce; b.style.opacity=manqueSauce?'.45':'1';
+  b.textContent=manqueSauce?'Choisissez une sauce':`Envoyer en cuisine${rcEtat.qte>1?' ('+rcEtat.qte+')':''}`;
+}
+function rcChoix(cle,val){ rcEtat[cle]=val; if(cle==='platId') rcEtat.sauce=null; renderRecharge(); }
+function rcQte(d){ rcEtat.qte+=d; renderRecharge(); }
+function fermerRecharge(){ document.getElementById('modalRecharge').classList.remove('visible'); rcEtat=null; }
+async function validerRecharge(){
+  if(!rcEtat) return;
+  const dispo=rechargesDisponibles();
+  if(dispo<=0){ showToast('⏳ Une recharge à la fois par personne'); fermerRecharge(); return; }
+  const plat=platsRechargeables().find(p=>p.id===rcEtat.platId); if(!plat) return;
+  const r=reglagesRecharge(), qte=Math.min(rcEtat.qte,dispo);
+  const morceaux=[]; if(rcEtat.sauce) morceaux.push('Sauce : '+rcEtat.sauce); if(r.frites) morceaux.push('Frites : '+(rcEtat.frites?'oui':'non'));
+  const item={id:'recharge_'+plat.id,nom:'🔁 Recharge '+plat.nom.replace(/\s*à volonté/i,''),desc:'',choix:morceaux.join(' — '),prix:0,points:0,recharge:true,plat:plat.nom,sauce:rcEtat.sauce||null,frites:r.frites?!!rcEtat.frites:null};
+  const items=Array.from({length:qte},()=>Object.assign({},item));
+  const b=document.getElementById('rcValider'); b.disabled=true; b.textContent='Envoi…';
+  try{
+    await db.collection('commandes').add({
+      table:tableNum, jeton:jetonToken||null, couverts:nbCouverts||null,
+      nbAdultes:nbAdultes!=null?nbAdultes:null, nbEnfants:nbEnfants!=null?nbEnfants:0,
+      items, total:0, totalPoints:0,
+      timestamp:firebase.firestore.FieldValue.serverTimestamp(), statut:'nouvelle',
+      heure:new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})
+    });
+    fermerRecharge();
+    showToast('✅ C\'est parti en cuisine ! On vous prévient quand c\'est prêt 🐚');
+    ecouterMesCommandes();
+    setTimeout(verifierRelanceBoisson,1500); // bon moment pour proposer une boisson
+  }catch(e){ console.error(e); b.disabled=false; renderRecharge(); showToast('❌ Erreur réseau — réessayez'); }
+}
+setInterval(majBoutonRecharge,20000);
+
+// ============================================================
+// RELANCE BOISSON « On remet ça ? »
+// Un seul popup par table et par repas, qui reprend les boissons de la PREMIÈRE
+// commande contenant des boissons (même marque, même taille, même prix).
+// Déclenché quand la boisson la plus rapide à boire devrait être finie.
+// Réglages (admin → Réglages → Relance boisson) : carte.relanceBoisson
+// ============================================================
+const RELANCE_DEFAUT={actif:true,verre:20,biere50:30,cocktail:25,bouteille:50,fenetre:40};
+let relanceAdditionDemandee=false;
+let relanceLignes=[];        // [{cle,item,qteInit,qte}]
+let relanceCommandeRef=null; // id de la 1re commande boissons concernée
+
+function reglagesRelance(){
+  const c=carte||carteDefaut;
+  return Object.assign({},RELANCE_DEFAUT,c.relanceBoisson||{});
+}
+// Catégories considérées comme boissons (même réglage que la tuile « Apéro / Boissons »), sans les boissons chaudes
+function categoriesBoissonsRelance(){
+  const c=carte||carteDefaut;
+  // Tuile « Apéro / Boissons » + catégories boissons standard (au cas où le réglage de la tuile
+  // vient d'une autre carte importée avant), sans les boissons chaudes
+  const ids=new Set([...getGroupeAperoIds(c),...GROUPE_BOISSONS_IDS_DEFAUT]);
+  ids.delete('chauds');
+  return [...ids];
+}
+function categorieDuProduit(idProduit){
+  const c=carte||carteDefaut;
+  const base=idBaseProduit(idProduit);
+  const cat=(c.categories||[]).find(k=>(k.produits||[]).some(p=>p.id===base));
+  return cat?cat.id:null;
+}
+// Type de boisson → délai : verre (bière 25 cl, soft, verre de vin, sirop), bière 50 cl, cocktail, bouteille
+function typeBoisson(item,catId){
+  const txt=((item.nom||'')+' '+(item.choix||'')+' '+(item.desc||'')).toLowerCase();
+  if(/bouteille|magnum|\b75\s?cl/.test(txt)) return 'bouteille';
+  if(catId==='cocktails'||catId==='sangria'||/spritz|mojito|mule|cocktail/.test(txt)) return 'cocktail';
+  if(/\b50\s?cl|pinte/.test(txt)) return 'biere50';
+  return 'verre';
+}
+function lignesBoissons(commande){
+  const cats=categoriesBoissonsRelance();
+  return (commande.items||[]).map(it=>({it,cat:categorieDuProduit(it.id)}))
+    .filter(x=>x.cat&&cats.includes(x.cat)&&(x.it.prix||0)>0);
+}
+function cleRelance(){ return 'relanceBoisson_'+(jetonToken||'')+'_'+(tableNum||''); }
+
+function verifierRelanceBoisson(){
+  try{
+    const r=reglagesRelance();
+    if(!r.actif||modeEmploye||!tableNum||relanceAdditionDemandee) return;
+    if(typeof finRepasRecente==='function'&&finRepasRecente()) return;
+    if(document.visibilityState!=='visible') return;
+    if(document.getElementById('modalRelanceBoisson').classList.contains('visible')) return;
+    // Pas pendant qu'un autre popup est ouvert
+    if(document.querySelector('.modal-overlay.visible,.upsell-overlay.visible')) return;
+    const cmds=(mesCommandesEnvoyees||[]).slice().sort((a,b)=>(a.ts||0)-(b.ts||0));
+    const avecBoissons=cmds.filter(c=>lignesBoissons(c).length);
+    if(!avecBoissons.length) return;
+    // La table a déjà recommandé des boissons d'elle-même → inutile de relancer
+    if(avecBoissons.length>1) return;
+    const premiere=avecBoissons[0];
+    // Déjà montré (ou refusé) pour ce repas sur cet appareil
+    let deja=null; try{ deja=localStorage.getItem(cleRelance()); }catch(e){}
+    if(deja===premiere.id) return;
+    const lignes=lignesBoissons(premiere);
+    const delaiMin=Math.min(...lignes.map(x=>Number(r[typeBoisson(x.it,x.cat)])||RELANCE_DEFAUT.verre));
+    const echeance=(premiere.ts||Date.now())+delaiMin*60000;
+    const maintenant=Date.now();
+    if(maintenant<echeance) return;
+    if(maintenant>echeance+(Number(r.fenetre)||RELANCE_DEFAUT.fenetre)*60000) return; // trop tard : repas sans doute fini
+    ouvrirRelanceBoisson(premiere,lignes);
+  }catch(e){ console.warn('relance boisson',e); }
+}
+
+function ouvrirRelanceBoisson(commande,lignes){
+  relanceCommandeRef=commande.id;
+  try{ localStorage.setItem(cleRelance(),commande.id); }catch(e){}
+  // Regroupe les boissons identiques (même produit, mêmes choix, même prix)
+  const groupes={};
+  lignes.forEach(({it})=>{
+    const cle=[idBaseProduit(it.id),it.choix||'',it.prix].join('|');
+    if(!groupes[cle]) groupes[cle]={cle,item:it,qteInit:0,qte:0};
+    groupes[cle].qteInit++;
+  });
+  relanceLignes=Object.values(groupes);
+  renderRelanceBoisson();
+  document.getElementById('modalRelanceBoisson').classList.add('visible');
+}
+
+function renderRelanceBoisson(){
+  const fmt=v=>v.toFixed(2).replace('.',',')+' €';
+  document.getElementById('relanceBoissonList').innerHTML=relanceLignes.map((l,i)=>{
+    const it=l.item;
+    return `<div class="modal-item" style="cursor:default">
+      <div style="min-width:0">
+        <div class="mnom">${it.nom}${l.qteInit>1?` <span style="color:#888;font-weight:normal">(×${l.qteInit} la 1re fois)</span>`:''}</div>
+        ${it.choix?`<div class="mdesc">${it.choix}</div>`:''}
+        <div class="mdesc" style="color:#D4AF37">${fmt(it.prix)}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+        ${l.qte>0?`<button class="qty-btn qty-minus" onclick="changerQteRelance(${i},-1)">−</button><span class="qty-num">${l.qte}</span>`:''}
+        <button class="qty-btn qty-plus" onclick="changerQteRelance(${i},1)">+</button>
+      </div>
+    </div>`;
+  }).join('');
+  const nb=relanceLignes.reduce((s,l)=>s+l.qte,0);
+  const total=relanceLignes.reduce((s,l)=>s+l.qte*l.item.prix,0);
+  const btn=document.getElementById('relanceBoissonValider');
+  btn.disabled=nb===0;
+  btn.style.opacity=nb===0?'.45':'1';
+  btn.textContent=nb===0?'Commander':`Commander ${nb} boisson${nb>1?'s':''} — ${fmt(total)}`;
+}
+
+function changerQteRelance(i,delta){
+  const l=relanceLignes[i]; if(!l) return;
+  l.qte=Math.max(0,Math.min(20,l.qte+delta));
+  renderRelanceBoisson();
+}
+
+function fermerRelanceBoisson(){
+  document.getElementById('modalRelanceBoisson').classList.remove('visible');
+  relanceLignes=[];
+}
+
+async function validerRelanceBoisson(){
+  const choisis=[];
+  relanceLignes.forEach(l=>{ for(let k=0;k<l.qte;k++) choisis.push(l.item); });
+  if(!choisis.length) return;
+  const btn=document.getElementById('relanceBoissonValider');
+  btn.disabled=true; btn.textContent='Envoi…';
+  const items=choisis.map(it=>({id:it.id,nom:it.nom,desc:it.desc||'',choix:it.choix||'',prix:it.prix,points:it.points||0}));
+  const total=items.reduce((s,it)=>s+(it.prix||0),0);
+  try{
+    // Même format qu'une commande normale (validerCommande)
+    await db.collection('commandes').add({
+      table:tableNum,
+      jeton:jetonToken||null,
+      couverts:nbCouverts||null,
+      nbAdultes:nbAdultes!=null?nbAdultes:null,
+      nbEnfants:nbEnfants!=null?nbEnfants:0,
+      items,
+      total,
+      totalPoints:0,
+      timestamp:firebase.firestore.FieldValue.serverTimestamp(),
+      statut:'nouvelle',
+      heure:new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})
+    });
+    fermerRelanceBoisson();
+    showToast('✅ C\'est commandé ! On vous l\'apporte 🍻');
+    ecouterMesCommandes();
+  }catch(e){
+    console.error(e);
+    btn.disabled=false; renderRelanceBoisson();
+    showToast('❌ Erreur réseau — réessayez');
+  }
+}
+
+setInterval(verifierRelanceBoisson,30000);
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') setTimeout(verifierRelanceBoisson,800); });
 
 // ============================================================
 // POPUP CONFIRMATION ÂGE ENFANT
