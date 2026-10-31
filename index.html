@@ -174,9 +174,9 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 <div class="header">
   <h1>🐚 MOULE & SMILE</h1>
   <div class="header-badges">
-    <div id="tableBadge" style="display:none" class="table-badge">Table <span id="tableNumHeader"></span></div>
+    <div id="tableBadge" style="display:none;cursor:pointer" class="table-badge" onclick="ouvrirMaTable()" title="Voir ma table">Table <span id="tableNumHeader"></span></div>
     <div id="pointsBadgeHeader" style="display:none" class="total-badge">🍽️ …</div>
-    <div id="totalBadgeHeader" style="display:none" class="total-badge">💰 Total : <span id="totalBadgeAmount">0,00 €</span></div>
+    <div id="totalBadgeHeader" style="display:none;cursor:pointer" class="total-badge" onclick="ouvrirMaTable()" title="Voir ma commande">🧾 Ma commande : <span id="totalBadgeAmount">0,00 €</span> ›</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -410,6 +410,18 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
+<!-- MA TABLE : panier en cours + commandes déjà envoyées (bouton du haut « Ma commande ») -->
+<div class="modal-overlay" id="modalMaTable" style="z-index:640">
+  <div class="modal-box">
+    <h3>🧾 Ma table <span id="maTableNum" style="color:#fff"></span></h3>
+    <div id="maTablePanier"></div>
+    <div id="maTableRecap"></div>
+    <button class="btn btn-or" id="maTableBtnPanier" onclick="fermerMaTable();showScreen('screenPanier');renderPanierItems()" style="margin-top:12px;display:none">🛒 Voir mon panier et l'envoyer</button>
+    <button class="btn btn-outline" onclick="fermerMaTable();showScreen('screenAccueil')" style="margin-top:10px">🍽️ Retour à la carte</button>
+    <button class="modal-close" onclick="fermerMaTable()" style="margin-top:8px">Fermer</button>
+  </div>
+</div>
+
 <!-- MODAL CHOIX MENU ADO 6-17 ANS -->
 <!-- POPUP SUGGESTION FORMULE (non-bloquant) -->
 <div class="modal-overlay" id="modalSuggestionFormule">
@@ -435,7 +447,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
-<div class="version">v.31/10/2026 18:15 — Moule & Smile</div>
+<div class="version">v.31/10/2026 19:10 — Moule & Smile</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -507,6 +519,7 @@ const CLE_FIN_REPAS='finRepas_'+(jetonToken||'');
 function finRepasRecente(){ try{ const t=+sessionStorage.getItem(CLE_FIN_REPAS)||0; return !!t && (Date.now()-t)<3*3600*1000; }catch(e){ return false; } }
 function afficherFinRepas(){
   repasTermine=true;
+  oublierRepas();
   try{ if(!finRepasRecente()) sessionStorage.setItem(CLE_FIN_REPAS, String(Date.now())); }catch(e){}
   masquerBlocageJeton();
   document.querySelectorAll('.modal-overlay.visible,.upsell-overlay.visible').forEach(el=>{ if(el.id!=='screenFinRepas') el.classList.remove('visible'); });
@@ -547,6 +560,9 @@ if(!jetonToken){
     if(!jetonEnCours){
       jetonEnCours=true;
       nbAdultes=1;nbEnfants=0;
+      // Même repas qu'avant d'avoir quitté la page ? → on reprend (couverts + panier) sans redemander
+      const repasId=String(jetonToken)+'_'+((d.timestamp&&d.timestamp.toMillis)?d.timestamp.toMillis():'');
+      if(!modeEmploye&&reprendreRepas(repasId)) return;
       if(modeEmploye){
         // Repas employé : pas de "combien de couverts ?" à demander, on va direct au menu.
         majAffichageCouverts();
@@ -896,6 +912,7 @@ function validerCouverts(){
 
 function validerTable(couverts){
   nbCouverts=couverts;
+  setTimeout(sauverRepas,0);
   document.getElementById('tableNumHeader').textContent=tableNum;
   // Repas employé : pas de badge "Table N" (numéro virtuel, sans intérêt pour l'employé) — le badge
   // de points prend sa place.
@@ -1301,6 +1318,7 @@ function fermerModalOption(){
 }
 
 function updatePanierBar(){
+  sauverRepas();
   const total=panier.reduce((s,p)=>s+p.prix,0);
   const nb=panier.length;
   document.getElementById('panierNb').textContent=nb+' article'+(nb>1?'s':'');
@@ -1367,8 +1385,8 @@ function updateTotalBadgeHeader(){
 }
 
 // Affiche le détail des commandes déjà envoyées sur l'écran de confirmation, mis à jour en direct
-function renderRecapCommandesEnvoyees(){
-  const container=document.getElementById('recapCommandesEnvoyees');
+function renderRecapCommandesEnvoyees(cible){
+  const container=document.getElementById(cible||'recapCommandesEnvoyees');
   if(!container) return;
   if(!mesCommandesEnvoyees.length){
     container.innerHTML='';
@@ -1892,6 +1910,50 @@ async function demanderAddition(){
 
 
 
+
+// ============================================================
+// MA TABLE + REPRISE DU REPAS APRÈS AVOIR QUITTÉ LA PAGE
+// Le panier et les couverts sont gardés sur le téléphone, liés au repas en cours
+// (jeton + heure d'activation par la caisse). En revenant sur la page pendant le même
+// repas : pas de nouvelle question « combien de couverts », retour direct à la carte
+// avec le panier. Nouveau repas (jeton réactivé) = on repart de zéro.
+// ============================================================
+let repasIdCourant=null;
+const CLE_REPAS='repas_'+(jetonToken||'');
+function sauverRepas(){
+  if(!repasIdCourant||modeEmploye) return;
+  try{ localStorage.setItem(CLE_REPAS,JSON.stringify({repasId:repasIdCourant,nbCouverts,nbAdultes,nbEnfants,panier,maj:Date.now()})); }catch(e){}
+}
+function lireRepas(){ try{ return JSON.parse(localStorage.getItem(CLE_REPAS)||'null'); }catch(e){ return null; } }
+function oublierRepas(){ try{ localStorage.removeItem(CLE_REPAS); }catch(e){} }
+// Renvoie true si un repas en cours a été repris
+function reprendreRepas(repasId){
+  repasIdCourant=repasId;
+  const r=lireRepas();
+  if(!r||r.repasId!==repasId||(Date.now()-(r.maj||0))>6*3600*1000){ oublierRepas(); return false; }
+  nbAdultes=r.nbAdultes!=null?r.nbAdultes:1; nbEnfants=r.nbEnfants||0;
+  if(typeof majAffichageCouverts==='function') majAffichageCouverts();
+  panier=Array.isArray(r.panier)?r.panier:[];
+  validerTable(r.nbCouverts||(nbAdultes+nbEnfants));
+  updatePanierBar();
+  if(panier.length) showToast('🛒 Votre panier vous attend ('+panier.length+' article'+(panier.length>1?'s':'')+')');
+  return true;
+}
+function ouvrirMaTable(){
+  if(!tableNum) return;
+  document.getElementById('maTableNum').textContent='— Table '+tableNum;
+  const fmt=v=>v.toFixed(2).replace('.',',')+' €';
+  const pz=document.getElementById('maTablePanier');
+  if(panier.length){
+    const tot=panier.reduce((a,p)=>a+p.prix,0);
+    pz.innerHTML='<div class="recap-titre">🛒 Pas encore envoyé</div><div class="recap-groupe">'+panier.map(p=>`<div class="recap-item"><span>${p.nom}</span><span>${p.prix===0?'Inclus':fmt(p.prix)}</span></div>`).join('')+`<div class="recap-item" style="font-weight:bold;color:#D4AF37"><span>Panier</span><span>${fmt(tot)}</span></div></div>`;
+  } else pz.innerHTML='';
+  document.getElementById('maTableBtnPanier').style.display=panier.length?'block':'none';
+  renderRecapCommandesEnvoyees('maTableRecap');
+  if(!panier.length&&!mesCommandesEnvoyees.length) document.getElementById('maTableRecap').innerHTML='<div style="color:#888;text-align:center;padding:14px">Rien de commandé pour l\'instant</div>';
+  document.getElementById('modalMaTable').classList.add('visible');
+}
+function fermerMaTable(){ document.getElementById('modalMaTable').classList.remove('visible'); }
 
 // ============================================================
 // RECHARGE À VOLONTÉ DEPUIS L'APPLI
