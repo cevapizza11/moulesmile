@@ -1,0 +1,35 @@
+# Publication automatique de la page client sur Firebase Hosting (commandemoulesmile.web.app)
+# Se lance à chaque dépôt de index.html (ou des fichiers listés) sur GitHub, ou à la main
+# depuis l'onglet « Actions » → « Publier la page client sur Firebase » → « Run workflow ».
+name: Publier la page client sur Firebase
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - index.html
+      - firebase-messaging-sw.js
+      - manifest.json
+      - firebase.json
+      - .github/workflows/deploy-firebase.yml
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Préparer les fichiers de la page client
+        run: |
+          mkdir -p _site
+          cp index.html firebase-messaging-sw.js manifest.json _site/
+          ls -la _site
+
+      - name: Publier sur Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_COMMANDEMOULESMILE }}
+          channelId: live
+          projectId: commandemoulesmile
