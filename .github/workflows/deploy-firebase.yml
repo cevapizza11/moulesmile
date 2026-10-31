@@ -26,10 +26,26 @@ jobs:
           cp index.html firebase-messaging-sw.js manifest.json _site/
           ls -la _site
 
+      - name: Vérifier la clé Firebase
+        env:
+          CLE: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_COMMANDEMOULESMILE }}
+        run: |
+          if [ -z "$CLE" ]; then echo "::error::Secret FIREBASE_SERVICE_ACCOUNT_COMMANDEMOULESMILE introuvable (nom exact ?)"; exit 1; fi
+          printf '%s' "$CLE" > "$RUNNER_TEMP/cle.json"
+          python3 -c "import json,sys; d=json.load(open(sys.argv[1])); print('::notice::Clé lue — projet', d.get('project_id'), '— compte', d.get('client_email','?').split('@')[0])" "$RUNNER_TEMP/cle.json" \
+            || { echo "::error::Le secret n'est pas un fichier JSON valide (contenu incomplet ?)"; exit 1; }
+
       - name: Publier sur Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_COMMANDEMOULESMILE }}
-          channelId: live
-          projectId: commandemoulesmile
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/cle.json
+        run: |
+          set -o pipefail
+          if ! npx --yes firebase-tools@latest deploy --only hosting --project commandemoulesmile --non-interactive 2>&1 | tee "$RUNNER_TEMP/deploy.log"; then
+            grep -iE "error|denied|permission|forbidden|not found|failed" "$RUNNER_TEMP/deploy.log" | tail -8 | while read -r l; do echo "::error::$l"; done
+            exit 1
+          fi
+          echo "::notice::Page client publiée sur https://commandemoulesmile.web.app"
+
+      - name: Nettoyer la clé
+        if: always()
+        run: rm -f "$RUNNER_TEMP/cle.json"
