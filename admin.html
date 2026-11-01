@@ -191,11 +191,11 @@ input,select,button{font-family:inherit}
 .form-group{display:flex;flex-direction:column;gap:6px;flex:1;min-width:100px}
 .form-group label{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.4px;text-transform:uppercase}
 .form-group input,.form-group select,
-input[type=text],input[type=number],input[type=url],input[type=password],select{
+:where(input[type=text],input[type=number],input[type=url],input[type=password],select){
   background:var(--bg-deep);border:1px solid var(--border);border-radius:10px;color:var(--text);
   padding:10px 12px;font-size:13.5px;width:100%;transition:border-color .2s,box-shadow .2s;
 }
-input:focus,select:focus{border-color:var(--gold)!important;outline:none;box-shadow:0 0 0 3px var(--gold-soft)}
+input:focus,select:focus{border-color:var(--gold);outline:none;box-shadow:0 0 0 3px var(--gold-soft)}
 input::placeholder{color:var(--faint)}
 input[type=checkbox]{accent-color:var(--gold)}
 input[type=file]{color:var(--text-2)}
@@ -365,7 +365,7 @@ input[type=file]::file-selector-button{background:var(--surface-3);color:var(--t
   </div>
   <h1>Admin — Moule & Smile</h1>
   <div class="header-right">
-    <span class="build" title="Version déployée">v.01/11/2026 18:20</span>
+    <span class="build" title="Version déployée">v.01/11/2026 19:10</span>
     <button class="save-btn" onclick="sauvegarder()">Publier</button>
   </div>
 </div>
@@ -790,7 +790,7 @@ input[type=file]::file-selector-button{background:var(--surface-3);color:var(--t
   </div>
 </div>
 
-<div class="version">v.01/11/2026 18:20 — Moule & Smile · Console carte</div>
+<div class="version">v.01/11/2026 19:10 — Moule & Smile · Console carte</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
