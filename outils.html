@@ -7,67 +7,157 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Moule & Smile">
-<meta name="theme-color" content="#0b2a4a">
+<meta name="theme-color" content="#0A0C11">
 <title>Moule &amp; Smile – Outils</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/png" href="outils-icon.png">
 <link rel="apple-touch-icon" href="outils-icon-180.png">
 <style>
-  :root{
-    --bleu:#0b2a4a;
-    --bleu2:#123a63;
-    --or:#d4a63c;
-    --or-clair:#f0d48a;
-    --blanc:#ffffff;
-    --texte:#e9eef5;
-    --gris:#9fb2c8;
-  }
+:root{
+  --bg:#0A0C11;
+  --bg-deep:#06070A;
+  --surface:#11141B;
+  --surface-2:#161A23;
+  --surface-3:#1D222D;
+  --border:#262C39;
+  --line:rgba(255,255,255,.06);
+  --line-strong:rgba(255,255,255,.11);
+  --text:#EDEEF2;
+  --text-2:#B3B8C6;
+  --muted:#868C9C;
+  --faint:#5A6070;
+  --gold:#E2BE6A;
+  --gold-hi:#F3DCA0;
+  --gold-lo:#B8913F;
+  --gold-soft:rgba(226,190,106,.12);
+  --gold-ring:rgba(226,190,106,.35);
+  --ink:#16120A;
+  --green:#3FD18A;
+  --green-deep:#1E8F5C;
+  --green-bg:rgba(63,209,138,.08);
+  --red:#F07575;
+  --danger:#E5484D;
+  --red-bg:rgba(240,117,117,.09);
+  --violet:#A98BFA;
+  --radius:16px;
+  --radius-sm:10px;
+  --shadow:0 1px 0 rgba(255,255,255,.04) inset,0 10px 30px -12px rgba(0,0,0,.6);
+  --grad-gold:linear-gradient(135deg,var(--gold-hi) 0%,var(--gold) 45%,var(--gold-lo) 100%);
+  --font:"Plus Jakarta Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  --font-display:"Instrument Serif",Georgia,serif;
+  --side:240px;
+  --blue:#62B6FF;
+  --blue-hi:#9CCFFF;
+  --blue-deep:#2F6FB8;
+  --blue-bg:rgba(98,182,255,.09);
+  --orange:#F0954A;
+  --amber:#E8A83C;
+  --amber-bg:rgba(232,168,60,.1);
+  --green-hi:#8EF0B8;
+  --violet-hi:#CDB8FF;
+  --violet-bg:rgba(169,139,250,.1);
+}
+
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-  html{background:var(--bleu)}
+  html{background:var(--bg)}
   html,body{min-height:100%}
   body{
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    background:radial-gradient(circle at 50% 0%, var(--bleu2) 0%, var(--bleu) 60%) no-repeat, var(--bleu);
-    color:var(--texte);
-    min-height:100vh;
-    padding:env(safe-area-inset-top) 16px calc(24px + env(safe-area-inset-bottom));
+    font-family:var(--font);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;
+    background:
+      radial-gradient(800px 460px at 50% -120px,rgba(226,190,106,.13),transparent 65%),
+      radial-gradient(600px 420px at 100% 30%,rgba(120,130,255,.05),transparent 60%),
+      var(--bg);
+    background-attachment:fixed;
+    padding:env(safe-area-inset-top) 16px calc(28px + env(safe-area-inset-bottom));
   }
+  .page{max-width:960px;margin:0 auto}
+
+  /* Barre du haut */
   header{
-    display:flex;align-items:center;justify-content:space-between;
-    padding:18px 0 14px;border-bottom:1px solid rgba(212,166,60,.35);
-    gap:12px;
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:18px 0 16px;border-bottom:1px solid var(--line);position:relative;
   }
-  .marque{font-size:22px;font-weight:800;color:var(--or);letter-spacing:.5px}
-  .marque span{color:var(--blanc);font-weight:600}
-  .version{font-size:11px;color:var(--gris);white-space:nowrap}
-  .horloge{text-align:center;margin:22px 0 18px}
-  #heure{font-size:44px;font-weight:700;color:var(--blanc);font-variant-numeric:tabular-nums}
-  #date{font-size:15px;color:var(--gris);margin-top:2px;text-transform:capitalize}
-  h2{font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--or);margin:22px 0 10px}
-  .grille{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;max-width:900px}
+  header::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent,var(--gold-ring),transparent)}
+  .marque{display:flex;align-items:center;gap:11px}
+  .brand-mark{
+    width:38px;height:38px;border-radius:12px;display:grid;place-items:center;flex-shrink:0;
+    background:var(--grad-gold);color:var(--ink);font-family:var(--font-display);font-style:italic;font-size:23px;
+    box-shadow:0 8px 20px -8px rgba(226,190,106,.65),inset 0 1px 0 rgba(255,255,255,.5);
+  }
+  .brand-name{font-family:var(--font-display);font-size:24px;line-height:1;color:var(--text)}
+  .brand-name em{color:var(--gold);font-style:italic}
+  .brand-sub{font-size:10.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:4px}
+  .version{
+    font-size:11px;font-weight:600;color:var(--text-2);white-space:nowrap;font-variant-numeric:tabular-nums;
+    padding:6px 10px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line-strong);
+  }
+  .version::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:7px;vertical-align:1px;box-shadow:0 0 0 3px var(--green-bg)}
+
+  /* Horloge */
+  .horloge{text-align:center;margin:30px 0 8px}
+  #heure{
+    font-family:var(--font-display);font-size:76px;line-height:1;letter-spacing:1px;font-variant-numeric:tabular-nums;
+    background:linear-gradient(180deg,#FFFFFF 0%,var(--gold-hi) 70%,var(--gold) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  #date{font-size:14px;color:var(--muted);margin-top:8px;text-transform:capitalize;letter-spacing:.3px}
+
+  /* Sections */
+  h2{
+    display:flex;align-items:center;gap:12px;font-size:10.5px;letter-spacing:1.8px;text-transform:uppercase;
+    color:var(--gold);font-weight:700;margin:30px auto 12px;max-width:960px;
+  }
+  h2::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line-strong),transparent)}
+  .grille{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;max-width:960px;margin:0 auto}
   @media (min-width:700px){.grille{grid-template-columns:repeat(3,1fr)}}
-  .grille{margin:0 auto}
-  h2{max-width:900px;margin-left:auto;margin-right:auto}
+  @media (min-width:1000px){.grille{grid-template-columns:repeat(4,1fr)}}
+
+  /* Tuiles */
   a.tuile{
-    display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;
-    min-height:130px;padding:16px;border-radius:16px;text-decoration:none;
-    background:rgba(255,255,255,.06);border:1px solid rgba(212,166,60,.35);
-    color:var(--blanc);transition:transform .08s ease, background .15s ease;
+    position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;
+    min-height:138px;padding:16px;border-radius:18px;text-decoration:none;color:var(--text);
+    background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01)),var(--surface);
+    border:1px solid var(--line);box-shadow:var(--shadow);
+    transition:transform .12s ease,border-color .2s ease,background .2s ease;
   }
-  a.tuile:active{transform:scale(.97);background:rgba(212,166,60,.18)}
-  .ico{font-size:34px;line-height:1}
-  .nom{font-size:18px;font-weight:700;margin-top:10px}
-  .desc{font-size:12.5px;color:var(--gris);margin-top:4px;line-height:1.3}
-  a.tuile.principale{background:linear-gradient(135deg,var(--or) 0%,#b8862a 100%);border-color:var(--or)}
-  a.tuile.principale .nom{color:var(--bleu)}
-  a.tuile.principale .desc{color:#3d2f0e}
-  footer{text-align:center;color:var(--gris);font-size:11.5px;margin-top:28px}
+  a.tuile::before{
+    content:"";position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .25s;
+    background:radial-gradient(220px 120px at 20% 0%,rgba(226,190,106,.14),transparent 70%);
+  }
+  a.tuile:hover{border-color:rgba(226,190,106,.32)}
+  a.tuile:hover::before{opacity:1}
+  a.tuile:active{transform:scale(.97)}
+  .ico{
+    font-size:24px;line-height:1;width:46px;height:46px;border-radius:13px;display:grid;place-items:center;
+    background:var(--surface-2);border:1px solid var(--line-strong);
+  }
+  .nom{font-size:16px;font-weight:700;margin-top:12px;letter-spacing:.1px}
+  .desc{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.35}
+  a.tuile.principale{
+    background:var(--grad-gold);border-color:transparent;color:var(--ink);
+    box-shadow:0 18px 40px -16px rgba(226,190,106,.6),inset 0 1px 0 rgba(255,255,255,.5);
+  }
+  a.tuile.principale .ico{background:rgba(22,18,10,.12);border-color:rgba(22,18,10,.12)}
+  a.tuile.principale .nom{color:var(--ink)}
+  a.tuile.principale .desc{color:rgba(22,18,10,.7)}
+  footer{text-align:center;color:var(--faint);font-size:11.5px;margin-top:34px}
+  @media (max-width:420px){
+    .brand-sub{display:none}
+    #heure{font-size:64px}
+    .version{font-size:10px;padding:5px 8px}
+    .version::before{display:none}
+  }
 </style>
 </head>
 <body>
 
+<div class="page">
 <header>
-  <div class="marque">Moule <span>&amp;</span> Smile</div>
-  <div class="version">v.31/10/2026 11:15</div>
+  <div class="marque">
+    <div class="brand-mark">M</div>
+    <div><div class="brand-name">Moule <em>&amp;</em> Smile</div><div class="brand-sub">Outils du restaurant</div></div>
+  </div>
+  <div class="version">v.01/11/2026 18:47</div>
 </header>
 
 <div class="horloge">
@@ -152,6 +242,7 @@
 </div>
 
 <footer>Chaque outil s'ouvre dans son propre onglet — cette page reste ouverte en permanence.</footer>
+</div>
 
 <script>
   function majHorloge(){
