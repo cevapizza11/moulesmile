@@ -3,37 +3,85 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<meta name="theme-color" content="#1A1A1A">
+<meta name="theme-color" content="var(--ink)">
 <title>Moule & Smile — Commander</title>
+<meta name="theme-color" content="#0A0C11">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="manifest" href="./manifest.json">
 <style>
+:root{
+  --bg:#0A0C11;
+  --bg-deep:#06070A;
+  --surface:#11141B;
+  --surface-2:#161A23;
+  --surface-3:#1D222D;
+  --border:#262C39;
+  --line:rgba(255,255,255,.06);
+  --line-strong:rgba(255,255,255,.11);
+  --text:#EDEEF2;
+  --text-2:#B3B8C6;
+  --muted:#868C9C;
+  --faint:#5A6070;
+  --gold:#E2BE6A;
+  --gold-hi:#F3DCA0;
+  --gold-lo:#B8913F;
+  --gold-soft:rgba(226,190,106,.12);
+  --gold-ring:rgba(226,190,106,.35);
+  --ink:#16120A;
+  --green:#3FD18A;
+  --green-deep:#1E8F5C;
+  --green-bg:rgba(63,209,138,.08);
+  --red:#F07575;
+  --danger:#E5484D;
+  --red-bg:rgba(240,117,117,.09);
+  --violet:#A98BFA;
+  --radius:16px;
+  --radius-sm:10px;
+  --shadow:0 1px 0 rgba(255,255,255,.04) inset,0 10px 30px -12px rgba(0,0,0,.6);
+  --grad-gold:linear-gradient(135deg,var(--gold-hi) 0%,var(--gold) 45%,var(--gold-lo) 100%);
+  --font:"Plus Jakarta Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  --font-display:"Instrument Serif",Georgia,serif;
+  --side:240px;
+  --blue:#62B6FF;
+  --blue-hi:#9CCFFF;
+  --blue-deep:#2F6FB8;
+  --blue-bg:rgba(98,182,255,.09);
+  --orange:#F0954A;
+  --amber:#E8A83C;
+  --amber-bg:rgba(232,168,60,.1);
+  --green-hi:#8EF0B8;
+  --violet-hi:#CDB8FF;
+  --violet-bg:rgba(169,139,250,.1);
+}
+
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh;padding-bottom:80px}
-.header{background:#111;padding:12px 16px;text-align:center;border-bottom:2px solid #D4AF37;position:sticky;top:0;z-index:100}
-.header h1{color:#D4AF37;font-size:20px;letter-spacing:2px}
+body{font-family:Arial,sans-serif;background:var(--ink);color:var(--text);min-height:100vh;padding-bottom:80px}
+.header{background:var(--bg-deep);padding:12px 16px;text-align:center;border-bottom:2px solid var(--gold);position:sticky;top:0;z-index:100}
+.header h1{color:var(--gold);font-size:20px;letter-spacing:2px}
 .header-badges{display:flex;gap:8px;justify-content:center;margin-top:5px;flex-wrap:wrap}
-.table-badge{background:#D4AF37;color:#1A1A1A;font-size:11px;font-weight:bold;padding:2px 10px;border-radius:20px;display:inline-block}
-.total-badge{background:#2A2A2A;border:1px solid #D4AF37;color:#D4AF37;font-size:11px;font-weight:bold;padding:2px 10px;border-radius:20px;display:inline-block}
+.table-badge{background:var(--gold);color:var(--ink);font-size:11px;font-weight:bold;padding:2px 10px;border-radius:20px;display:inline-block}
+.total-badge{background:var(--surface-2);border:1px solid var(--gold);color:var(--gold);font-size:11px;font-weight:bold;padding:2px 10px;border-radius:20px;display:inline-block}
 .screen{display:none;padding:16px;max-width:480px;margin:0 auto}
 .screen.active{display:block}
 
 /* TABLE */
 .table-screen{text-align:center;padding-top:50px}
 .table-screen .logo{font-size:56px;margin-bottom:16px}
-.table-screen h2{color:#D4AF37;font-size:22px;margin-bottom:6px}
-.table-screen p{color:#aaa;font-size:13px;margin-bottom:30px}
-.table-input{width:100%;padding:18px;font-size:36px;text-align:center;background:#2A2A2A;border:2px solid #D4AF37;border-radius:12px;color:#D4AF37;font-weight:bold;margin-bottom:16px}
+.table-screen h2{color:var(--gold);font-size:22px;margin-bottom:6px}
+.table-screen p{color:var(--text-2);font-size:13px;margin-bottom:30px}
+.table-input{width:100%;padding:18px;font-size:36px;text-align:center;background:var(--surface-2);border:2px solid var(--gold);border-radius:12px;color:var(--gold);font-weight:bold;margin-bottom:16px}
 .couverts-compteurs{display:flex;flex-direction:column;gap:14px;margin-top:10px}
-.couverts-ligne{display:flex;align-items:center;justify-content:space-between;background:#2A2A2A;border:2px solid #333;border-radius:14px;padding:16px 18px}
+.couverts-ligne{display:flex;align-items:center;justify-content:space-between;background:var(--surface-2);border:2px solid var(--surface-3);border-radius:14px;padding:16px 18px}
 .couverts-info{display:flex;align-items:center;gap:10px}
 .couverts-emoji{font-size:26px}
-.couverts-label{font-size:16px;font-weight:bold;color:#fff}
+.couverts-label{font-size:16px;font-weight:bold;color:var(--text)}
 .couverts-controls{display:flex;align-items:center;gap:12px}
-.couverts-valeur{font-size:22px;font-weight:bold;color:#D4AF37;min-width:28px;text-align:center}
-.couverts-total{margin-top:18px;font-size:15px;color:#D4AF37;font-weight:bold;text-align:center}
+.couverts-valeur{font-size:22px;font-weight:bold;color:var(--gold);min-width:28px;text-align:center}
+.couverts-total{margin-top:18px;font-size:15px;color:var(--gold);font-weight:bold;text-align:center}
 
 /* NOTIFICATION BANDEAU */
-.notif-banner{position:fixed;top:0;left:0;right:0;z-index:9999;background:#1A7A50;color:white;padding:20px 16px;text-align:center;font-size:16px;font-weight:bold;transform:translateY(-100%);transition:transform .5s cubic-bezier(.175,.885,.32,1.275);border-bottom:3px solid #D4AF37;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+.notif-banner{position:fixed;top:0;left:0;right:0;z-index:9999;background:var(--green-deep);color:white;padding:20px 16px;text-align:center;font-size:16px;font-weight:bold;transform:translateY(-100%);transition:transform .5s cubic-bezier(.175,.885,.32,1.275);border-bottom:3px solid var(--gold);box-shadow:0 4px 20px rgba(0,0,0,.5)}
 .notif-banner.show{transform:translateY(0)}
 .notif-banner .notif-icon{font-size:28px;margin-bottom:6px;display:block}
 .notif-banner .notif-text{font-size:15px;font-weight:bold}
@@ -41,125 +89,270 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 /* CATÉGORIES */
 .cat-tabs{display:flex;overflow-x:auto;gap:8px;padding:0 0 12px;scrollbar-width:none;margin-bottom:4px}
 .cat-tabs::-webkit-scrollbar{display:none}
-.cat-tab{flex-shrink:0;padding:8px 14px;background:#2A2A2A;border:2px solid #333;border-radius:20px;font-size:12px;font-weight:bold;cursor:pointer;color:#aaa;white-space:nowrap;transition:all .2s}
-.cat-tab.active{background:#D4AF37;color:#1A1A1A;border-color:#D4AF37}
+.cat-tab{flex-shrink:0;padding:8px 14px;background:var(--surface-2);border:2px solid var(--surface-3);border-radius:20px;font-size:12px;font-weight:bold;cursor:pointer;color:var(--text-2);white-space:nowrap;transition:all .2s}
+.cat-tab.active{background:var(--gold);color:var(--ink);border-color:var(--gold)}
 
 /* TUILES ACCUEIL (façon borne) */
 .tuiles-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.tuile-cat{background:#2A2A2A;border:2px solid #333;border-radius:18px;padding:26px 10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;transition:all .15s;min-height:130px;text-align:center}
-.tuile-cat:active{background:#D4AF37;transform:scale(.96)}
-.tuile-cat:active .tuile-emoji,.tuile-cat:active .tuile-nom{color:#1A1A1A}
+.tuile-cat{background:var(--surface-2);border:2px solid var(--surface-3);border-radius:18px;padding:26px 10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;transition:all .15s;min-height:130px;text-align:center}
+.tuile-cat:active{background:var(--gold);transform:scale(.96)}
+.tuile-cat:active .tuile-emoji,.tuile-cat:active .tuile-nom{color:var(--ink)}
 .tuile-emoji{font-size:40px}
-.tuile-nom{font-size:14px;font-weight:bold;color:#fff;line-height:1.2}
+.tuile-nom{font-size:14px;font-weight:bold;color:var(--text);line-height:1.2}
 
 /* SOUS-CATÉGORIES */
-.subcat-header{color:#D4AF37;font-size:12px;font-weight:bold;padding:10px 0 6px;letter-spacing:1px;border-bottom:1px solid #333;margin-bottom:8px;margin-top:4px}
+.subcat-header{color:var(--gold);font-size:12px;font-weight:bold;padding:10px 0 6px;letter-spacing:1px;border-bottom:1px solid var(--surface-3);margin-bottom:8px;margin-top:4px}
 
 /* PRODUITS */
 .product-list{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
-.product-card{background:#2A2A2A;border:2px solid #333;border-radius:12px;padding:14px;display:flex;justify-content:space-between;align-items:center;transition:all .2s;position:relative}
+.product-card{background:var(--surface-2);border:2px solid var(--surface-3);border-radius:12px;padding:14px;display:flex;justify-content:space-between;align-items:center;transition:all .2s;position:relative}
 .product-card.disabled{opacity:.3;pointer-events:none}
 .product-card .info{flex:1}
-.product-card .nom{font-size:14px;font-weight:bold;color:#fff;margin-bottom:3px}
-.product-card .desc{font-size:11px;color:#888;line-height:1.3}
-.product-card .photo{width:52px;height:52px;border-radius:10px;object-fit:cover;flex-shrink:0;margin-right:10px;background:#1A1A1A}
-.badge-menu{display:inline-block;background:#1A3A2A;border:1px solid #1A7A50;color:#4ABA80;font-size:9px;font-weight:bold;padding:1px 6px;border-radius:10px;margin-left:6px;vertical-align:middle}
-.add-btn{background:#D4AF37;border:none;border-radius:8px;color:#1A1A1A;font-size:22px;font-weight:bold;width:38px;height:38px;cursor:pointer;flex-shrink:0;margin-left:10px;display:flex;align-items:center;justify-content:center}
-.add-btn:active{background:#C49A2F;transform:scale(.95)}
-.qty-btn{background:#D4AF37;border:none;border-radius:8px;color:#1A1A1A;font-size:20px;font-weight:bold;width:34px;height:34px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1}
-.qty-btn.qty-minus{background:#333;color:#D4AF37;border:2px solid #D4AF37}
+.product-card .nom{font-size:14px;font-weight:bold;color:var(--text);margin-bottom:3px}
+.product-card .desc{font-size:11px;color:var(--muted);line-height:1.3}
+.product-card .photo{width:52px;height:52px;border-radius:10px;object-fit:cover;flex-shrink:0;margin-right:10px;background:var(--ink)}
+.badge-menu{display:inline-block;background:var(--green-bg);border:1px solid var(--green-deep);color:var(--green);font-size:9px;font-weight:bold;padding:1px 6px;border-radius:10px;margin-left:6px;vertical-align:middle}
+.add-btn{background:var(--gold);border:none;border-radius:8px;color:var(--ink);font-size:22px;font-weight:bold;width:38px;height:38px;cursor:pointer;flex-shrink:0;margin-left:10px;display:flex;align-items:center;justify-content:center}
+.add-btn:active{background:var(--gold-lo);transform:scale(.95)}
+.qty-btn{background:var(--gold);border:none;border-radius:8px;color:var(--ink);font-size:20px;font-weight:bold;width:34px;height:34px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1}
+.qty-btn.qty-minus{background:var(--surface-3);color:var(--gold);border:2px solid var(--gold)}
 .qty-btn:active{transform:scale(.9)}
-.qty-num{color:#fff;font-size:16px;font-weight:bold;min-width:22px;text-align:center}
-.prix{color:#D4AF37;font-size:16px;font-weight:bold;text-align:right;margin-left:12px;white-space:nowrap}
-.gratuit{color:#1A7A50;font-size:13px;font-weight:bold}
+.qty-num{color:var(--text);font-size:16px;font-weight:bold;min-width:22px;text-align:center}
+.prix{color:var(--gold);font-size:16px;font-weight:bold;text-align:right;margin-left:12px;white-space:nowrap}
+.gratuit{color:var(--green-deep);font-size:13px;font-weight:bold}
 
 /* PANIER */
-.btn-recharge{position:fixed;right:14px;bottom:78px;z-index:210;background:#D4AF37;color:#111;border:none;border-radius:30px;padding:12px 18px;font-size:15px;font-weight:bold;box-shadow:0 4px 18px rgba(0,0,0,.6);cursor:pointer;display:none}
+.btn-recharge{position:fixed;right:14px;bottom:78px;z-index:210;background:var(--gold);color:var(--bg-deep);border:none;border-radius:30px;padding:12px 18px;font-size:15px;font-weight:bold;box-shadow:0 4px 18px rgba(0,0,0,.6);cursor:pointer;display:none}
 .btn-recharge.visible{display:block}
 .rc-chips{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 14px}
-.rc-chip{background:#2A2A2A;border:2px solid #333;border-radius:20px;padding:9px 14px;color:#fff;font-size:13px;cursor:pointer}
-.rc-chip.actif{border-color:#D4AF37;background:#2E2A1A;color:#D4AF37;font-weight:bold}
-.rc-titre{color:#aaa;font-size:12px;margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
-.panier-bar{position:fixed;bottom:0;left:0;right:0;background:#D4AF37;padding:12px 20px;display:none;justify-content:space-between;align-items:center;z-index:200;cursor:pointer}
+.rc-chip{background:var(--surface-2);border:2px solid var(--surface-3);border-radius:20px;padding:9px 14px;color:var(--text);font-size:13px;cursor:pointer}
+.rc-chip.actif{border-color:var(--gold);background:var(--gold-soft);color:var(--gold);font-weight:bold}
+.rc-titre{color:var(--text-2);font-size:12px;margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
+.panier-bar{position:fixed;bottom:0;left:0;right:0;background:var(--gold);padding:12px 20px;display:none;justify-content:space-between;align-items:center;z-index:200;cursor:pointer}
 .panier-bar.visible{display:flex}
-.panier-bar .panier-nb{font-size:12px;font-weight:bold;color:#1A1A1A}
-.panier-bar .panier-total{font-size:20px;font-weight:bold;color:#1A1A1A}
-.panier-bar .panier-btn{background:#1A1A1A;color:#D4AF37;border:none;padding:10px 18px;border-radius:8px;font-weight:bold;font-size:13px;cursor:pointer}
-.panier-item{background:#2A2A2A;border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.panier-bar .panier-nb{font-size:12px;font-weight:bold;color:var(--ink)}
+.panier-bar .panier-total{font-size:20px;font-weight:bold;color:var(--ink)}
+.panier-bar .panier-btn{background:var(--ink);color:var(--gold);border:none;padding:10px 18px;border-radius:8px;font-weight:bold;font-size:13px;cursor:pointer}
+.panier-item{background:var(--surface-2);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
 .panier-item .pnom{font-size:13px;font-weight:bold}
-.panier-item .pdesc{font-size:11px;color:#888}
-.panier-item .pprix{color:#D4AF37;font-weight:bold;font-size:14px}
-.del-btn{background:#C0392B;border:none;border-radius:6px;color:white;padding:4px 10px;cursor:pointer;font-size:12px;margin-left:8px}
-.panier-total-row{display:flex;justify-content:space-between;padding:14px;background:#2A2A2A;border-radius:10px;margin-top:8px;border:2px solid #D4AF37}
+.panier-item .pdesc{font-size:11px;color:var(--muted)}
+.panier-item .pprix{color:var(--gold);font-weight:bold;font-size:14px}
+.del-btn{background:var(--red);border:none;border-radius:6px;color:white;padding:4px 10px;cursor:pointer;font-size:12px;margin-left:8px}
+.panier-total-row{display:flex;justify-content:space-between;padding:14px;background:var(--surface-2);border-radius:10px;margin-top:8px;border:2px solid var(--gold)}
 
 /* CONFIRM */
 .confirm-screen{text-align:center;padding-top:30px}
 .big-emoji{font-size:64px;margin-bottom:16px}
-.steps-list{background:#2A2A2A;border-radius:12px;padding:14px;text-align:left;margin:16px 0}
-.step-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #333}
+.steps-list{background:var(--surface-2);border-radius:12px;padding:14px;text-align:left;margin:16px 0}
+.step-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--surface-3)}
 .step-item:last-child{border-bottom:none}
-.step-num{background:#D4AF37;color:#1A1A1A;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:12px;flex-shrink:0}
-.step-text{color:#ddd;font-size:13px}
-.recap-titre{color:#D4AF37;font-size:14px;font-weight:bold;margin-bottom:8px;text-align:left}
-.recap-groupe{background:#2A2A2A;border-radius:10px;padding:10px 12px;margin-bottom:8px;text-align:left}
-.recap-heure{color:#D4AF37;font-size:11px;font-weight:bold;margin-bottom:6px}
-.recap-item{display:flex;justify-content:space-between;font-size:13px;color:#ddd;padding:3px 0}
-.recap-total-row{display:flex;justify-content:space-between;background:#2A2A2A;border:2px solid #D4AF37;border-radius:10px;padding:10px 12px;font-weight:bold;color:#D4AF37;margin-top:4px;margin-bottom:16px}
+.step-num{background:var(--gold);color:var(--ink);width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:12px;flex-shrink:0}
+.step-text{color:var(--text);font-size:13px}
+.recap-titre{color:var(--gold);font-size:14px;font-weight:bold;margin-bottom:8px;text-align:left}
+.recap-groupe{background:var(--surface-2);border-radius:10px;padding:10px 12px;margin-bottom:8px;text-align:left}
+.recap-heure{color:var(--gold);font-size:11px;font-weight:bold;margin-bottom:6px}
+.recap-item{display:flex;justify-content:space-between;font-size:13px;color:var(--text);padding:3px 0}
+.recap-total-row{display:flex;justify-content:space-between;background:var(--surface-2);border:2px solid var(--gold);border-radius:10px;padding:10px 12px;font-weight:bold;color:var(--gold);margin-top:4px;margin-bottom:16px}
 
 /* ADDITION */
-.total-box{background:#D4AF37;border-radius:14px;padding:24px;margin:16px 0;text-align:center}
-.total-box .tlbl{color:#1A1A1A;font-size:13px;font-weight:bold;margin-bottom:6px}
-.total-box .tamt{color:#1A1A1A;font-size:44px;font-weight:bold}
-.commande-groupe{background:#2A2A2A;border-radius:10px;padding:12px;margin-bottom:10px}
-.commande-groupe .cmd-heure{color:#D4AF37;font-size:11px;font-weight:bold;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #333}
-.cmd-item{padding:5px 0;font-size:13px;color:#ddd;display:flex;justify-content:space-between}
+.total-box{background:var(--gold);border-radius:14px;padding:24px;margin:16px 0;text-align:center}
+.total-box .tlbl{color:var(--ink);font-size:13px;font-weight:bold;margin-bottom:6px}
+.total-box .tamt{color:var(--ink);font-size:44px;font-weight:bold}
+.commande-groupe{background:var(--surface-2);border-radius:10px;padding:12px;margin-bottom:10px}
+.commande-groupe .cmd-heure{color:var(--gold);font-size:11px;font-weight:bold;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--surface-3)}
+.cmd-item{padding:5px 0;font-size:13px;color:var(--text);display:flex;justify-content:space-between}
 
 /* MODALS */
 .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:500;display:none;align-items:flex-end;justify-content:center}
 .modal-overlay.visible{display:flex}
-.modal-box{background:#1E1E1E;border-radius:20px 20px 0 0;padding:24px 16px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto;border-top:3px solid #D4AF37}
-.modal-box h3{color:#D4AF37;font-size:18px;font-weight:bold;margin-bottom:4px;text-align:center}
-.modal-sub{color:#888;font-size:12px;text-align:center;margin-bottom:20px}
+.modal-box{background:var(--surface);border-radius:20px 20px 0 0;padding:24px 16px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto;border-top:3px solid var(--gold)}
+.modal-box h3{color:var(--gold);font-size:18px;font-weight:bold;margin-bottom:4px;text-align:center}
+.modal-sub{color:var(--muted);font-size:12px;text-align:center;margin-bottom:20px}
 .modal-list{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
-.modal-item{background:#2A2A2A;border:2px solid #333;border-radius:12px;padding:14px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:all .2s}
-.modal-item:active{border-color:#D4AF37;background:#2E2A1A}
-.modal-item .mphoto{width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0;margin-right:10px;background:#1A1A1A}
-.modal-item .mnom{font-size:14px;font-weight:bold;color:#fff}
-.modal-item .mdesc{font-size:11px;color:#888;margin-top:2px}
-.modal-item .mprix{color:#1A7A50;font-size:14px;font-weight:bold;flex-shrink:0;margin-left:10px}
-.modal-close{background:#333;border:none;color:#aaa;padding:12px;border-radius:10px;width:100%;font-size:13px;cursor:pointer}
+.modal-item{background:var(--surface-2);border:2px solid var(--surface-3);border-radius:12px;padding:14px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:all .2s}
+.modal-item:active{border-color:var(--gold);background:var(--gold-soft)}
+.modal-item .mphoto{width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0;margin-right:10px;background:var(--ink)}
+.modal-item .mnom{font-size:14px;font-weight:bold;color:var(--text)}
+.modal-item .mdesc{font-size:11px;color:var(--muted);margin-top:2px}
+.modal-item .mprix{color:var(--green-deep);font-size:14px;font-weight:bold;flex-shrink:0;margin-left:10px}
+.modal-close{background:var(--surface-3);border:none;color:var(--text-2);padding:12px;border-radius:10px;width:100%;font-size:13px;cursor:pointer}
 
 /* UPSELL */
 .upsell-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.9);z-index:600;display:none;align-items:flex-end;justify-content:center}
 .upsell-overlay.visible{display:flex}
-.upsell-box{background:#1E1E1E;border-radius:20px 20px 0 0;padding:24px 16px;width:100%;max-width:480px;border-top:3px solid #D4AF37;text-align:center}
+.upsell-box{background:var(--surface);border-radius:20px 20px 0 0;padding:24px 16px;width:100%;max-width:480px;border-top:3px solid var(--gold);text-align:center}
 .upsell-box .upsell-emoji{font-size:48px;margin-bottom:12px}
-.upsell-box h3{color:#D4AF37;font-size:20px;font-weight:bold;margin-bottom:6px}
-.upsell-box p{color:#aaa;font-size:13px;margin-bottom:20px;line-height:1.5}
+.upsell-box h3{color:var(--gold);font-size:20px;font-weight:bold;margin-bottom:6px}
+.upsell-box p{color:var(--text-2);font-size:13px;margin-bottom:20px;line-height:1.5}
 .upsell-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;text-align:left}
-.upsell-item{background:#2A2A2A;border:2px solid #333;border-radius:10px;padding:12px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
-.upsell-item .photo{width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0;margin-right:10px;background:#1A1A1A}
-.upsell-item:active{border-color:#D4AF37}
-.upsell-item .unom{font-size:13px;font-weight:bold;color:#fff}
-.upsell-item .udesc{font-size:11px;color:#888}
-.upsell-item .uprix{color:#D4AF37;font-weight:bold;font-size:14px;flex-shrink:0;margin-left:10px}
-.upsell-non{background:#333;border:none;color:#aaa;padding:12px;border-radius:10px;width:100%;font-size:13px;cursor:pointer}
+.upsell-item{background:var(--surface-2);border:2px solid var(--surface-3);border-radius:10px;padding:12px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.upsell-item .photo{width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0;margin-right:10px;background:var(--ink)}
+.upsell-item:active{border-color:var(--gold)}
+.upsell-item .unom{font-size:13px;font-weight:bold;color:var(--text)}
+.upsell-item .udesc{font-size:11px;color:var(--muted)}
+.upsell-item .uprix{color:var(--gold);font-weight:bold;font-size:14px;flex-shrink:0;margin-left:10px}
+.upsell-non{background:var(--surface-3);border:none;color:var(--text-2);padding:12px;border-radius:10px;width:100%;font-size:13px;cursor:pointer}
 
 /* BTNS */
 .btn{width:100%;padding:15px;border:none;border-radius:12px;font-size:15px;font-weight:bold;cursor:pointer;margin-bottom:10px;transition:all .2s}
-.btn-or{background:#D4AF37;color:#1A1A1A}
-.btn-outline{background:transparent;border:2px solid #D4AF37;color:#D4AF37}
-.btn-rouge{background:#C0392B;color:white}
-.btn-gris{background:#333;color:#aaa}
-.info-banner{background:#1A3A2A;border:1px solid #1A7A50;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#4ABA80}
-.sec-title{color:#D4AF37;font-size:16px;font-weight:bold;margin-bottom:4px}
-.sec-sub{color:#888;font-size:12px;margin-bottom:14px}
+.btn-or{background:var(--gold);color:var(--ink)}
+.btn-outline{background:transparent;border:2px solid var(--gold);color:var(--gold)}
+.btn-rouge{background:var(--red);color:white}
+.btn-gris{background:var(--surface-3);color:var(--text-2)}
+.info-banner{background:var(--green-bg);border:1px solid var(--green-deep);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--green)}
+.sec-title{color:var(--gold);font-size:16px;font-weight:bold;margin-bottom:4px}
+.sec-sub{color:var(--muted);font-size:12px;margin-bottom:14px}
 .loader{display:none;text-align:center;padding:50px}
-.spinner{width:40px;height:40px;border:4px solid #333;border-top:4px solid #D4AF37;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 14px}
+.spinner{width:40px;height:40px;border:4px solid var(--surface-3);border-top:4px solid var(--gold);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 14px}
 @keyframes spin{to{transform:rotate(360deg)}}
-.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#D4AF37;color:#1A1A1A;padding:10px 22px;border-radius:30px;font-weight:bold;font-size:13px;z-index:998;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--gold);color:var(--ink);padding:10px 22px;border-radius:30px;font-weight:bold;font-size:13px;z-index:998;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
-.version{text-align:center;padding:16px;color:#333;font-size:10px}
+.version{text-align:center;padding:16px;color:var(--surface-3);font-size:10px}
+
+/* ==========================================================================
+   LE MENU — Page client · thème sombre premium (couche de finition, 01/11/2026)
+   ========================================================================== */
+body{
+  font-family:var(--font);-webkit-font-smoothing:antialiased;color:var(--text);
+  background:
+    radial-gradient(520px 340px at 50% -80px,rgba(226,190,106,.12),transparent 70%),
+    radial-gradient(500px 400px at 110% 30%,rgba(120,130,255,.05),transparent 60%),
+    var(--bg);
+  background-attachment:fixed;
+}
+input,select,button,textarea{font-family:inherit}
+
+/* En-tête */
+.header{
+  padding:12px 16px 12px;background:rgba(10,12,17,.78);border-bottom:1px solid var(--line);
+  backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);
+}
+.header::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent,var(--gold-ring),transparent);opacity:.7}
+.header h1{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  font-family:var(--font-display);font-weight:400;font-size:26px;letter-spacing:.2px;color:var(--text);line-height:1;
+}
+.header h1 em{color:var(--gold);font-style:italic}
+.brand-mark{
+  width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex-shrink:0;
+  background:var(--grad-gold);color:var(--ink);font-family:var(--font-display);font-style:italic;font-size:19px;
+  box-shadow:0 6px 16px -6px rgba(226,190,106,.6),inset 0 1px 0 rgba(255,255,255,.5);
+}
+.build-mini{font-size:9.5px;color:var(--faint);letter-spacing:.4px;margin-top:4px;font-variant-numeric:tabular-nums}
+.header-badges{margin-top:8px}
+.table-badge{background:var(--grad-gold);color:var(--ink);font-weight:700;padding:4px 12px;border-radius:999px;box-shadow:0 4px 14px -6px rgba(226,190,106,.7)}
+.total-badge{background:var(--gold-soft);border:1px solid rgba(226,190,106,.35);color:var(--gold-hi);font-weight:700;padding:4px 12px;border-radius:999px}
+.screen{padding:20px 16px}
+
+/* Écran d'accueil table */
+.table-screen h2,.sec-title{font-family:var(--font-display);font-weight:400;color:var(--text);letter-spacing:.2px}
+.table-screen h2{font-size:30px}
+.sec-title{font-size:26px;margin-bottom:6px}
+.sec-sub{color:var(--muted);font-size:13px}
+.table-input{background:var(--bg-deep);border:1px solid rgba(226,190,106,.4);border-radius:16px;color:var(--gold-hi)}
+.table-input:focus{outline:none;box-shadow:0 0 0 4px var(--gold-soft)}
+.couverts-ligne{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+.couverts-valeur{color:var(--gold-hi)}
+
+/* Bandeau notification */
+.notif-banner{
+  background:linear-gradient(135deg,#21A86C,#167A4E);border-bottom:1px solid rgba(255,255,255,.15);
+  box-shadow:0 14px 40px -10px rgba(0,0,0,.7);
+}
+
+/* Catégories */
+.cat-tab{padding:9px 15px;background:var(--surface);border:1px solid var(--border);border-radius:999px;font-weight:600;color:var(--text-2)}
+.cat-tab.active{background:var(--grad-gold);color:var(--ink);border-color:transparent;box-shadow:0 6px 18px -8px rgba(226,190,106,.7)}
+
+/* Tuiles d'accueil */
+.tuiles-grid{gap:12px}
+.tuile-cat{
+  position:relative;overflow:hidden;border-radius:20px;border:1px solid var(--line);min-height:136px;
+  background:radial-gradient(160px 100px at 50% 0%,rgba(226,190,106,.10),transparent 70%),linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01)),var(--surface);
+  box-shadow:var(--shadow);
+}
+.tuile-cat:active{background:var(--grad-gold);border-color:transparent}
+.tuile-cat:active .tuile-emoji,.tuile-cat:active .tuile-nom{color:var(--ink)}
+.tuile-emoji{font-size:40px;filter:drop-shadow(0 6px 10px rgba(0,0,0,.45))}
+.tuile-nom{font-weight:700;font-size:14.5px;color:var(--text)}
+
+/* Produits */
+.subcat-header{color:var(--gold);font-size:10.5px;letter-spacing:1.6px;text-transform:uppercase;border-bottom:1px solid var(--line);padding:14px 0 8px}
+.product-card{
+  border-radius:16px;border:1px solid var(--line);padding:14px;
+  background:linear-gradient(180deg,rgba(255,255,255,.028),rgba(255,255,255,.008)),var(--surface);box-shadow:var(--shadow);
+}
+.product-card .nom{font-weight:700;font-size:14.5px;color:var(--text)}
+.product-card .desc{color:var(--muted);font-size:12px;line-height:1.4}
+.product-card .photo{width:58px;height:58px;border-radius:12px;background:var(--bg-deep);box-shadow:0 6px 14px -6px rgba(0,0,0,.6)}
+.badge-menu{background:var(--green-bg);border:1px solid rgba(63,209,138,.3);color:var(--green);border-radius:999px}
+.prix{color:var(--gold-hi);font-variant-numeric:tabular-nums}
+.gratuit{color:var(--green)}
+.add-btn,.qty-btn{
+  background:var(--grad-gold);color:var(--ink);border-radius:12px;
+  box-shadow:0 6px 16px -8px rgba(226,190,106,.8),inset 0 1px 0 rgba(255,255,255,.45);
+}
+.add-btn:active{background:var(--gold-lo)}
+.qty-btn.qty-minus{background:transparent;color:var(--gold-hi);border:1px solid rgba(226,190,106,.45);box-shadow:none}
+.qty-num{font-variant-numeric:tabular-nums}
+
+/* Panier */
+.panier-bar{
+  left:12px;right:12px;bottom:12px;border-radius:18px;padding:12px 14px 12px 18px;
+  background:var(--grad-gold);box-shadow:0 18px 40px -14px rgba(226,190,106,.65),0 10px 30px -10px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.45);
+}
+.panier-bar .panier-nb,.panier-bar .panier-total{color:var(--ink)}
+.panier-bar .panier-total{font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+.panier-bar .panier-btn{background:var(--ink);color:var(--gold-hi);border-radius:12px;padding:11px 16px}
+.btn-recharge{bottom:86px;background:var(--grad-gold);color:var(--ink);border-radius:999px;box-shadow:0 12px 30px -10px rgba(0,0,0,.8),0 8px 20px -10px rgba(226,190,106,.7)}
+.rc-chip{background:var(--surface);border:1px solid var(--border);border-radius:999px}
+.rc-chip.actif{border-color:rgba(226,190,106,.6);background:var(--gold-soft);color:var(--gold-hi)}
+.panier-item,.recap-groupe,.commande-groupe,.steps-list{background:var(--surface);border:1px solid var(--line);border-radius:14px}
+.panier-item .pdesc{color:var(--muted)}
+.panier-item .pprix,.recap-item span:last-child{font-variant-numeric:tabular-nums}
+.del-btn{background:var(--red-bg);color:var(--red);border:1px solid rgba(240,117,117,.3);border-radius:8px}
+.panier-total-row,.recap-total-row{background:var(--gold-soft);border:1px solid rgba(226,190,106,.4);border-radius:14px}
+.step-item{border-bottom:1px solid var(--line)}
+.step-num{background:var(--grad-gold);color:var(--ink)}
+.commande-groupe .cmd-heure{border-bottom:1px solid var(--line)}
+
+/* Addition */
+.total-box{
+  border-radius:20px;background:var(--grad-gold);
+  box-shadow:0 20px 44px -16px rgba(226,190,106,.6),inset 0 1px 0 rgba(255,255,255,.5);
+}
+.total-box .tlbl{color:var(--ink);letter-spacing:1px;text-transform:uppercase;font-size:11.5px}
+.total-box .tamt{color:var(--ink);font-family:var(--font-display);font-weight:400;font-size:54px;font-variant-numeric:tabular-nums}
+
+/* Fenêtres du bas */
+.modal-overlay,.upsell-overlay{background:rgba(4,5,8,.75);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.modal-box,.upsell-box{
+  border-radius:24px 24px 0 0;border-top:1px solid rgba(226,190,106,.35);padding:14px 16px 24px;
+  background:linear-gradient(180deg,rgba(226,190,106,.06),transparent 120px),var(--surface);
+  box-shadow:0 -20px 60px -20px rgba(0,0,0,.8);animation:monte .3s cubic-bezier(.2,.9,.3,1);
+}
+.modal-box::before,.upsell-box::before{content:"";display:block;width:40px;height:4px;border-radius:4px;background:var(--line-strong);margin:0 auto 16px}
+@keyframes monte{from{transform:translateY(30px);opacity:.4}to{transform:none;opacity:1}}
+.modal-box h3,.upsell-box h3{color:var(--text);font-family:var(--font-display);font-weight:400;font-size:26px}
+.modal-item,.upsell-item{background:var(--surface-2);border:1px solid var(--line);border-radius:14px}
+.modal-item:active,.upsell-item:active{border-color:rgba(226,190,106,.6);background:var(--gold-soft)}
+.modal-item .mprix{color:var(--green)}
+.modal-close,.upsell-non,.btn-gris{background:var(--surface-2);border:1px solid var(--border);color:var(--text-2);border-radius:12px}
+
+/* Boutons */
+.btn{border-radius:14px;font-weight:700;padding:15px}
+.btn-or{background:var(--grad-gold);color:var(--ink);box-shadow:0 12px 26px -12px rgba(226,190,106,.8),inset 0 1px 0 rgba(255,255,255,.45)}
+.btn-outline{border:1px solid rgba(226,190,106,.55);color:var(--gold-hi)}
+.btn-rouge{background:linear-gradient(135deg,#F07575,#D9434A)}
+.info-banner{background:var(--green-bg);border:1px solid rgba(63,209,138,.25);border-radius:12px;color:var(--text-2)}
+.spinner{border:3px solid var(--surface-3);border-top:3px solid var(--gold)}
+.toast{
+  background:rgba(22,26,35,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:var(--text);
+  border:1px solid rgba(226,190,106,.35);font-weight:600;box-shadow:0 18px 40px -12px rgba(0,0,0,.7);
+}
+.version{color:var(--faint);font-size:10.5px}
+body{padding-bottom:110px}
+body:has(#bandeauModeTest) .header{padding-top:30px}
 </style>
 </head>
 <body>
@@ -172,7 +365,8 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 </div>
 
 <div class="header">
-  <h1>🐚 MOULE & SMILE</h1>
+  <h1><span class="brand-mark">M</span>Moule <em>&amp;</em> Smile</h1>
+  <div class="build-mini">v.01/11/2026 18:20</div>
   <div class="header-badges">
     <div id="tableBadge" style="display:none;cursor:pointer" class="table-badge" onclick="ouvrirMaTable()" title="Voir ma table">Table <span id="tableNumHeader"></span></div>
     <div id="pointsBadgeHeader" style="display:none" class="total-badge">🍽️ …</div>
@@ -193,7 +387,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 <!-- TABLE -->
 <!-- BLOCAGE JETON (accès protégé) -->
 <!-- FIN DE REPAS : affiché quand l'addition est encaissée (le jeton de la table se ferme) -->
-<div class="modal-overlay" id="screenFinRepas" style="z-index:950;background:#1A1A1A">
+<div class="modal-overlay" id="screenFinRepas" style="z-index:950;background:var(--ink)">
   <div class="modal-box" style="text-align:center">
     <img id="logoFinRepas" alt="Moule &amp; Smile" style="width:150px;max-width:60%;height:auto;display:block;margin:0 auto 10px">
     <h3 style="margin-bottom:8px">🙏 Merci de votre visite !</h3>
@@ -223,8 +417,8 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
     <input type="number" class="table-input" id="tableInput" placeholder="N° de table" min="1" max="150">
     <button class="btn btn-or" onclick="allerVersCouverts()">Commencer →</button>
     <button class="btn btn-outline" onclick="retrouverCommande()" style="margin-top:4px">🔍 Retrouver ma commande en cours</button>
-    <div id="bannerIOSAjout" style="display:none;background:#2A2A2A;border:1px solid #D4AF37;border-radius:12px;padding:14px;margin-top:20px;text-align:left;font-size:13px;color:#ccc">
-      📲 <strong style="color:#D4AF37">Astuce iPhone :</strong> pour être notifié dès qu'un serveur s'occupe de votre commande, ajoutez cette page à votre écran d'accueil : appuyez sur <strong>Partager</strong> (icône carrée avec flèche) puis <strong>"Sur l'écran d'accueil"</strong>.
+    <div id="bannerIOSAjout" style="display:none;background:var(--surface-2);border:1px solid var(--gold);border-radius:12px;padding:14px;margin-top:20px;text-align:left;font-size:13px;color:var(--text-2)">
+      📲 <strong style="color:var(--gold)">Astuce iPhone :</strong> pour être notifié dès qu'un serveur s'occupe de votre commande, ajoutez cette page à votre écran d'accueil : appuyez sur <strong>Partager</strong> (icône carrée avec flèche) puis <strong>"Sur l'écran d'accueil"</strong>.
     </div>
   </div>
 </div>
@@ -266,7 +460,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 
 <!-- ACCUEIL — GROSSES TUILES CATÉGORIES (façon borne) -->
 <div class="screen" id="screenAccueil">
-  <div class="sec-title">Que souhaitez-vous commander ?</div>
+  <div class="sec-title">Que souhaitez-vous commander&nbsp;?</div>
   <div class="sec-sub">Choisissez une catégorie</div>
   <div class="tuiles-grid" id="tuilesGrid"></div>
   <button class="btn btn-outline" onclick="appelerServeur()" style="margin-top:20px">🙋 Appeler un serveur</button>
@@ -302,14 +496,14 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 </div>
 
 <!-- LOADER -->
-<div class="loader" id="loader"><div class="spinner"></div><p style="color:#aaa">Envoi...</p></div>
+<div class="loader" id="loader"><div class="spinner"></div><p style="color:var(--text-2)">Envoi...</p></div>
 
 <!-- CONFIRMATION -->
 <div class="screen" id="screenConfirm">
   <div class="confirm-screen">
     <div class="big-emoji">✅</div>
-    <h2 style="color:#D4AF37;font-size:22px;margin-bottom:8px">Commande envoyée !</h2>
-    <p style="color:#aaa;font-size:13px;margin-bottom:16px">Table <strong id="confirmTable" style="color:#D4AF37"></strong></p>
+    <h2 style="color:var(--gold);font-size:22px;margin-bottom:8px">Commande envoyée !</h2>
+    <p style="color:var(--text-2);font-size:13px;margin-bottom:16px">Table <strong id="confirmTable" style="color:var(--gold)"></strong></p>
     <div class="steps-list">
       <div class="step-item"><div class="step-num">1</div><div class="step-text">Un serveur prend en charge votre commande</div></div>
       <div class="step-item"><div class="step-num">2</div><div class="step-text">Pour les moules → passage self-service : Moules → Sauce → Frites</div></div>
@@ -356,10 +550,10 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
     <div style="font-size:48px;margin-bottom:12px">👧</div>
     <h3 style="margin-bottom:8px">Confirmation enfant gratuit</h3>
     <div class="modal-sub" style="margin-bottom:20px">
-      L'offre enfant gratuit est réservée aux enfants de <strong style="color:#D4AF37">0 à 5 ans révolus</strong>.<br>
+      L'offre enfant gratuit est réservée aux enfants de <strong style="color:var(--gold)">0 à 5 ans révolus</strong>.<br>
       À partir de 6 ans, le tarif enfant/ado s'applique (15,90 €).
     </div>
-    <div style="background:#1A3A2A;border:1px solid #1A7A50;border-radius:10px;padding:14px;margin-bottom:20px;font-size:13px;color:#4ABA80">
+    <div style="background:var(--green-bg);border:1px solid var(--green-deep);border-radius:10px;padding:14px;margin-bottom:20px;font-size:13px;color:var(--green)">
       ✋ En validant, vous confirmez que l'enfant<br>a <strong>5 ans ou moins</strong>.
     </div>
     <button class="btn btn-or" onclick="confirmerEnfantGratuit()" style="margin-bottom:8px">✅ Oui, l'enfant a 5 ans ou moins</button>
@@ -391,9 +585,9 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 <div class="modal-overlay" id="modalRelanceBoisson" style="z-index:650">
   <div class="modal-box">
     <h3>On remet ça ? 🍻</h3>
-    <p style="text-align:center;color:#aaa;font-size:12px;margin-bottom:12px">Touchez + pour reprendre la même boisson, servie à table</p>
+    <p style="text-align:center;color:var(--text-2);font-size:12px;margin-bottom:12px">Touchez + pour reprendre la même boisson, servie à table</p>
     <div class="modal-list" id="relanceBoissonList"></div>
-    <button id="relanceBoissonValider" onclick="validerRelanceBoisson()" style="width:100%;margin:14px 0 8px;padding:14px;border:none;border-radius:12px;background:#D4AF37;color:#111;font-size:15px;font-weight:bold;cursor:pointer" disabled>Commander</button>
+    <button id="relanceBoissonValider" onclick="validerRelanceBoisson()" style="width:100%;margin:14px 0 8px;padding:14px;border:none;border-radius:12px;background:var(--gold);color:var(--bg-deep);font-size:15px;font-weight:bold;cursor:pointer" disabled>Commander</button>
     <button class="modal-close" onclick="fermerRelanceBoisson()">Non merci</button>
   </div>
 </div>
@@ -403,9 +597,9 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 <div class="modal-overlay" id="modalRecharge" style="z-index:660">
   <div class="modal-box">
     <h3>🔁 On vous ressert !</h3>
-    <p style="text-align:center;color:#aaa;font-size:12px;margin-bottom:10px" id="rcInfo"></p>
+    <p style="text-align:center;color:var(--text-2);font-size:12px;margin-bottom:10px" id="rcInfo"></p>
     <div id="rcContenu"></div>
-    <button id="rcValider" onclick="validerRecharge()" style="width:100%;margin:10px 0 8px;padding:14px;border:none;border-radius:12px;background:#D4AF37;color:#111;font-size:15px;font-weight:bold;cursor:pointer">Envoyer en cuisine</button>
+    <button id="rcValider" onclick="validerRecharge()" style="width:100%;margin:10px 0 8px;padding:14px;border:none;border-radius:12px;background:var(--gold);color:var(--bg-deep);font-size:15px;font-weight:bold;cursor:pointer">Envoyer en cuisine</button>
     <button class="modal-close" onclick="fermerRecharge()">Annuler</button>
   </div>
 </div>
@@ -413,7 +607,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 <!-- MA TABLE : panier en cours + commandes déjà envoyées (bouton du haut « Ma commande ») -->
 <div class="modal-overlay" id="modalMaTable" style="z-index:640">
   <div class="modal-box">
-    <h3>🧾 Ma table <span id="maTableNum" style="color:#fff"></span></h3>
+    <h3>🧾 Ma table <span id="maTableNum" style="color:var(--text)"></span></h3>
     <div id="maTablePanier"></div>
     <div id="maTableRecap"></div>
     <button class="btn btn-or" id="maTableBtnPanier" onclick="fermerMaTable();showScreen('screenPanier');renderPanierItems()" style="margin-top:12px;display:none">🛒 Voir mon panier et l'envoyer</button>
@@ -431,7 +625,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
     <div class="modal-sub">Un équipier peut tout apporter en même temps — boissons et contenants pour vos moules</div>
     <button class="btn btn-or" onclick="allerVersFormulesDepuisPopup()" style="margin-bottom:8px">🐚 Voir les formules</button>
     <button class="modal-close" onclick="ignorerSuggestionFormule()">Non merci, valider quand même</button>
-    <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:12px;color:#888;cursor:pointer">
+    <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:12px;color:var(--muted);cursor:pointer">
       <input type="checkbox" id="checkboxJusteBoire" style="width:16px;height:16px;flex-shrink:0">
       C'est juste pour boire, ne plus me demander
     </label>
@@ -447,7 +641,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
-<div class="version">v.31/10/2026 19:10 — Moule & Smile</div>
+<div class="version">v.01/11/2026 18:20 — Moule & Smile</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -1077,7 +1271,7 @@ function renderProduits(catId,filtreSubcat){
   const container=document.getElementById('productList');
   let produits=(cat.produits||[]);
   if(filtreSubcat) produits=produits.filter(p=>p.subcat===filtreSubcat);
-  if(!produits.length){container.innerHTML='<div style="text-align:center;color:#888;padding:30px">Aucun produit disponible</div>';return;}
+  if(!produits.length){container.innerHTML='<div style="text-align:center;color:var(--muted);padding:30px">Aucun produit disponible</div>';return;}
 
   const compteurActif=c.compteurActif!==false; // réglage global piloté par Excel/admin, actif par défaut
   const catsConsultation=c.categoriesConsultationSeule||{};
@@ -1094,7 +1288,7 @@ function renderProduits(catId,filtreSubcat){
       lastSubcat=p.subcat;
     }
     const prixDisplay=modeEmploye
-      ?`<span class="prix" style="color:#C89EDB">🍽️ ${p.points||0} pt</span>`
+      ?`<span class="prix" style="color:var(--violet-hi)">🍽️ ${p.points||0} pt</span>`
       :(p.prix===0?'<span class="gratuit">Inclus</span>':`<span class="prix">${p.prix.toFixed(2).replace('.',',')} €</span>`);
     const qte=qteDansPanier(p.id);
     let compteurHtml;
@@ -1270,7 +1464,7 @@ function ouvrirProchainePopupOption(uidItem,etapes,index,source){
   document.getElementById('modalOptionList').innerHTML=options.map(o=>`
     <div class="modal-item" onclick="choisirOption('${o.id}','${esc(o.nom)}',${o.supplement||0},${o.points||0})">
       <div><div class="mnom">${o.nom}</div></div>
-      ${modeEmploye?(o.points>0?`<div class="mprix" style="color:#C89EDB">+${o.points} pt</div>`:''):(o.supplement>0?`<div class="mprix">+${o.supplement.toFixed(2).replace('.',',')} €</div>`:'')}
+      ${modeEmploye?(o.points>0?`<div class="mprix" style="color:var(--violet-hi)">+${o.points} pt</div>`:''):(o.supplement>0?`<div class="mprix">+${o.supplement.toFixed(2).replace('.',',')} €</div>`:'')}
     </div>`).join('');
   document.getElementById('modalOption').classList.add('visible');
 }
@@ -1412,7 +1606,7 @@ function renderPanierItems(){
   document.getElementById('panierTable').textContent=tableNum;
   document.getElementById('btnCommander').style.display=panier.length?'block':'none';
   if(!panier.length){
-    container.innerHTML='<div style="text-align:center;color:#888;padding:30px">Panier vide<br><br><button class="btn btn-outline" onclick="showScreen(\'screenCarte\')" style="width:auto;padding:10px 20px">← Voir la carte</button></div>';
+    container.innerHTML='<div style="text-align:center;color:var(--muted);padding:30px">Panier vide<br><br><button class="btn btn-outline" onclick="showScreen(\'screenCarte\')" style="width:auto;padding:10px 20px">← Voir la carte</button></div>';
     return;
   }
   const total=panier.reduce((s,p)=>s+p.prix,0);
@@ -1426,7 +1620,7 @@ function renderPanierItems(){
     </div>`).join('')+`
     <div class="panier-total-row">
       <span style="font-size:15px;font-weight:bold">TOTAL</span>
-      <span style="font-size:22px;font-weight:bold;color:#D4AF37">${total.toFixed(2).replace('.',',')} €</span>
+      <span style="font-size:22px;font-weight:bold;color:var(--gold)">${total.toFixed(2).replace('.',',')} €</span>
     </div>`;
 }
 
@@ -1580,7 +1774,7 @@ function renderUpsellList(){
   if(familleUpsellActive){
     const produits=(familleUpsellActive.produits||[]).filter(p=>p.actif);
     container.innerHTML=`
-      <div class="upsell-retour" onclick="retourTuilesUpsell()" style="cursor:pointer;color:#D4AF37;font-size:13px;margin-bottom:8px">← Retour</div>
+      <div class="upsell-retour" onclick="retourTuilesUpsell()" style="cursor:pointer;color:var(--gold);font-size:13px;margin-bottom:8px">← Retour</div>
       ${produits.map(p=>{
         const prix=p.prix!=null?p.prix:0;
         const qte=qteAvantAddition(p.id);
@@ -1604,7 +1798,7 @@ function renderUpsellList(){
     const emoji=(cat.produits||[]).find(p=>p.emoji)?.emoji||'🍽️';
     return `<div class="upsell-item" style="cursor:pointer" onclick="ouvrirFamilleUpsell('${cat.id}')">
       <div><div class="unom">${emoji} ${cat.nom}</div></div>
-      <div style="color:#D4AF37;font-size:20px">›</div>
+      <div style="color:var(--gold);font-size:20px">›</div>
     </div>`;
   }).join('');
 
@@ -1761,9 +1955,9 @@ async function retrouverCommande(){
             ${(cmd.items||[]).map(item=>`
               <div class="cmd-item">
                 <span>${item.nom}</span>
-                <span style="color:#D4AF37;font-weight:bold">${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span>
+                <span style="color:var(--gold);font-weight:bold">${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span>
               </div>`).join('')}
-            <div style="text-align:right;color:#D4AF37;font-size:12px;margin-top:6px;padding-top:6px;border-top:1px solid #333">Sous-total : ${(cmd.total||0).toFixed(2).replace('.',',')} €</div>
+            <div style="text-align:right;color:var(--gold);font-size:12px;margin-top:6px;padding-top:6px;border-top:1px solid var(--surface-3)">Sous-total : ${(cmd.total||0).toFixed(2).replace('.',',')} €</div>
           </div>`).join('');
         document.getElementById('additionTable').textContent=tableNum;
         document.getElementById('commandesDetail').innerHTML=html;
@@ -1788,9 +1982,9 @@ async function retrouverCommande(){
         ${(cmd.items||[]).map(item=>`
           <div class="cmd-item">
             <span>${item.nom}</span>
-            <span style="color:#D4AF37;font-weight:bold">${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span>
+            <span style="color:var(--gold);font-weight:bold">${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span>
           </div>`).join('')}
-        <div style="text-align:right;color:#D4AF37;font-size:12px;margin-top:6px;padding-top:6px;border-top:1px solid #333">Sous-total : ${(cmd.total||0).toFixed(2).replace('.',',')} €</div>
+        <div style="text-align:right;color:var(--gold);font-size:12px;margin-top:6px;padding-top:6px;border-top:1px solid var(--surface-3)">Sous-total : ${(cmd.total||0).toFixed(2).replace('.',',')} €</div>
       </div>`).join('');
     document.getElementById('additionTable').textContent=tableNum;
     document.getElementById('commandesDetail').innerHTML=html;
@@ -1861,13 +2055,13 @@ async function demanderAddition(){
         ${(cmd.items||[]).map(item=>`
           <div class="cmd-item">
             <span>${item.nom}</span>
-            <span style="color:#D4AF37;font-weight:bold">${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span>
+            <span style="color:var(--gold);font-weight:bold">${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span>
           </div>`).join('')}
-        <div style="text-align:right;color:#D4AF37;font-size:12px;margin-top:6px;padding-top:6px;border-top:1px solid #333">Sous-total : ${(cmd.total||0).toFixed(2).replace('.',',')} €</div>
+        <div style="text-align:right;color:var(--gold);font-size:12px;margin-top:6px;padding-top:6px;border-top:1px solid var(--surface-3)">Sous-total : ${(cmd.total||0).toFixed(2).replace('.',',')} €</div>
       </div>`;
     });
 
-    if(!html) html='<div style="color:#888;text-align:center;padding:20px">Aucune commande enregistrée</div>';
+    if(!html) html='<div style="color:var(--muted);text-align:center;padding:20px">Aucune commande enregistrée</div>';
     document.getElementById('commandesDetail').innerHTML=html;
     document.getElementById('totalAmount').textContent=total.toFixed(2).replace('.',',')+' €';
 
@@ -1946,11 +2140,11 @@ function ouvrirMaTable(){
   const pz=document.getElementById('maTablePanier');
   if(panier.length){
     const tot=panier.reduce((a,p)=>a+p.prix,0);
-    pz.innerHTML='<div class="recap-titre">🛒 Pas encore envoyé</div><div class="recap-groupe">'+panier.map(p=>`<div class="recap-item"><span>${p.nom}</span><span>${p.prix===0?'Inclus':fmt(p.prix)}</span></div>`).join('')+`<div class="recap-item" style="font-weight:bold;color:#D4AF37"><span>Panier</span><span>${fmt(tot)}</span></div></div>`;
+    pz.innerHTML='<div class="recap-titre">🛒 Pas encore envoyé</div><div class="recap-groupe">'+panier.map(p=>`<div class="recap-item"><span>${p.nom}</span><span>${p.prix===0?'Inclus':fmt(p.prix)}</span></div>`).join('')+`<div class="recap-item" style="font-weight:bold;color:var(--gold)"><span>Panier</span><span>${fmt(tot)}</span></div></div>`;
   } else pz.innerHTML='';
   document.getElementById('maTableBtnPanier').style.display=panier.length?'block':'none';
   renderRecapCommandesEnvoyees('maTableRecap');
-  if(!panier.length&&!mesCommandesEnvoyees.length) document.getElementById('maTableRecap').innerHTML='<div style="color:#888;text-align:center;padding:14px">Rien de commandé pour l\'instant</div>';
+  if(!panier.length&&!mesCommandesEnvoyees.length) document.getElementById('maTableRecap').innerHTML='<div style="color:var(--muted);text-align:center;padding:14px">Rien de commandé pour l\'instant</div>';
   document.getElementById('modalMaTable').classList.add('visible');
 }
 function fermerMaTable(){ document.getElementById('modalMaTable').classList.remove('visible'); }
@@ -2033,7 +2227,7 @@ function renderRecharge(){
   if(dispo>1){
     h+=`<div class="rc-titre">Combien de cocottes ?</div><div style="display:flex;align-items:center;gap:12px;margin:8px 0 6px">
       <button class="qty-btn qty-minus" onclick="rcQte(-1)">−</button><span class="qty-num" style="font-size:18px">${rcEtat.qte}</span><button class="qty-btn qty-plus" onclick="rcQte(1)">+</button>
-      <span style="color:#888;font-size:12px">max ${dispo} (1 par personne)</span></div>`;
+      <span style="color:var(--muted);font-size:12px">max ${dispo} (1 par personne)</span></div>`;
   }
   document.getElementById('rcContenu').innerHTML=h;
   document.getElementById('rcInfo').textContent='Choisissez, on prépare, vous venez la chercher au comptoir quand elle est prête.';
@@ -2166,9 +2360,9 @@ function renderRelanceBoisson(){
     const it=l.item;
     return `<div class="modal-item" style="cursor:default">
       <div style="min-width:0">
-        <div class="mnom">${it.nom}${l.qteInit>1?` <span style="color:#888;font-weight:normal">(×${l.qteInit} la 1re fois)</span>`:''}</div>
+        <div class="mnom">${it.nom}${l.qteInit>1?` <span style="color:var(--muted);font-weight:normal">(×${l.qteInit} la 1re fois)</span>`:''}</div>
         ${it.choix?`<div class="mdesc">${it.choix}</div>`:''}
-        <div class="mdesc" style="color:#D4AF37">${fmt(it.prix)}</div>
+        <div class="mdesc" style="color:var(--gold)">${fmt(it.prix)}</div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
         ${l.qte>0?`<button class="qty-btn qty-minus" onclick="changerQteRelance(${i},-1)">−</button><span class="qty-num">${l.qte}</span>`:''}

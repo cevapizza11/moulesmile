@@ -4,61 +4,109 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Moule & Smile — Caisse</title>
+<meta name="theme-color" content="#0A0C11">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/png" href="icon-caisse.png">
 <link rel="apple-touch-icon" href="icon-caisse-180.png">
 <style>
+:root{
+  --bg:#0A0C11;
+  --bg-deep:#06070A;
+  --surface:#11141B;
+  --surface-2:#161A23;
+  --surface-3:#1D222D;
+  --border:#262C39;
+  --line:rgba(255,255,255,.06);
+  --line-strong:rgba(255,255,255,.11);
+  --text:#EDEEF2;
+  --text-2:#B3B8C6;
+  --muted:#868C9C;
+  --faint:#5A6070;
+  --gold:#E2BE6A;
+  --gold-hi:#F3DCA0;
+  --gold-lo:#B8913F;
+  --gold-soft:rgba(226,190,106,.12);
+  --gold-ring:rgba(226,190,106,.35);
+  --ink:#16120A;
+  --green:#3FD18A;
+  --green-deep:#1E8F5C;
+  --green-bg:rgba(63,209,138,.08);
+  --red:#F07575;
+  --danger:#E5484D;
+  --red-bg:rgba(240,117,117,.09);
+  --violet:#A98BFA;
+  --radius:16px;
+  --radius-sm:10px;
+  --shadow:0 1px 0 rgba(255,255,255,.04) inset,0 10px 30px -12px rgba(0,0,0,.6);
+  --grad-gold:linear-gradient(135deg,var(--gold-hi) 0%,var(--gold) 45%,var(--gold-lo) 100%);
+  --font:"Plus Jakarta Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  --font-display:"Instrument Serif",Georgia,serif;
+  --side:240px;
+  --blue:#62B6FF;
+  --blue-hi:#9CCFFF;
+  --blue-deep:#2F6FB8;
+  --blue-bg:rgba(98,182,255,.09);
+  --orange:#F0954A;
+  --amber:#E8A83C;
+  --amber-bg:rgba(232,168,60,.1);
+  --green-hi:#8EF0B8;
+  --violet-hi:#CDB8FF;
+  --violet-bg:rgba(169,139,250,.1);
+}
+
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Arial,sans-serif;background:#111;color:#fff;min-height:100vh;padding-bottom:20px}
+body{font-family:Arial,sans-serif;background:var(--bg-deep);color:var(--text);min-height:100vh;padding-bottom:20px}
 
 /* HEADER */
-.header{background:#1A1A1A;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #D4AF37;position:sticky;top:0;z-index:100}
-.header h1{color:#D4AF37;font-size:16px}
+.header{background:var(--ink);padding:12px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid var(--gold);position:sticky;top:0;z-index:100}
+.header h1{color:var(--gold);font-size:16px}
 .stats-row{display:flex;gap:16px}
 .stat{text-align:center}
-.stat .num{color:#D4AF37;font-size:20px;font-weight:bold}
-.stat .lbl{color:#888;font-size:9px}
+.stat .num{color:var(--gold);font-size:20px;font-weight:bold}
+.stat .lbl{color:var(--muted);font-size:9px}
 
 /* TABS */
-.nav-tabs{display:flex;background:#1A1A1A;border-bottom:2px solid #333;overflow-x:auto}
-.nav-tab{flex:1;min-width:80px;padding:11px 8px;text-align:center;cursor:pointer;font-size:11px;color:#888;border-bottom:3px solid transparent;font-weight:bold;white-space:nowrap;transition:all .2s}
-.nav-tab.active{color:#D4AF37;border-bottom-color:#D4AF37}
-.badge-r{display:inline-block;background:#C0392B;color:white;font-size:9px;font-weight:bold;padding:1px 5px;border-radius:10px;margin-left:3px;vertical-align:middle}
+.nav-tabs{display:flex;background:var(--ink);border-bottom:2px solid var(--surface-3);overflow-x:auto}
+.nav-tab{flex:1;min-width:80px;padding:11px 8px;text-align:center;cursor:pointer;font-size:11px;color:var(--muted);border-bottom:3px solid transparent;font-weight:bold;white-space:nowrap;transition:all .2s}
+.nav-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.badge-r{display:inline-block;background:var(--red);color:white;font-size:9px;font-weight:bold;padding:1px 5px;border-radius:10px;margin-left:3px;vertical-align:middle}
 
 /* CONTENU */
 .tab-content{display:none;padding:14px;max-width:1200px;margin:0 auto}
 .tab-content.actif{display:block}
 
 /* STATUT */
-.status-bar{background:#1A3A2A;border:1px solid #1A7A50;border-radius:10px;padding:8px 14px;margin-bottom:12px;font-size:12px;color:#4ABA80;display:flex;align-items:center;gap:8px}
-.bandeau-retard{display:none;background:#3A1A1A;border-bottom:2px solid #C0392B;color:#ff8a8a;text-align:center;font-weight:bold;font-size:14px;padding:10px;animation:pulseRetard 1.5s infinite}
+.status-bar{background:var(--green-bg);border:1px solid var(--green-deep);border-radius:10px;padding:8px 14px;margin-bottom:12px;font-size:12px;color:var(--green);display:flex;align-items:center;gap:8px}
+.bandeau-retard{display:none;background:var(--red-bg);border-bottom:2px solid var(--red);color:var(--red);text-align:center;font-weight:bold;font-size:14px;padding:10px;animation:pulseRetard 1.5s infinite}
 .bandeau-retard.visible{display:block}
-@keyframes pulseRetard{0%,100%{background:#3A1A1A}50%{background:#5A2020}}
-.addition-card.en-retard{border:2px solid #C0392B;animation:pulseCard 1.5s infinite}
+@keyframes pulseRetard{0%,100%{background:var(--red-bg)}50%{background:#5A2020}}
+.addition-card.en-retard{border:2px solid var(--red);animation:pulseCard 1.5s infinite}
 @keyframes pulseCard{0%,100%{box-shadow:0 0 0 rgba(192,57,43,0)}50%{box-shadow:0 0 14px rgba(192,57,43,.7)}}
-.badge-retard{background:#C0392B;color:#fff;font-size:10px;font-weight:bold;padding:3px 8px;border-radius:10px;margin-left:8px}
-.dot{width:8px;height:8px;background:#4ABA80;border-radius:50%;animation:blink 1.5s infinite;flex-shrink:0}
+.badge-retard{background:var(--red);color:var(--text);font-size:10px;font-weight:bold;padding:3px 8px;border-radius:10px;margin-left:8px}
+.dot{width:8px;height:8px;background:var(--green);border-radius:50%;animation:blink 1.5s infinite;flex-shrink:0}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 
 /* FILTRE */
 .filtre-bar{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
-.btn-filtre{padding:6px 12px;border-radius:20px;font-size:11px;font-weight:bold;cursor:pointer;border:1px solid #333;background:#2A2A2A;color:#aaa;transition:all .2s}
-.btn-filtre.actif{background:#D4AF37;color:#1A1A1A;border-color:#D4AF37}
-.btn-sm{padding:6px 12px;border-radius:20px;font-size:11px;cursor:pointer;border:1px solid #C0392B;background:#2A2A2A;color:#C0392B}
+.btn-filtre{padding:6px 12px;border-radius:20px;font-size:11px;font-weight:bold;cursor:pointer;border:1px solid var(--surface-3);background:var(--surface-2);color:var(--text-2);transition:all .2s}
+.btn-filtre.actif{background:var(--gold);color:var(--ink);border-color:var(--gold)}
+.btn-sm{padding:6px 12px;border-radius:20px;font-size:11px;cursor:pointer;border:1px solid var(--red);background:var(--surface-2);color:var(--red)}
 .recherche-bar{display:flex;gap:8px;margin-bottom:12px}
-.recherche-input{flex:1;background:#1E1E1E;border:2px solid #333;border-radius:10px;padding:12px 14px;color:#fff;font-size:16px;outline:none;transition:border-color .2s}
-.recherche-input:focus{border-color:#D4AF37}
-.recherche-input::placeholder{color:#666}
+.recherche-input{flex:1;background:var(--surface);border:2px solid var(--surface-3);border-radius:10px;padding:12px 14px;color:var(--text);font-size:16px;outline:none;transition:border-color .2s}
+.recherche-input:focus{border-color:var(--gold)}
+.recherche-input::placeholder{color:var(--faint)}
 
 /* GRILLE COMMANDES */
 .commandes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
 .cuisine-compteurs{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin:12px 0 18px}
-.cuisine-compteur{background:#242424;border:2px solid #D4AF37;border-radius:14px;padding:14px 10px;text-align:center}
-.cuisine-compteur.zero{border-color:#333;opacity:.55}
-.cuisine-compteur .cc-nb{font-size:48px;font-weight:bold;color:#D4AF37;line-height:1}
-.cuisine-compteur.zero .cc-nb{color:#666}
-.cuisine-compteur .cc-nom{font-size:14px;font-weight:bold;color:#fff;margin-top:6px}
-.btn-plein{background:#D4AF37;color:#1a1a1a;border:none;border-radius:10px;padding:10px 16px;font-weight:bold;font-size:14px;cursor:pointer;margin:10px 0 0}
-#cuisineKiosk{display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:#111;color:#fff;overflow:auto;padding:10px 12px 16px;-webkit-overflow-scrolling:touch}
+.cuisine-compteur{background:var(--surface);border:2px solid var(--gold);border-radius:14px;padding:14px 10px;text-align:center}
+.cuisine-compteur.zero{border-color:var(--surface-3);opacity:.55}
+.cuisine-compteur .cc-nb{font-size:48px;font-weight:bold;color:var(--gold);line-height:1}
+.cuisine-compteur.zero .cc-nb{color:var(--faint)}
+.cuisine-compteur .cc-nom{font-size:14px;font-weight:bold;color:var(--text);margin-top:6px}
+.btn-plein{background:var(--gold);color:var(--ink);border:none;border-radius:10px;padding:10px 16px;font-weight:bold;font-size:14px;cursor:pointer;margin:10px 0 0}
+#cuisineKiosk{display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:var(--bg-deep);color:var(--text);overflow:auto;padding:10px 12px 16px;-webkit-overflow-scrolling:touch}
 body.cuisine-plein #cuisineKiosk{display:block}
 /* iPad/iPhone Safari : la barre d'état et le bouton ✕ du plein écran recouvrent le haut de l'écran */
 @supports (-webkit-touch-callout:none){
@@ -66,186 +114,382 @@ body.cuisine-plein #cuisineKiosk{display:block}
 }
 body.cuisine-plein{overflow:hidden}
 .kiosk-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
-.kiosk-top .kt{font-size:13px;color:#888}
-.btn-quitter{background:#333;color:#fff;border:1px solid #666;border-radius:10px;padding:8px 14px;font-weight:bold;font-size:14px;cursor:pointer}
+.kiosk-top .kt{font-size:13px;color:var(--muted)}
+.btn-quitter{background:var(--surface-3);color:var(--text);border:1px solid var(--faint);border-radius:10px;padding:8px 14px;font-weight:bold;font-size:14px;cursor:pointer}
 .kiosk-cols{display:flex;gap:12px;align-items:flex-start}
 .kiosk-col{flex:1;min-width:0}
-.kiosk-col:first-child{border-right:1px solid #333;padding-right:12px}
+.kiosk-col:first-child{border-right:1px solid var(--surface-3);padding-right:12px}
 .kiosk-titre{font-size:13px;font-weight:bold;letter-spacing:1px;margin:10px 0 6px;padding-left:2px}
-.kiosk-titre.faire{color:#D4AF37}
-.kiosk-titre.fait{color:#4ABA80}
+.kiosk-titre.faire{color:var(--gold)}
+.kiosk-titre.fait{color:var(--green)}
 .kiosk-tickets{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;align-items:start}
-.kiosk-ticket{display:flex;flex-direction:column;gap:6px;background:#242424;border:2px solid #555;border-radius:12px;padding:10px 12px}
-.kiosk-ticket.nouvelle{border-color:#E67E22}
-.kiosk-ticket .kt-tete{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #444;padding-bottom:5px}
-.kiosk-ticket .kt-tete b{color:#D4AF37;font-size:16px}
-.kiosk-ticket .kt-tete span{color:#888;font-size:12px}
-.kiosk-ticket .kt-ligne{display:flex;gap:8px;align-items:baseline;font-size:15px;line-height:1.3;color:#fff}
-.kiosk-ticket .kt-ligne .q{color:#D4AF37;font-weight:bold;min-width:30px}
-.kiosk-ticket .kt-ligne .alerte{color:#ff8a8a;font-size:12px}
-.kiosk-ticket button{background:#1A7A50;color:#fff;border:none;border-radius:8px;padding:10px;font-weight:bold;font-size:16px;cursor:pointer;margin-top:2px}
+.kiosk-ticket{display:flex;flex-direction:column;gap:6px;background:var(--surface);border:2px solid var(--faint);border-radius:12px;padding:10px 12px}
+.kiosk-ticket.nouvelle{border-color:var(--orange)}
+.kiosk-ticket .kt-tete{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--border);padding-bottom:5px}
+.kiosk-ticket .kt-tete b{color:var(--gold);font-size:16px}
+.kiosk-ticket .kt-tete span{color:var(--muted);font-size:12px}
+.kiosk-ticket .kt-ligne{display:flex;gap:8px;align-items:baseline;font-size:15px;line-height:1.3;color:var(--text)}
+.kiosk-ticket .kt-ligne .q{color:var(--gold);font-weight:bold;min-width:30px}
+.kiosk-ticket .kt-ligne .alerte{color:var(--red);font-size:12px}
+.kiosk-ticket button{background:var(--green-deep);color:var(--text);border:none;border-radius:8px;padding:10px;font-weight:bold;font-size:16px;cursor:pointer;margin-top:2px}
 .kiosk-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
 .kiosk-grille .cuisine-compteur{padding:8px 6px;border-radius:10px}
 .kiosk-grille .cc-nb{font-size:34px}
 .kiosk-grille .cc-nom{font-size:12px;margin-top:3px}
 .kiosk-grille .cc-detail{font-size:10px;margin-top:3px}
-.kiosk-grille.fait .cuisine-compteur{border-color:#1A7A50}
-.kiosk-grille.fait .cc-nb{color:#4ABA80}
-.kiosk-grille.fait .cuisine-compteur.zero{border-color:#333}
-.kiosk-grille.fait .cuisine-compteur.zero .cc-nb{color:#666}
+.kiosk-grille.fait .cuisine-compteur{border-color:var(--green-deep)}
+.kiosk-grille.fait .cc-nb{color:var(--green)}
+.kiosk-grille.fait .cuisine-compteur.zero{border-color:var(--surface-3)}
+.kiosk-grille.fait .cuisine-compteur.zero .cc-nb{color:var(--faint)}
 .cuisine-duo{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-top:6px}
 .cuisine-duo-col{flex:1;min-width:300px}
 .cuisine-duo .cuisine-compteurs{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));margin:6px 0 10px;gap:8px}
 .cuisine-duo .cuisine-compteur{padding:10px 8px}
 .cuisine-duo .cc-nb{font-size:38px}
-.cuisine-compteurs.fait .cuisine-compteur{border-color:#1A7A50}
-.cuisine-compteurs.fait .cuisine-compteur .cc-nb{color:#4ABA80}
-.cuisine-compteurs.fait .cuisine-compteur.zero{border-color:#333}
-.cuisine-compteurs.fait .cuisine-compteur.zero .cc-nb{color:#666}
-.cuisine-histo-titre{font-size:14px;font-weight:bold;color:#aaa;margin:22px 0 8px;letter-spacing:.5px}
+.cuisine-compteurs.fait .cuisine-compteur{border-color:var(--green-deep)}
+.cuisine-compteurs.fait .cuisine-compteur .cc-nb{color:var(--green)}
+.cuisine-compteurs.fait .cuisine-compteur.zero{border-color:var(--surface-3)}
+.cuisine-compteurs.fait .cuisine-compteur.zero .cc-nb{color:var(--faint)}
+.cuisine-histo-titre{font-size:14px;font-weight:bold;color:var(--text-2);margin:22px 0 8px;letter-spacing:.5px}
 .histo-carte{opacity:.85}
 .histo-carte .cmd-table{font-size:18px}
-.btn-remettre{background:#444;color:#fff;border:1px solid #777;border-radius:8px;padding:8px 12px;font-weight:bold;font-size:13px;cursor:pointer;width:100%}
-.cuisine-compteur .cc-detail{font-size:11px;color:#4ABA80;margin-top:6px;line-height:1.5}
+.btn-remettre{background:var(--border);color:var(--text);border:1px solid var(--faint);border-radius:8px;padding:8px 12px;font-weight:bold;font-size:13px;cursor:pointer;width:100%}
+.cuisine-compteur .cc-detail{font-size:11px;color:var(--green);margin-top:6px;line-height:1.5}
 .jetons-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px;margin-top:14px}
-.jeton-pastille{background:#242424;border:2px solid #444;border-radius:12px;padding:10px 6px;text-align:center;cursor:pointer;transition:transform .1s}
+.jeton-pastille{background:var(--surface);border:2px solid var(--border);border-radius:12px;padding:10px 6px;text-align:center;cursor:pointer;transition:transform .1s}
 .jeton-pastille:active{transform:scale(.95)}
-.jeton-pastille.libre{border-color:#555}
-.jeton-pastille.actif{background:#1E3A2E;border-color:#4ABA80}
-.jeton-pastille.jeton-employe{background:#2E1E3A;border-color:#8E44AD}
-.jeton-pastille.jeton-employe .jp-num,.jeton-pastille.jeton-employe .jp-sub{color:#C89EDB}
-.jeton-pastille.en-attente{background:#3A2E1A;border-color:#D4941E}
-.jeton-pastille.en-attente .jp-num{color:#D4941E}
-.jeton-pastille.en-attente .jp-sub{color:#D4941E}
-.jeton-pastille .jp-num{font-weight:bold;font-size:15px;color:#ddd}
-.jeton-pastille.actif .jp-num{color:#4ABA80}
-.jeton-pastille .jp-sub{font-size:10px;color:#888;margin-top:3px}
-.jeton-pastille.actif .jp-sub{color:#4ABA80}
-.jp-print{position:absolute;top:2px;right:2px;background:#1A2A3A;border:1px solid #2a6ab5;border-radius:6px;font-size:12px;padding:2px 5px;cursor:pointer;line-height:1}
+.jeton-pastille.libre{border-color:var(--faint)}
+.jeton-pastille.actif{background:var(--green-bg);border-color:var(--green)}
+.jeton-pastille.jeton-employe{background:var(--violet-bg);border-color:var(--violet)}
+.jeton-pastille.jeton-employe .jp-num,.jeton-pastille.jeton-employe .jp-sub{color:var(--violet-hi)}
+.jeton-pastille.en-attente{background:var(--amber-bg);border-color:var(--amber)}
+.jeton-pastille.en-attente .jp-num{color:var(--amber)}
+.jeton-pastille.en-attente .jp-sub{color:var(--amber)}
+.jeton-pastille .jp-num{font-weight:bold;font-size:15px;color:var(--text)}
+.jeton-pastille.actif .jp-num{color:var(--green)}
+.jeton-pastille .jp-sub{font-size:10px;color:var(--muted);margin-top:3px}
+.jeton-pastille.actif .jp-sub{color:var(--green)}
+.jp-print{position:absolute;top:2px;right:2px;background:var(--blue-bg);border:1px solid var(--blue-deep);border-radius:6px;font-size:12px;padding:2px 5px;cursor:pointer;line-height:1}
 
 /* CARTE COMMANDE */
-.cmd-card{background:#1E1E1E;border:2px solid #333;border-radius:14px;padding:14px;transition:border-color .3s}
-.cmd-card.nouvelle{border-color:#D4AF37;animation:pulse 2s infinite}
-.cmd-card.en_addition{border-color:#1A7A50}
-.cmd-card.regle{opacity:.4;border-color:#333}
-.cmd-card.cmd-prioritaire{box-shadow:0 0 0 2px #4ABAFF inset}
-.badge-prio{display:inline-block;background:#4ABAFF;color:#0A2A3A;font-size:10px;font-weight:bold;padding:2px 8px;border-radius:20px;margin-left:6px;vertical-align:middle}
+.cmd-card{background:var(--surface);border:2px solid var(--surface-3);border-radius:14px;padding:14px;transition:border-color .3s}
+.cmd-card.nouvelle{border-color:var(--gold);animation:pulse 2s infinite}
+.cmd-card.en_addition{border-color:var(--green-deep)}
+.cmd-card.regle{opacity:.4;border-color:var(--surface-3)}
+.cmd-card.cmd-prioritaire{box-shadow:0 0 0 2px var(--blue) inset}
+.badge-prio{display:inline-block;background:var(--blue);color:#0A2A3A;font-size:10px;font-weight:bold;padding:2px 8px;border-radius:20px;margin-left:6px;vertical-align:middle}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(212,175,55,.4)}50%{box-shadow:0 0 0 8px rgba(212,175,55,0)}}
 .cmd-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
-.cmd-table{font-size:24px;font-weight:bold;color:#D4AF37}
+.cmd-table{font-size:24px;font-weight:bold;color:var(--gold)}
 .cmd-meta{text-align:right}
-.cmd-heure{font-size:11px;color:#888;background:#2A2A2A;padding:2px 8px;border-radius:20px;display:inline-block}
+.cmd-heure{font-size:11px;color:var(--muted);background:var(--surface-2);padding:2px 8px;border-radius:20px;display:inline-block}
 .cmd-statut{font-size:10px;margin-top:3px}
 .cmd-items{margin-bottom:8px}
-.cmd-item-row{padding:3px 0;font-size:13px;color:#ddd;display:flex;justify-content:space-between;border-bottom:1px solid #222}
+.cmd-item-row{padding:3px 0;font-size:13px;color:var(--text);display:flex;justify-content:space-between;border-bottom:1px solid var(--surface)}
 .cmd-item-row:last-child{border-bottom:none}
-.cmd-total{color:#D4AF37;font-weight:bold;font-size:15px;padding-top:8px;border-top:1px solid #333;margin-bottom:8px}
+.cmd-total{color:var(--gold);font-weight:bold;font-size:15px;padding-top:8px;border-top:1px solid var(--surface-3);margin-bottom:8px}
 .cmd-actions{display:flex;gap:6px}
-.btn-vu{flex:2;padding:8px;background:#1A7A50;border:none;border-radius:8px;color:white;font-size:12px;font-weight:bold;cursor:pointer}
-.btn-archive{flex:1;padding:8px;background:#2A2A2A;border:1px solid #555;border-radius:8px;color:#aaa;font-size:11px;cursor:pointer}
+.btn-vu{flex:2;padding:8px;background:var(--green-deep);border:none;border-radius:8px;color:white;font-size:12px;font-weight:bold;cursor:pointer}
+.btn-archive{flex:1;padding:8px;background:var(--surface-2);border:1px solid var(--faint);border-radius:8px;color:var(--text-2);font-size:11px;cursor:pointer}
 
 /* ALERTES */
-.alerte-card{background:#1A0A0A;border:2px solid #C0392B;border-radius:12px;padding:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;animation:pulse-rouge 1.5s infinite}
+.alerte-card{background:var(--red-bg);border:2px solid var(--red);border-radius:12px;padding:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;animation:pulse-rouge 1.5s infinite}
 @keyframes pulse-rouge{0%,100%{box-shadow:0 0 0 0 rgba(192,57,43,.4)}50%{box-shadow:0 0 0 8px rgba(192,57,43,0)}}
-.alerte-info .alerte-titre{color:#C0392B;font-size:16px;font-weight:bold}
-.alerte-info .alerte-sub{color:#888;font-size:12px;margin-top:2px}
-.btn-ack{background:#C0392B;border:none;border-radius:8px;color:white;padding:10px 16px;font-weight:bold;cursor:pointer;font-size:13px}
+.alerte-info .alerte-titre{color:var(--red);font-size:16px;font-weight:bold}
+.alerte-info .alerte-sub{color:var(--muted);font-size:12px;margin-top:2px}
+.btn-ack{background:var(--red);border:none;border-radius:8px;color:white;padding:10px 16px;font-weight:bold;cursor:pointer;font-size:13px}
 
 /* ADDITIONS */
-.addition-card{background:#1E1E1E;border:2px solid #C0392B;border-radius:14px;padding:16px;margin-bottom:12px}
+.addition-card{background:var(--surface);border:2px solid var(--red);border-radius:14px;padding:16px;margin-bottom:12px}
 .addition-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
-.addition-table-num{color:#C0392B;font-size:22px;font-weight:bold}
-.addition-total{color:#D4AF37;font-size:30px;font-weight:bold}
-.addition-nb{color:#888;font-size:12px;margin-top:2px}
-.cmd-groupe{background:#2A2A2A;border-radius:8px;padding:10px;margin-bottom:8px}
-.cmd-groupe-heure{color:#D4AF37;font-size:11px;font-weight:bold;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid #333}
-.cmd-groupe-item{display:flex;justify-content:space-between;font-size:12px;color:#ddd;padding:3px 0}
-.cmd-groupe-subtotal{text-align:right;font-size:11px;color:#888;margin-top:4px;padding-top:4px;border-top:1px solid #333}
+.addition-table-num{color:var(--red);font-size:22px;font-weight:bold}
+.addition-total{color:var(--gold);font-size:30px;font-weight:bold}
+.addition-nb{color:var(--muted);font-size:12px;margin-top:2px}
+.cmd-groupe{background:var(--surface-2);border-radius:8px;padding:10px;margin-bottom:8px}
+.cmd-groupe-heure{color:var(--gold);font-size:11px;font-weight:bold;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--surface-3)}
+.cmd-groupe-item{display:flex;justify-content:space-between;font-size:12px;color:var(--text);padding:3px 0}
+.cmd-groupe-subtotal{text-align:right;font-size:11px;color:var(--muted);margin-top:4px;padding-top:4px;border-top:1px solid var(--surface-3)}
 .addition-actions{display:flex;gap:8px}
-.btn-imprimer{flex:1;padding:10px;background:#2A2A2A;border:2px solid #D4AF37;border-radius:8px;color:#D4AF37;font-weight:bold;font-size:13px;cursor:pointer}
-.btn-encaisser{flex:1;padding:10px;background:#C0392B;border:none;border-radius:8px;color:white;font-weight:bold;font-size:13px;cursor:pointer}
+.btn-imprimer{flex:1;padding:10px;background:var(--surface-2);border:2px solid var(--gold);border-radius:8px;color:var(--gold);font-weight:bold;font-size:13px;cursor:pointer}
+.btn-encaisser{flex:1;padding:10px;background:var(--red);border:none;border-radius:8px;color:white;font-weight:bold;font-size:13px;cursor:pointer}
 
 /* HISTORIQUE */
-.histo-card{background:#1E1E1E;border:1px solid #333;border-radius:10px;padding:12px;margin-bottom:8px;cursor:pointer;transition:border-color .2s}
-.histo-card:hover{border-color:#D4AF37}
+.histo-card{background:var(--surface);border:1px solid var(--surface-3);border-radius:10px;padding:12px;margin-bottom:8px;cursor:pointer;transition:border-color .2s}
+.histo-card:hover{border-color:var(--gold)}
 .histo-header{display:flex;justify-content:space-between;align-items:center}
-.histo-table{color:#D4AF37;font-weight:bold;font-size:14px}
-.histo-total{color:#D4AF37;font-weight:bold;font-size:16px}
-.histo-heure{color:#888;font-size:11px;margin-top:2px}
-.histo-detail{display:none;margin-top:10px;padding-top:10px;border-top:1px solid #333}
+.histo-table{color:var(--gold);font-weight:bold;font-size:14px}
+.histo-total{color:var(--gold);font-weight:bold;font-size:16px}
+.histo-heure{color:var(--muted);font-size:11px;margin-top:2px}
+.histo-detail{display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--surface-3)}
 .histo-detail.open{display:block}
 
 /* CA */
 .ca-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
-.ca-box{background:#1E1E1E;border:2px solid #333;border-radius:12px;padding:16px;text-align:center}
-.ca-box .ca-num{font-size:26px;font-weight:bold;color:#D4AF37}
-.ca-box .ca-lbl{font-size:11px;color:#888;margin-top:4px}
+.ca-box{background:var(--surface);border:2px solid var(--surface-3);border-radius:12px;padding:16px;text-align:center}
+.ca-box .ca-num{font-size:26px;font-weight:bold;color:var(--gold)}
+.ca-box .ca-lbl{font-size:11px;color:var(--muted);margin-top:4px}
 .ca-table{width:100%;border-collapse:collapse;font-size:12px}
-.ca-table th{background:#1A1A1A;color:#D4AF37;padding:8px;text-align:left}
-.ca-table td{padding:6px 8px;border-bottom:1px solid #222;color:#ddd}
+.ca-table th{background:var(--ink);color:var(--gold);padding:8px;text-align:left}
+.ca-table td{padding:6px 8px;border-bottom:1px solid var(--surface);color:var(--text)}
 
 /* UTILS */
-.empty{text-align:center;padding:50px;color:#444}
+.empty{text-align:center;padding:50px;color:var(--border)}
 .empty .em{font-size:40px;margin-bottom:12px}
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#D4AF37;color:#1A1A1A;padding:10px 22px;border-radius:30px;font-weight:bold;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--gold);color:var(--ink);padding:10px 22px;border-radius:30px;font-weight:bold;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
-.version{text-align:center;padding:10px;color:#333;font-size:10px}
+.version{text-align:center;padding:10px;color:var(--surface-3);font-size:10px}
 
 /* BOUTON EDITER SUR LES CARTES */
-.btn-editer{background:#2A2A2A;border:1px solid #D4AF37;color:#D4AF37;padding:8px;border-radius:8px;font-size:12px;font-weight:bold;cursor:pointer}
+.btn-editer{background:var(--surface-2);border:1px solid var(--gold);color:var(--gold);padding:8px;border-radius:8px;font-size:12px;font-weight:bold;cursor:pointer}
 
 /* MODAL EDITION ARTICLES */
 .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.75);z-index:1000;display:none;align-items:center;justify-content:center;padding:16px}
 .modal-overlay.visible{display:flex}
-.modal-box{background:#1E1E1E;border:2px solid #D4AF37;border-radius:16px;padding:20px;width:100%;max-width:480px;max-height:88vh;overflow-y:auto}
-.modal-box h3{color:#D4AF37;font-size:17px;margin-bottom:4px}
-.modal-box .modal-sub{color:#888;font-size:12px;margin-bottom:14px}
-.edit-item-row{display:flex;align-items:center;gap:8px;background:#2A2A2A;border-radius:8px;padding:8px 10px;margin-bottom:6px}
-.edit-item-nom{flex:1;font-size:13px;color:#fff}
-.edit-item-prix{width:70px;background:#111;border:1px solid #444;border-radius:6px;color:#D4AF37;font-weight:bold;text-align:center;padding:5px 4px;font-size:13px}
-.edit-item-del{background:#C0392B;border:none;color:white;border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:13px;flex-shrink:0}
-.edit-total-row{display:flex;justify-content:space-between;align-items:center;background:#2A2A2A;border:1px solid #D4AF37;border-radius:8px;padding:10px 12px;margin:12px 0;font-weight:bold}
-.edit-total-row .val{color:#D4AF37;font-size:18px}
+.modal-box{background:var(--surface);border:2px solid var(--gold);border-radius:16px;padding:20px;width:100%;max-width:480px;max-height:88vh;overflow-y:auto}
+.modal-box h3{color:var(--gold);font-size:17px;margin-bottom:4px}
+.modal-box .modal-sub{color:var(--muted);font-size:12px;margin-bottom:14px}
+.edit-item-row{display:flex;align-items:center;gap:8px;background:var(--surface-2);border-radius:8px;padding:8px 10px;margin-bottom:6px}
+.edit-item-nom{flex:1;font-size:13px;color:var(--text)}
+.edit-item-prix{width:70px;background:var(--bg-deep);border:1px solid var(--border);border-radius:6px;color:var(--gold);font-weight:bold;text-align:center;padding:5px 4px;font-size:13px}
+.edit-item-del{background:var(--red);border:none;color:white;border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:13px;flex-shrink:0}
+.edit-total-row{display:flex;justify-content:space-between;align-items:center;background:var(--surface-2);border:1px solid var(--gold);border-radius:8px;padding:10px 12px;margin:12px 0;font-weight:bold}
+.edit-total-row .val{color:var(--gold);font-size:18px}
 .add-item-form{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
-.add-item-form input{background:#2A2A2A;border:1px solid #444;border-radius:8px;color:#fff;padding:8px 10px;font-size:13px}
+.add-item-form input{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 10px;font-size:13px}
 .add-item-form input.nom{flex:2;min-width:120px}
 .add-item-form input.prix{flex:1;min-width:70px}
-.btn-add-item{background:#1A7A50;border:none;color:white;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:bold;cursor:pointer;white-space:nowrap}
+.btn-add-item{background:var(--green-deep);border:none;color:white;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:bold;cursor:pointer;white-space:nowrap}
 .modal-actions{display:flex;gap:8px;margin-top:14px}
-.btn-annuler-modal{flex:1;background:#333;border:none;color:#aaa;padding:12px;border-radius:8px;font-weight:bold;cursor:pointer}
-.btn-valider-modal{flex:2;background:#D4AF37;border:none;color:#1A1A1A;padding:12px;border-radius:8px;font-weight:bold;cursor:pointer}
+.btn-annuler-modal{flex:1;background:var(--surface-3);border:none;color:var(--text-2);padding:12px;border-radius:8px;font-weight:bold;cursor:pointer}
+.btn-valider-modal{flex:2;background:var(--gold);border:none;color:var(--ink);padding:12px;border-radius:8px;font-weight:bold;cursor:pointer}
 
 /* MODAL MOT DE PASSE */
-.pwd-input{width:100%;background:#111;border:2px solid #D4AF37;border-radius:10px;color:#D4AF37;font-size:22px;font-weight:bold;text-align:center;padding:14px;letter-spacing:6px;margin-bottom:14px}
+.pwd-input{width:100%;background:var(--bg-deep);border:2px solid var(--gold);border-radius:10px;color:var(--gold);font-size:22px;font-weight:bold;text-align:center;padding:14px;letter-spacing:6px;margin-bottom:14px}
 
 /* ÉCRAN DE CONNEXION ÉQUIPE (ajouté le 20/09/2026 — sécurisation Firestore) */
-#screenLoginEquipe{position:fixed;inset:0;background:#111;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
+#screenLoginEquipe{position:fixed;inset:0;background:var(--bg-deep);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
 #screenLoginEquipe.masque{display:none}
-.login-box{background:#1A1A1A;border:2px solid #D4AF37;border-radius:16px;padding:32px 28px;max-width:340px;width:100%;text-align:center}
-.login-box h2{color:#D4AF37;font-size:18px;margin-bottom:8px}
-.login-box p{color:#888;font-size:12px;margin-bottom:18px}
-.login-box input{width:100%;background:#111;border:2px solid #444;border-radius:10px;color:#fff;font-size:16px;text-align:center;padding:12px;margin-bottom:12px}
-.login-box input:focus{border-color:#D4AF37;outline:none}
-.login-box button{width:100%;background:#D4AF37;border:none;color:#1A1A1A;padding:13px;border-radius:10px;font-weight:bold;font-size:14px;cursor:pointer}
-.login-erreur{color:#ff8a8a;font-size:12px;margin-top:10px;min-height:16px}
+.login-box{background:var(--ink);border:2px solid var(--gold);border-radius:16px;padding:32px 28px;max-width:340px;width:100%;text-align:center}
+.login-box h2{color:var(--gold);font-size:18px;margin-bottom:8px}
+.login-box p{color:var(--muted);font-size:12px;margin-bottom:18px}
+.login-box input{width:100%;background:var(--bg-deep);border:2px solid var(--border);border-radius:10px;color:var(--text);font-size:16px;text-align:center;padding:12px;margin-bottom:12px}
+.login-box input:focus{border-color:var(--gold);outline:none}
+.login-box button{width:100%;background:var(--gold);border:none;color:var(--ink);padding:13px;border-radius:10px;font-weight:bold;font-size:14px;cursor:pointer}
+.login-erreur{color:var(--red);font-size:12px;margin-top:10px;min-height:16px}
 
 /* VERSION DANS L'EN-TÊTE */
-.build-tag{display:block;font-size:9px;color:#777;font-weight:normal;margin-top:2px}
+.build-tag{display:block;font-size:9px;color:var(--faint);font-weight:normal;margin-top:2px}
 
 /* MODAL MODE DE PAIEMENT (ajouté le 17/10/2026) */
-.paiement-total{color:#D4AF37;font-size:34px;font-weight:bold;text-align:center;margin:6px 0 14px}
+.paiement-total{color:var(--gold);font-size:34px;font-weight:bold;text-align:center;margin:6px 0 14px}
 .paiement-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
-.btn-mode-pay{background:#2A2A2A;border:2px solid #D4AF37;border-radius:12px;color:#fff;padding:16px 8px;font-size:26px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px}
-.btn-mode-pay span{font-size:14px;font-weight:bold;color:#D4AF37}
-.btn-mode-pay:active{transform:scale(.96);background:#3A3A2A}
-.btn-mixte{width:100%;background:#1A2A3A;border:1px solid #2a6ab5;color:#8ac4ff;border-radius:10px;padding:12px;font-weight:bold;font-size:13px;cursor:pointer;margin-bottom:6px}
+.btn-mode-pay{background:var(--surface-2);border:2px solid var(--gold);border-radius:12px;color:var(--text);padding:16px 8px;font-size:26px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px}
+.btn-mode-pay span{font-size:14px;font-weight:bold;color:var(--gold)}
+.btn-mode-pay:active{transform:scale(.96);background:var(--gold-soft)}
+.btn-mixte{width:100%;background:var(--blue-bg);border:1px solid var(--blue-deep);color:var(--blue-hi);border-radius:10px;padding:12px;font-weight:bold;font-size:13px;cursor:pointer;margin-bottom:6px}
 .mixte-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.mixte-lbl{flex:1;font-size:13px;color:#fff}
-.mixte-input{width:90px;background:#111;border:1px solid #D4AF37;border-radius:8px;color:#D4AF37;font-weight:bold;font-size:16px;text-align:right;padding:8px}
-.btn-reste{background:#333;border:1px solid #555;color:#ccc;border-radius:8px;padding:8px;font-size:11px;cursor:pointer;white-space:nowrap}
-.mixte-reste{text-align:center;font-size:14px;margin:10px 0 4px;color:#ddd}
+.mixte-lbl{flex:1;font-size:13px;color:var(--text)}
+.mixte-input{width:90px;background:var(--bg-deep);border:1px solid var(--gold);border-radius:8px;color:var(--gold);font-weight:bold;font-size:16px;text-align:right;padding:8px}
+.btn-reste{background:var(--surface-3);border:1px solid var(--faint);color:var(--text-2);border-radius:8px;padding:8px;font-size:11px;cursor:pointer;white-space:nowrap}
+.mixte-reste{text-align:center;font-size:14px;margin:10px 0 4px;color:var(--text)}
 .btn-valider-modal:disabled{opacity:.4;cursor:not-allowed}
-.pay-badge{display:inline-block;background:#2A2A2A;border:1px solid #444;color:#ddd;font-size:10px;padding:2px 7px;border-radius:10px;margin:3px 4px 0 0}
+.pay-badge{display:inline-block;background:var(--surface-2);border:1px solid var(--border);color:var(--text);font-size:10px;padding:2px 7px;border-radius:10px;margin:3px 4px 0 0}
+
+/* ==========================================================================
+   LE MENU — Caisse · thème sombre premium (couche de finition, 01/11/2026)
+   ========================================================================== */
+body{
+  font-family:var(--font);font-size:14px;-webkit-font-smoothing:antialiased;color:var(--text);
+  background:
+    radial-gradient(900px 500px at 8% -10%,rgba(226,190,106,.08),transparent 60%),
+    radial-gradient(700px 420px at 100% 0%,rgba(120,130,255,.06),transparent 60%),
+    var(--bg);
+  background-attachment:fixed;
+}
+input,select,button,textarea{font-family:inherit}
+*::-webkit-scrollbar{width:10px;height:8px}
+*::-webkit-scrollbar-thumb{background:var(--surface-3);border-radius:10px;border:2px solid var(--bg)}
+*::-webkit-scrollbar-track{background:transparent}
+
+/* Barre du haut */
+.header{
+  min-height:64px;padding:8px 20px;gap:14px;flex-wrap:wrap;
+  background:rgba(10,12,17,.75);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);
+  border-bottom:1px solid var(--line);
+}
+.header::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent,var(--gold-ring),transparent);opacity:.6}
+.header h1{display:flex;align-items:center;gap:11px;color:var(--text);font-size:14px;font-weight:600}
+.brand-mark{
+  width:36px;height:36px;border-radius:11px;flex-shrink:0;display:grid;place-items:center;
+  background:var(--grad-gold);color:var(--ink);font-family:var(--font-display);font-size:22px;font-style:italic;font-weight:400;
+  box-shadow:0 6px 18px -6px rgba(226,190,106,.55),inset 0 1px 0 rgba(255,255,255,.5);
+}
+.brand-txt{display:flex;flex-direction:column;line-height:1}
+.brand-name{font-family:var(--font-display);font-weight:400;font-size:22px;color:var(--text)}
+.brand-name em{color:var(--gold);font-style:italic}
+#motCaisse{font-size:10.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:4px}
+.build-tag{
+  display:inline-block;margin:0 0 0 6px;font-size:11px;font-weight:600;color:var(--text-2);font-variant-numeric:tabular-nums;
+  padding:5px 10px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line-strong);white-space:nowrap;align-self:center;
+}
+.stats-row{gap:8px}
+.stat{min-width:76px;padding:7px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}
+.stat .num{font-size:20px;font-weight:700;color:var(--gold-hi);font-variant-numeric:tabular-nums;line-height:1.1}
+.stat .lbl{font-size:9.5px;letter-spacing:.8px;text-transform:uppercase;font-weight:600;color:var(--muted);margin-top:2px}
+
+/* Onglets */
+.nav-tabs{
+  gap:6px;padding:10px 16px;background:rgba(10,12,17,.6);border-bottom:1px solid var(--line);scrollbar-width:none;
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+}
+.nav-tabs::-webkit-scrollbar{display:none}
+.nav-tab{
+  flex:0 0 auto;min-width:0;padding:9px 14px;border-radius:10px;border:1px solid transparent;font-size:12.5px;font-weight:600;color:var(--muted);
+}
+.nav-tab:hover{color:var(--text);background:var(--surface-2)}
+.nav-tab.active{
+  color:var(--gold-hi);border-color:rgba(226,190,106,.25);border-bottom-color:rgba(226,190,106,.25);
+  background:linear-gradient(180deg,rgba(226,190,106,.14),rgba(226,190,106,.05));
+}
+.badge-r,.badge-retard{background:var(--danger);color:#fff;border-radius:999px;font-weight:700;box-shadow:0 0 0 2px var(--bg)}
+
+.tab-content{padding:20px 16px;animation:entree .3s ease}
+@keyframes entree{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.status-bar{
+  border-radius:12px;padding:10px 14px;background:linear-gradient(90deg,var(--green-bg),rgba(63,209,138,.02));
+  border:1px solid rgba(63,209,138,.18);color:var(--text-2);
+}
+.dot{animation:pulseDot 2s infinite}
+@keyframes pulseDot{0%{box-shadow:0 0 0 0 rgba(63,209,138,.55)}70%{box-shadow:0 0 0 8px rgba(63,209,138,0)}100%{box-shadow:0 0 0 0 rgba(63,209,138,0)}}
+.bandeau-retard{background:var(--red-bg);border-bottom:1px solid rgba(240,117,117,.4);color:var(--red)}
+@keyframes pulseRetard{0%,100%{background:rgba(240,117,117,.08)}50%{background:rgba(240,117,117,.18)}}
+
+/* Filtres et recherche */
+.btn-filtre{padding:7px 14px;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--text-2);font-weight:600;font-size:12px}
+.btn-filtre:hover{color:var(--text);border-color:var(--line-strong)}
+.btn-filtre.actif{background:var(--grad-gold);color:var(--ink);border-color:transparent;box-shadow:0 6px 18px -8px rgba(226,190,106,.7)}
+.btn-sm{border-radius:999px;background:var(--red-bg);border:1px solid rgba(240,117,117,.3);color:var(--red);font-weight:600}
+.recherche-input{background:var(--bg-deep);border:1px solid var(--border);border-radius:12px}
+.recherche-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-soft)}
+
+/* Cartes génériques */
+.cmd-card,.addition-card,.histo-card,.ca-box,.cuisine-compteur,.kiosk-ticket,.jeton-pastille{
+  background:linear-gradient(180deg,rgba(255,255,255,.028),rgba(255,255,255,.008)),var(--surface);
+  box-shadow:var(--shadow);
+}
+.cmd-card{border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.cmd-card.nouvelle{border-color:rgba(226,190,106,.55)}
+.cmd-card.en_addition{border-color:rgba(63,209,138,.4)}
+.cmd-card.regle{border-color:var(--line)}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(226,190,106,.35)}50%{box-shadow:0 0 0 8px rgba(226,190,106,0)}}
+.cmd-table{font-weight:700;color:var(--gold-hi);letter-spacing:-.3px}
+.cmd-heure{background:var(--surface-3);color:var(--text-2);font-weight:600;font-variant-numeric:tabular-nums}
+.cmd-item-row{border-bottom:1px solid var(--line);color:var(--text)}
+.cmd-total{border-top:1px solid var(--line);color:var(--gold-hi);font-variant-numeric:tabular-nums}
+.btn-vu{background:var(--green-bg);color:var(--green);border:1px solid rgba(63,209,138,.3);border-radius:10px;font-weight:700}
+.btn-vu:hover{background:rgba(63,209,138,.15)}
+.btn-archive{background:var(--surface-2);border:1px solid var(--border);color:var(--text-2);border-radius:10px}
+.btn-editer{background:var(--gold-soft);border:1px solid rgba(226,190,106,.35);color:var(--gold-hi);border-radius:10px}
+
+/* Alertes */
+.alerte-card{background:linear-gradient(90deg,var(--red-bg),rgba(240,117,117,.03)),var(--surface);border:1px solid rgba(240,117,117,.45);border-radius:var(--radius)}
+.alerte-info .alerte-titre{color:var(--red)}
+.btn-ack,.btn-encaisser{background:linear-gradient(135deg,#F07575,#D9434A);color:#fff;border:none;border-radius:10px;box-shadow:0 8px 20px -10px rgba(229,72,77,.8)}
+
+/* Additions */
+.addition-card{border:1px solid rgba(240,117,117,.35);border-radius:var(--radius);padding:18px}
+.addition-card.en-retard{border:1px solid var(--red)}
+.addition-table-num{color:var(--red)}
+.addition-total{color:var(--gold-hi);font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+.cmd-groupe{background:var(--surface-2);border:1px solid var(--line);border-radius:12px}
+.cmd-groupe-heure{color:var(--gold);border-bottom:1px solid var(--line)}
+.cmd-groupe-subtotal{border-top:1px solid var(--line)}
+.btn-imprimer{background:transparent;border:1px solid rgba(226,190,106,.45);color:var(--gold-hi);border-radius:10px}
+.btn-imprimer:hover{background:var(--gold-soft)}
+
+/* Historique et CA */
+.histo-card{border:1px solid var(--line);border-radius:14px}
+.histo-card:hover{border-color:rgba(226,190,106,.35)}
+.histo-detail{border-top:1px solid var(--line)}
+.ca-box{border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+.ca-box .ca-num{font-weight:700;color:var(--gold-hi);font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+.ca-box .ca-lbl{letter-spacing:.8px;text-transform:uppercase;font-weight:600;font-size:10.5px}
+.ca-table{border-radius:12px;overflow:hidden}
+.ca-table th{background:var(--surface-2);color:var(--gold);font-size:11px;letter-spacing:.6px;text-transform:uppercase;border-bottom:1px solid var(--line)}
+.ca-table td{border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+
+/* Cuisine */
+.cuisine-compteur{border:1px solid rgba(226,190,106,.45);border-radius:var(--radius)}
+.cuisine-compteur.zero{border-color:var(--line)}
+.cuisine-compteur .cc-nb{color:var(--gold-hi);font-weight:700;letter-spacing:-1px}
+.cuisine-compteurs.fait .cuisine-compteur,.kiosk-grille.fait .cuisine-compteur{border-color:rgba(63,209,138,.45)}
+.btn-plein{background:var(--grad-gold);color:var(--ink);border-radius:11px;box-shadow:0 8px 22px -10px rgba(226,190,106,.8)}
+#cuisineKiosk{background:var(--bg)}
+.kiosk-ticket{border:1px solid var(--border);border-radius:14px}
+.kiosk-ticket.nouvelle{border-color:var(--orange)}
+.kiosk-ticket .kt-tete{border-bottom:1px solid var(--line)}
+.kiosk-ticket button{background:linear-gradient(135deg,#3FD18A,#1E8F5C);border-radius:10px}
+.btn-quitter,.btn-remettre{background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:10px}
+.kiosk-col:first-child{border-right:1px solid var(--line)}
+
+/* Jetons */
+.jeton-pastille{border:1px solid var(--border);border-radius:14px}
+.jeton-pastille.actif{background:linear-gradient(180deg,rgba(63,209,138,.12),rgba(63,209,138,.03)),var(--surface);border-color:rgba(63,209,138,.5)}
+.jeton-pastille.jeton-employe{background:linear-gradient(180deg,rgba(169,139,250,.12),rgba(169,139,250,.03)),var(--surface);border-color:rgba(169,139,250,.5)}
+.jeton-pastille.en-attente{background:linear-gradient(180deg,rgba(232,168,60,.12),rgba(232,168,60,.03)),var(--surface);border-color:rgba(232,168,60,.5)}
+
+/* Fenêtres */
+.modal-overlay{background:rgba(4,5,8,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.modal-box{
+  border-radius:20px;padding:22px;border:1px solid var(--line-strong);
+  background:linear-gradient(180deg,rgba(255,255,255,.035),transparent 30%),var(--surface);
+  box-shadow:0 30px 80px -20px rgba(0,0,0,.85),0 0 0 1px rgba(226,190,106,.08);animation:entree .25s ease;
+}
+.modal-box h3{color:var(--text);font-weight:700}
+.edit-item-row{background:var(--surface-2);border:1px solid var(--line);border-radius:10px}
+.edit-item-prix,.mixte-input,.add-item-form input,.pwd-input{background:var(--bg-deep);border:1px solid var(--border);border-radius:10px}
+.edit-item-prix:focus,.mixte-input:focus,.add-item-form input:focus,.pwd-input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-soft)}
+.pwd-input{color:var(--gold-hi);border-color:rgba(226,190,106,.4)}
+.edit-item-del{background:var(--red-bg);color:var(--red);border:1px solid rgba(240,117,117,.35)}
+.edit-total-row{background:var(--gold-soft);border:1px solid rgba(226,190,106,.35);border-radius:12px}
+.btn-add-item{background:var(--green-bg);color:var(--green);border:1px solid rgba(63,209,138,.3);border-radius:10px}
+.btn-annuler-modal{background:var(--surface-2);border:1px solid var(--border);color:var(--text-2);border-radius:11px}
+.btn-valider-modal{background:var(--grad-gold);color:var(--ink);border-radius:11px;box-shadow:0 10px 24px -12px rgba(226,190,106,.8),inset 0 1px 0 rgba(255,255,255,.4)}
+.paiement-total{color:var(--gold-hi);font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+.btn-mode-pay{background:var(--surface-2);border:1px solid rgba(226,190,106,.3);border-radius:14px;transition:.15s}
+.btn-mode-pay:hover{background:var(--gold-soft);border-color:rgba(226,190,106,.55)}
+.btn-mode-pay span{color:var(--gold-hi)}
+.btn-mixte{background:var(--blue-bg);border:1px solid rgba(98,182,255,.35);color:var(--blue-hi);border-radius:11px}
+.btn-reste{background:var(--surface-3);border:1px solid var(--border);border-radius:8px}
+.pay-badge{background:var(--surface-2);border:1px solid var(--border);border-radius:999px}
+
+/* Divers */
+.empty{color:var(--faint)}
+.toast{
+  background:rgba(22,26,35,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:var(--text);
+  border:1px solid rgba(226,190,106,.35);font-weight:600;box-shadow:0 18px 40px -12px rgba(0,0,0,.7);
+}
+.version{color:var(--faint);font-size:11px;padding:18px}
+#screenLoginEquipe{background:radial-gradient(600px 400px at 50% 20%,rgba(226,190,106,.12),transparent 65%),var(--bg-deep)}
+.login-box{
+  border-radius:22px;padding:36px 28px;max-width:360px;border:1px solid var(--line-strong);
+  background:linear-gradient(180deg,rgba(255,255,255,.04),transparent 40%),var(--surface);box-shadow:0 30px 80px -20px rgba(0,0,0,.9);
+}
+.login-box::before{
+  content:"M";display:grid;place-items:center;width:52px;height:52px;margin:0 auto 18px;border-radius:15px;
+  background:var(--grad-gold);color:var(--ink);font-family:var(--font-display);font-style:italic;font-size:30px;
+  box-shadow:0 10px 28px -8px rgba(226,190,106,.6),inset 0 1px 0 rgba(255,255,255,.5);
+}
+.login-box h2{color:var(--text);font-family:var(--font-display);font-weight:400;font-size:28px}
+.login-box input{background:var(--bg-deep);border:1px solid var(--border);letter-spacing:2px}
+.login-box input:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-soft)}
+.login-box button{background:var(--grad-gold);color:var(--ink);border-radius:11px;font-weight:700;box-shadow:0 10px 24px -12px rgba(226,190,106,.8),inset 0 1px 0 rgba(255,255,255,.4)}
+@media (max-width:620px){
+  .header{padding:8px 12px}
+  .stats-row{width:100%;justify-content:space-between}
+  .stat{flex:1;min-width:0;padding:6px 6px}
+  .build-tag{font-size:10px}
+}
 </style>
 </head>
 <body>
@@ -263,7 +507,7 @@ body.cuisine-plein{overflow:hidden}
 
 <!-- HEADER -->
 <div class="header">
-  <h1>🐚 <span id="motCaisse" onclick="tapMotCaisse()" style="cursor:default;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent">CAISSE</span> — Moule & Smile<span class="build-tag">v.31/10/2026 18:15</span></h1>
+  <h1><span class="brand-mark">M</span><span class="brand-txt"><span class="brand-name">Moule <em>&amp;</em> Smile</span><span id="motCaisse" onclick="tapMotCaisse()" style="cursor:default;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent">CAISSE</span></span><span class="build-tag">v.01/11/2026 18:20</span></h1>
   <div class="stats-row">
     <div class="stat"><div class="num" id="statNouv">0</div><div class="lbl">Nouvelles</div></div>
     <div class="stat"><div class="num" id="statAdd">0</div><div class="lbl">Additions</div></div>
@@ -386,7 +630,7 @@ body.cuisine-plein{overflow:hidden}
       <div class="kiosk-grille" id="kioskAFaire"></div>
     </div>
   </div>
-  <div class="kiosk-titre" style="color:#aaa;margin-top:14px">🎫 COMMANDES EN COURS — appuie sur ✓ quand c'est prêt</div>
+  <div class="kiosk-titre" style="color:var(--text-2);margin-top:14px">🎫 COMMANDES EN COURS — appuie sur ✓ quand c'est prêt</div>
   <div class="kiosk-tickets" id="kioskTickets"></div>
 </div>
 
@@ -405,8 +649,8 @@ body.cuisine-plein{overflow:hidden}
 <!-- ===== ONGLET HISTORIQUE ===== -->
 <div class="tab-content" id="tab-historique">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-    <span style="color:#D4AF37;font-weight:bold">Tables réglées</span>
-    <button onclick="viderHistorique()" style="background:#333;border:none;color:#aaa;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px">🗑 Vider</button>
+    <span style="color:var(--gold);font-weight:bold">Tables réglées</span>
+    <button onclick="viderHistorique()" style="background:var(--surface-3);border:none;color:var(--text-2);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px">🗑 Vider</button>
   </div>
   <div id="historiqueList">
     <div class="empty"><div class="em">📚</div><p>Aucun historique</p></div>
@@ -430,18 +674,18 @@ body.cuisine-plein{overflow:hidden}
 <!-- ===== ONGLET JETONS ===== -->
 <div class="tab-content" id="tab-jetons">
   <div class="status-bar"><div class="dot"></div>Imprimez un jeton jetable au moment de placer une table — il s'active tout seul, se libère automatiquement à l'encaissement.</div>
-  <div style="background:#242424;border:1px solid #D4AF37;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px">
-    <label for="choixAdresseApp" style="color:#D4AF37;font-weight:bold">🔗 Adresse mise dans les QR codes :</label>
-    <select id="choixAdresseApp" onchange="changerAdresseApp(this.value)" style="margin-left:6px;padding:6px;border-radius:8px;background:#1a1a1a;color:#fff;border:1px solid #555;font-size:13px">
+  <div style="background:var(--surface);border:1px solid var(--gold);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px">
+    <label for="choixAdresseApp" style="color:var(--gold);font-weight:bold">🔗 Adresse mise dans les QR codes :</label>
+    <select id="choixAdresseApp" onchange="changerAdresseApp(this.value)" style="margin-left:6px;padding:6px;border-radius:8px;background:var(--ink);color:var(--text);border:1px solid var(--faint);font-size:13px">
       <option value="firebase">Firebase — commandemoulesmile.web.app (recommandée)</option>
       <option value="github">GitHub — ancienne adresse (cevapizza11.github.io)</option>
     </select>
-    <div id="adresseAppAffichee" style="color:#888;font-size:11px;margin-top:4px;word-break:break-all"></div>
+    <div id="adresseAppAffichee" style="color:var(--muted);font-size:11px;margin-top:4px;word-break:break-all"></div>
   </div>
-  <div id="occupationCounter" style="background:#1A2A1A;border:1px solid #2ab54a;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#8aff9d;font-weight:bold;text-align:center"></div>
+  <div id="occupationCounter" style="background:var(--green-bg);border:1px solid var(--green);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:var(--green-hi);font-weight:bold;text-align:center"></div>
   <button class="btn-encaisser" style="width:100%;font-size:15px;padding:14px;margin-bottom:8px" onclick="ouvrirModalNouvelleTable()">🖨️ Nouvelle table — imprimer un jeton</button>
   <button class="btn-encaisser" style="width:100%;font-size:15px;padding:14px;margin-bottom:8px;background:#2A6FB5" onclick="imprimerJetonAvance()">🖨️ Imprimer à l'avance (sans table — à attribuer ensuite)</button>
-  <button class="btn-encaisser" style="width:100%;font-size:15px;padding:14px;margin-bottom:14px;background:#8E44AD" onclick="creerJetonEmploye()">🍽️ Nouveau repas employé (10 points offerts)</button>
+  <button class="btn-encaisser" style="width:100%;font-size:15px;padding:14px;margin-bottom:14px;background:var(--violet)" onclick="creerJetonEmploye()">🍽️ Nouveau repas employé (10 points offerts)</button>
   <div class="recherche-bar">
     <input type="number" id="rechercheJeton" class="recherche-input" placeholder="🔍 Rechercher par n° de jeton OU n° de table..." inputmode="numeric" oninput="filtrerJetons()">
     <button class="btn-sm" onclick="document.getElementById('rechercheJeton').value='';filtrerJetons()" id="btnViderRechercheJeton" style="display:none">✕ Effacer</button>
@@ -464,7 +708,7 @@ body.cuisine-plein{overflow:hidden}
   </div>
   <div id="tablesRechargeGrid" class="jetons-grid"></div>
   <div style="margin-top:20px">
-    <h3 style="color:#D4AF37;font-size:14px;margin-bottom:10px">📋 Recharges du service en cours</h3>
+    <h3 style="color:var(--gold);font-size:14px;margin-bottom:10px">📋 Recharges du service en cours</h3>
     <div id="rechargesRecentes"></div>
   </div>
 </div>
@@ -489,7 +733,7 @@ body.cuisine-plein{overflow:hidden}
     <button class="btn-filtre" id="filtreStats30" onclick="setFiltreStats(30,this)">30 derniers jours</button>
     <button class="btn-filtre" id="filtreStatsTout" onclick="setFiltreStats(9999,this)">Tout</button>
   </div>
-  <button class="btn-sm" style="width:100%;margin-top:10px;background:#3A1E1E;color:#E88;border:1px solid #C0392B;padding:10px" onclick="reinitialiserStats()">🗑️ Réinitialiser toutes les statistiques</button>
+  <button class="btn-sm" style="width:100%;margin-top:10px;background:var(--red-bg);color:var(--red);border:1px solid var(--red);padding:10px" onclick="reinitialiserStats()">🗑️ Réinitialiser toutes les statistiques</button>
   <div id="statsContent" style="margin-top:14px"></div>
 </div>
 
@@ -500,20 +744,20 @@ body.cuisine-plein{overflow:hidden}
     <div class="modal-sub">Quelle table pour ce jeton ?</div>
     <input type="number" class="pwd-input" id="jetonTableInput" inputmode="numeric" placeholder="N° de table" min="1" max="150">
 
-    <div style="text-align:left;font-size:11px;color:#D4AF37;font-weight:bold;margin:10px 0 4px">🪑 Nombre de tables 90×90 assemblées (pour la capacité)</div>
+    <div style="text-align:left;font-size:11px;color:var(--gold);font-weight:bold;margin:10px 0 4px">🪑 Nombre de tables 90×90 assemblées (pour la capacité)</div>
     <input type="number" class="pwd-input" id="jetonUnitesInput" inputmode="numeric" placeholder="Ex: 2" min="1" max="15" style="font-size:16px;letter-spacing:normal">
 
-    <div style="text-align:left;font-size:11px;color:#D4AF37;font-weight:bold;margin:10px 0 4px">👥 Nombre de couverts (personnes)</div>
+    <div style="text-align:left;font-size:11px;color:var(--gold);font-weight:bold;margin:10px 0 4px">👥 Nombre de couverts (personnes)</div>
     <input type="number" class="pwd-input" id="jetonCouvertsInput" inputmode="numeric" placeholder="Ex: 4" min="1" max="30" style="font-size:16px;letter-spacing:normal">
 
     <div class="modal-actions">
       <button class="btn-annuler-modal" onclick="fermerModalJeton()">Annuler</button>
       <button class="btn-valider-modal" onclick="validerActivationJeton()">✅ Activer</button>
     </div>
-    <button class="btn-sm" id="btnReimprimerJeton" onclick="reimprimerJetonDepuisModal()" style="display:none;margin-top:10px;width:100%;background:#1A2A3A;color:#8ac4ff;border:1px solid #2a6ab5">🖨️ Réimprimer ce jeton</button>
-    <button class="btn-sm" id="btnCopierLienJeton" onclick="copierLienJetonDepuisModal()" style="display:none;margin-top:8px;width:100%;background:#1A2A1A;color:#8aff9d;border:1px solid #2ab54a">📋 Copier le lien (test sur ordinateur)</button>
-    <button class="btn-sm" id="btnLibererJeton" onclick="libererJetonDepuisModal()" style="display:none;margin-top:10px;width:100%;background:#3A1E1E;color:#E88;border:1px solid #C0392B">🔓 Libérer ce jeton</button>
-    <button class="btn-sm" id="btnSupprimerJeton" onclick="supprimerJetonDepuisModal()" style="margin-top:8px;width:100%;background:#1A1A1A;color:#888;border:1px solid #555">🗑️ Supprimer définitivement</button>
+    <button class="btn-sm" id="btnReimprimerJeton" onclick="reimprimerJetonDepuisModal()" style="display:none;margin-top:10px;width:100%;background:var(--blue-bg);color:var(--blue-hi);border:1px solid var(--blue-deep)">🖨️ Réimprimer ce jeton</button>
+    <button class="btn-sm" id="btnCopierLienJeton" onclick="copierLienJetonDepuisModal()" style="display:none;margin-top:8px;width:100%;background:var(--green-bg);color:var(--green-hi);border:1px solid var(--green)">📋 Copier le lien (test sur ordinateur)</button>
+    <button class="btn-sm" id="btnLibererJeton" onclick="libererJetonDepuisModal()" style="display:none;margin-top:10px;width:100%;background:var(--red-bg);color:var(--red);border:1px solid var(--red)">🔓 Libérer ce jeton</button>
+    <button class="btn-sm" id="btnSupprimerJeton" onclick="supprimerJetonDepuisModal()" style="margin-top:8px;width:100%;background:var(--ink);color:var(--muted);border:1px solid var(--faint)">🗑️ Supprimer définitivement</button>
   </div>
 </div>
 
@@ -537,13 +781,13 @@ body.cuisine-plein{overflow:hidden}
     <h3>🖨️ Nouvelle table</h3>
     <div class="modal-sub">Renseigne les informations pour imprimer le jeton</div>
 
-    <div style="text-align:left;font-size:11px;color:#D4AF37;font-weight:bold;margin:10px 0 4px">N° de table</div>
+    <div style="text-align:left;font-size:11px;color:var(--gold);font-weight:bold;margin:10px 0 4px">N° de table</div>
     <input type="number" class="pwd-input" id="ntTableInput" inputmode="numeric" placeholder="Ex: 12" min="1" max="150" style="font-size:16px;letter-spacing:normal">
 
-    <div style="text-align:left;font-size:11px;color:#D4AF37;font-weight:bold;margin:10px 0 4px">🪑 Nombre de tables 90×90 assemblées (pour la capacité)</div>
+    <div style="text-align:left;font-size:11px;color:var(--gold);font-weight:bold;margin:10px 0 4px">🪑 Nombre de tables 90×90 assemblées (pour la capacité)</div>
     <input type="number" class="pwd-input" id="ntUnitesInput" inputmode="numeric" placeholder="1 par défaut" min="1" max="15" style="font-size:16px;letter-spacing:normal">
 
-    <div style="text-align:left;font-size:11px;color:#D4AF37;font-weight:bold;margin:10px 0 4px">👥 Nombre de couverts (personnes)</div>
+    <div style="text-align:left;font-size:11px;color:var(--gold);font-weight:bold;margin:10px 0 4px">👥 Nombre de couverts (personnes)</div>
     <input type="number" class="pwd-input" id="ntCouvertsInput" inputmode="numeric" placeholder="Ex: 4" min="1" max="30" style="font-size:16px;letter-spacing:normal">
 
     <div class="modal-actions">
@@ -553,7 +797,7 @@ body.cuisine-plein{overflow:hidden}
   </div>
 </div>
 
-<div class="version">v.31/10/2026 18:15 — Moule & Smile Caisse</div>
+<div class="version">v.01/11/2026 18:20 — Moule & Smile · Caisse</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -971,7 +1215,7 @@ function ouvrirModalRecharge(tableNum){
   const list=document.getElementById('rechargeContenuList');
 
   if(!platsAVolonte.length){
-    list.innerHTML=`<div style="color:#888;font-size:12px">Aucun plat à volonté configuré — ajoutez-en dans l'onglet 📊 Stats</div>`;
+    list.innerHTML=`<div style="color:var(--muted);font-size:12px">Aucun plat à volonté configuré — ajoutez-en dans l'onglet 📊 Stats</div>`;
   } else {
     list.innerHTML=platsAVolonte.map((p,i)=>`
       <button class="btn-valider-modal" style="width:100%" onclick="choisirPlatRecharge(${i})">${p.nom}</button>
@@ -1031,7 +1275,7 @@ function renderRechargesRecentes(){
   }
   el.innerHTML=recharges.slice(0,30).map(r=>{
     const heure=r.timestamp?.toDate?r.timestamp.toDate().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'--:--';
-    return `<div class="cmd-item-row"><span>🪑 Table ${r.table}${r.sauce?' — '+r.sauce:''}</span><span style="color:#888;font-size:11px">${heure}</span></div>`;
+    return `<div class="cmd-item-row"><span>🪑 Table ${r.table}${r.sauce?' — '+r.sauce:''}</span><span style="color:var(--muted);font-size:11px">${heure}</span></div>`;
   }).join('');
 }
 
@@ -1181,7 +1425,7 @@ async function chargerStats(jours){
     function conditionnementHtml(totalQte,plat){
       if(!plat.condTaille||plat.condTaille<=0)return '';
       const nb=Math.ceil(totalQte/plat.condTaille);
-      return `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed #444;font-size:13px;color:#8aff9d">📦 ≈ <b>${nb}</b> ${plat.condLabel||'conditionnement(s)'} (de ${plat.condTaille} ${plat.unite})</div>`;
+      return `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);font-size:13px;color:var(--green-hi)">📦 ≈ <b>${nb}</b> ${plat.condLabel||'conditionnement(s)'} (de ${plat.condTaille} ${plat.unite})</div>`;
     }
 
     let html='';
@@ -1198,17 +1442,17 @@ async function chargerStats(jours){
           <div class="ca-box"><div class="ca-num">${dureeGlobale!==null?hms(dureeGlobale):'—'}</div><div class="ca-lbl">Durée moyenne globale</div></div>
           <div class="ca-box"><div class="ca-num">${rechargesParTable}</div><div class="ca-lbl">Recharges / table</div></div>
         </div>
-        <h3 style="color:#D4AF37;font-size:14px;margin-bottom:10px">⏱️ Durée moyenne par taille de table</h3>
+        <h3 style="color:var(--gold);font-size:14px;margin-bottom:10px">⏱️ Durée moyenne par taille de table</h3>
       `;
       Object.entries(buckets).forEach(([label,arr])=>{
         if(!arr.length)return;
         const m=moyenne(arr);
-        html+=`<div class="cmd-item-row"><span>${label}</span><span style="color:#D4AF37;font-weight:bold">${hms(m)} <span style="color:#888;font-weight:normal;font-size:11px">(${arr.length} table${arr.length>1?'s':''})</span></span></div>`;
+        html+=`<div class="cmd-item-row"><span>${label}</span><span style="color:var(--gold);font-weight:bold">${hms(m)} <span style="color:var(--muted);font-weight:normal;font-size:11px">(${arr.length} table${arr.length>1?'s':''})</span></span></div>`;
       });
     }
 
     // ===== PLATS À VOLONTÉ (avec recharge) =====
-    html+=`<h3 style="color:#D4AF37;font-size:14px;margin:20px 0 10px">🐚 Plats à volonté (avec recharges)</h3>`;
+    html+=`<h3 style="color:var(--gold);font-size:14px;margin:20px 0 10px">🐚 Plats à volonté (avec recharges)</h3>`;
 
     platsAVolonte.forEach((plat,i)=>{
       const nbInitial=compterCommandesInitiales(plat.nom);
@@ -1218,34 +1462,34 @@ async function chargerStats(jours){
       const detailJour=detailParJour(plat.nom,true);
 
       html+=`
-        <div style="background:#242424;border:1px solid #444;border-radius:10px;padding:14px;margin-bottom:10px">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-            <span style="font-weight:bold;color:#fff;font-size:15px">${plat.nom}</span>
-            <button class="btn-sm" style="background:#3A1E1E;color:#E88;border:1px solid #C0392B;padding:4px 10px;font-size:11px" onclick="supprimerPlatAVolonte(${i})">🗑️</button>
+            <span style="font-weight:bold;color:var(--text);font-size:15px">${plat.nom}</span>
+            <button class="btn-sm" style="background:var(--red-bg);color:var(--red);border:1px solid var(--red);padding:4px 10px;font-size:11px" onclick="supprimerPlatAVolonte(${i})">🗑️</button>
           </div>
 
-          <div style="text-align:center;background:#111;border-radius:10px;padding:14px;margin-bottom:10px">
-            <div style="font-size:32px;font-weight:900;color:#D4AF37">${qte.toFixed(1)} ${plat.unite}</div>
-            <div style="font-size:11px;color:#888;margin-top:2px">Total période — ${nbInitial} servies + ${rechargesPlat.length} recharge(s)</div>
+          <div style="text-align:center;background:var(--bg-deep);border-radius:10px;padding:14px;margin-bottom:10px">
+            <div style="font-size:32px;font-weight:900;color:var(--gold)">${qte.toFixed(1)} ${plat.unite}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">Total période — ${nbInitial} servies + ${rechargesPlat.length} recharge(s)</div>
             ${conditionnementHtml(qte,plat)}
           </div>
 
           <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
-            <div><span style="color:#888;font-size:11px;display:block">Qté/portion</span><input type="number" value="${plat.quantite}" step="0.1" min="0" style="width:65px;background:#111;border:1px solid #D4AF37;border-radius:6px;color:#D4AF37;font-weight:bold;padding:6px;font-size:13px;text-align:center" onchange="majPlatAVolonte(${i},'quantite',this.value)"></div>
-            <div><span style="color:#888;font-size:11px;display:block">Taille cond.</span><input type="number" value="${plat.condTaille||''}" step="0.1" min="0" placeholder="Ex: 5" style="width:65px;background:#111;border:1px solid #4ABA80;border-radius:6px;color:#4ABA80;font-weight:bold;padding:6px;font-size:13px;text-align:center" onchange="majPlatAVolonte(${i},'condTaille',this.value)"></div>
-            <div><span style="color:#888;font-size:11px;display:block">Nom conditionnement</span><input type="text" value="${plat.condLabel||''}" placeholder="Ex: sacs" style="width:90px;background:#111;border:1px solid #4ABA80;border-radius:6px;color:#4ABA80;padding:6px;font-size:12px" onchange="majPlatAVolonte(${i},'condLabel',this.value)"></div>
-            <label style="display:flex;align-items:center;gap:4px;color:#888;font-size:12px;margin-left:auto">
+            <div><span style="color:var(--muted);font-size:11px;display:block">Qté/portion</span><input type="number" value="${plat.quantite}" step="0.1" min="0" style="width:65px;background:var(--bg-deep);border:1px solid var(--gold);border-radius:6px;color:var(--gold);font-weight:bold;padding:6px;font-size:13px;text-align:center" onchange="majPlatAVolonte(${i},'quantite',this.value)"></div>
+            <div><span style="color:var(--muted);font-size:11px;display:block">Taille cond.</span><input type="number" value="${plat.condTaille||''}" step="0.1" min="0" placeholder="Ex: 5" style="width:65px;background:var(--bg-deep);border:1px solid var(--green);border-radius:6px;color:var(--green);font-weight:bold;padding:6px;font-size:13px;text-align:center" onchange="majPlatAVolonte(${i},'condTaille',this.value)"></div>
+            <div><span style="color:var(--muted);font-size:11px;display:block">Nom conditionnement</span><input type="text" value="${plat.condLabel||''}" placeholder="Ex: sacs" style="width:90px;background:var(--bg-deep);border:1px solid var(--green);border-radius:6px;color:var(--green);padding:6px;font-size:12px" onchange="majPlatAVolonte(${i},'condLabel',this.value)"></div>
+            <label style="display:flex;align-items:center;gap:4px;color:var(--muted);font-size:12px;margin-left:auto">
               <input type="checkbox" ${plat.sauce?'checked':''} onchange="majPlatAVolonte(${i},'sauce',this.checked)"> sauce
             </label>
           </div>
 
-          <div class="jour-detail-toggle" style="cursor:pointer;color:#D4AF37;font-size:12px;margin-top:8px" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">📅 Détail par jour (${detailJour.length} jour${detailJour.length>1?'s':''}) ▾</div>
+          <div class="jour-detail-toggle" style="cursor:pointer;color:var(--gold);font-size:12px;margin-top:8px" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">📅 Détail par jour (${detailJour.length} jour${detailJour.length>1?'s':''}) ▾</div>
           <div style="display:none;margin-top:8px">
             ${detailJour.map(([key,d])=>{
               const t=d.nbInitial+d.nbRecharges;
               const q=(t*(plat.quantite||0)).toFixed(1);
-              return `<div class="cmd-item-row" style="font-size:12px"><span>${d.label}</span><span style="color:#D4AF37">${d.nbInitial} servies + ${d.nbRecharges} rech. = <b>${q} ${plat.unite}</b></span></div>`;
-            }).join('')||'<div style="color:#666;font-size:12px">Aucune donnée</div>'}
+              return `<div class="cmd-item-row" style="font-size:12px"><span>${d.label}</span><span style="color:var(--gold)">${d.nbInitial} servies + ${d.nbRecharges} rech. = <b>${q} ${plat.unite}</b></span></div>`;
+            }).join('')||'<div style="color:var(--faint);font-size:12px">Aucune donnée</div>'}
           </div>
         </div>`;
 
@@ -1259,7 +1503,7 @@ async function chargerStats(jours){
         if(sauceEntries.length){
           html+=`<div style="margin:0 0 14px 14px">`;
           sauceEntries.forEach(([sauce,count])=>{
-            html+=`<div class="cmd-item-row" style="font-size:12px"><span>🧂 ${sauce}</span><span style="color:#D4AF37;font-weight:bold">${count}</span></div>`;
+            html+=`<div class="cmd-item-row" style="font-size:12px"><span>🧂 ${sauce}</span><span style="color:var(--gold);font-weight:bold">${count}</span></div>`;
           });
           html+=`</div>`;
         }
@@ -1267,27 +1511,27 @@ async function chargerStats(jours){
     });
 
     html+=`
-      <div style="background:#1A2A1A;border:1px dashed #2ab54a;border-radius:10px;padding:10px 14px;margin-bottom:20px">
-        <input type="text" id="nouveauPlatVolonteNom" placeholder="Nom exact du plat (ex: Calamars à volonté)" style="width:100%;background:#111;border:1px solid #444;border-radius:6px;color:#fff;padding:8px;font-size:12px;margin-bottom:6px">
+      <div style="background:var(--green-bg);border:1px dashed var(--green);border-radius:10px;padding:10px 14px;margin-bottom:20px">
+        <input type="text" id="nouveauPlatVolonteNom" placeholder="Nom exact du plat (ex: Calamars à volonté)" style="width:100%;background:var(--bg-deep);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px;font-size:12px;margin-bottom:6px">
         <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <input type="number" id="nouveauPlatVolonteQte" placeholder="Qté/portion" step="0.1" min="0" style="width:80px;background:#111;border:1px solid #444;border-radius:6px;color:#fff;padding:8px;font-size:12px">
-          <select id="nouveauPlatVolonteUnite" style="background:#111;border:1px solid #444;border-radius:6px;color:#fff;padding:8px;font-size:12px">
+          <input type="number" id="nouveauPlatVolonteQte" placeholder="Qté/portion" step="0.1" min="0" style="width:80px;background:var(--bg-deep);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px;font-size:12px">
+          <select id="nouveauPlatVolonteUnite" style="background:var(--bg-deep);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px;font-size:12px">
             <option value="kg">kg</option>
             <option value="pièces">pièces</option>
             <option value="portions">portions</option>
           </select>
-          <label style="display:flex;align-items:center;gap:4px;color:#888;font-size:11px"><input type="checkbox" id="nouveauPlatVolonteSauce"> sauce</label>
+          <label style="display:flex;align-items:center;gap:4px;color:var(--muted);font-size:11px"><input type="checkbox" id="nouveauPlatVolonteSauce"> sauce</label>
         </div>
         <div style="display:flex;gap:6px;margin-top:6px">
-          <input type="number" id="nouveauPlatVolonteCondTaille" placeholder="Taille conditionnement (ex: 5)" step="0.1" min="0" style="width:130px;background:#111;border:1px solid #4ABA80;border-radius:6px;color:#4ABA80;padding:8px;font-size:12px">
-          <input type="text" id="nouveauPlatVolonteCondLabel" placeholder="Nom (ex: sacs, cartons)" style="flex:1;background:#111;border:1px solid #4ABA80;border-radius:6px;color:#4ABA80;padding:8px;font-size:12px">
+          <input type="number" id="nouveauPlatVolonteCondTaille" placeholder="Taille conditionnement (ex: 5)" step="0.1" min="0" style="width:130px;background:var(--bg-deep);border:1px solid var(--green);border-radius:6px;color:var(--green);padding:8px;font-size:12px">
+          <input type="text" id="nouveauPlatVolonteCondLabel" placeholder="Nom (ex: sacs, cartons)" style="flex:1;background:var(--bg-deep);border:1px solid var(--green);border-radius:6px;color:var(--green);padding:8px;font-size:12px">
         </div>
         <button class="btn-valider-modal" style="width:100%;margin-top:6px;padding:8px" onclick="ajouterPlatAVolonte()">+ Ajouter</button>
       </div>
     `;
 
     // ===== PLATS À QUANTITÉ FIXE (sans recharge) =====
-    html+=`<h3 style="color:#D4AF37;font-size:14px;margin:20px 0 10px">🍽️ Plats à portion fixe</h3>`;
+    html+=`<h3 style="color:var(--gold);font-size:14px;margin:20px 0 10px">🍽️ Plats à portion fixe</h3>`;
 
     platsQuantiteFixe.forEach((plat,i)=>{
       const nb=compterCommandesInitiales(plat.nom);
@@ -1295,52 +1539,52 @@ async function chargerStats(jours){
       const detailJour=detailParJour(plat.nom,false);
 
       html+=`
-        <div style="background:#242424;border:1px solid #444;border-radius:10px;padding:14px;margin-bottom:10px">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-            <span style="font-weight:bold;color:#fff;font-size:15px">${plat.nom}</span>
-            <button class="btn-sm" style="background:#3A1E1E;color:#E88;border:1px solid #C0392B;padding:4px 10px;font-size:11px" onclick="supprimerPlatQuantiteFixe(${i})">🗑️</button>
+            <span style="font-weight:bold;color:var(--text);font-size:15px">${plat.nom}</span>
+            <button class="btn-sm" style="background:var(--red-bg);color:var(--red);border:1px solid var(--red);padding:4px 10px;font-size:11px" onclick="supprimerPlatQuantiteFixe(${i})">🗑️</button>
           </div>
 
-          <div style="text-align:center;background:#111;border-radius:10px;padding:14px;margin-bottom:10px">
-            <div style="font-size:32px;font-weight:900;color:#D4AF37">${qte.toFixed(1)} ${plat.unite}</div>
-            <div style="font-size:11px;color:#888;margin-top:2px">Total période — ${nb} commandée(s)</div>
+          <div style="text-align:center;background:var(--bg-deep);border-radius:10px;padding:14px;margin-bottom:10px">
+            <div style="font-size:32px;font-weight:900;color:var(--gold)">${qte.toFixed(1)} ${plat.unite}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">Total période — ${nb} commandée(s)</div>
             ${conditionnementHtml(qte,plat)}
           </div>
 
           <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
-            <div><span style="color:#888;font-size:11px;display:block">Qté/portion</span><input type="number" value="${plat.quantite}" step="0.1" min="0" style="width:65px;background:#111;border:1px solid #D4AF37;border-radius:6px;color:#D4AF37;font-weight:bold;padding:6px;font-size:13px;text-align:center" onchange="majPlatQuantiteFixe(${i},'quantite',this.value)"></div>
-            <div><span style="color:#888;font-size:11px;display:block">Taille cond.</span><input type="number" value="${plat.condTaille||''}" step="0.1" min="0" placeholder="Ex: 40" style="width:65px;background:#111;border:1px solid #4ABA80;border-radius:6px;color:#4ABA80;font-weight:bold;padding:6px;font-size:13px;text-align:center" onchange="majPlatQuantiteFixe(${i},'condTaille',this.value)"></div>
-            <div><span style="color:#888;font-size:11px;display:block">Nom conditionnement</span><input type="text" value="${plat.condLabel||''}" placeholder="Ex: cartons" style="width:90px;background:#111;border:1px solid #4ABA80;border-radius:6px;color:#4ABA80;padding:6px;font-size:12px" onchange="majPlatQuantiteFixe(${i},'condLabel',this.value)"></div>
+            <div><span style="color:var(--muted);font-size:11px;display:block">Qté/portion</span><input type="number" value="${plat.quantite}" step="0.1" min="0" style="width:65px;background:var(--bg-deep);border:1px solid var(--gold);border-radius:6px;color:var(--gold);font-weight:bold;padding:6px;font-size:13px;text-align:center" onchange="majPlatQuantiteFixe(${i},'quantite',this.value)"></div>
+            <div><span style="color:var(--muted);font-size:11px;display:block">Taille cond.</span><input type="number" value="${plat.condTaille||''}" step="0.1" min="0" placeholder="Ex: 40" style="width:65px;background:var(--bg-deep);border:1px solid var(--green);border-radius:6px;color:var(--green);font-weight:bold;padding:6px;font-size:13px;text-align:center" onchange="majPlatQuantiteFixe(${i},'condTaille',this.value)"></div>
+            <div><span style="color:var(--muted);font-size:11px;display:block">Nom conditionnement</span><input type="text" value="${plat.condLabel||''}" placeholder="Ex: cartons" style="width:90px;background:var(--bg-deep);border:1px solid var(--green);border-radius:6px;color:var(--green);padding:6px;font-size:12px" onchange="majPlatQuantiteFixe(${i},'condLabel',this.value)"></div>
           </div>
 
-          <div class="jour-detail-toggle" style="cursor:pointer;color:#D4AF37;font-size:12px;margin-top:8px" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">📅 Détail par jour (${detailJour.length} jour${detailJour.length>1?'s':''}) ▾</div>
+          <div class="jour-detail-toggle" style="cursor:pointer;color:var(--gold);font-size:12px;margin-top:8px" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">📅 Détail par jour (${detailJour.length} jour${detailJour.length>1?'s':''}) ▾</div>
           <div style="display:none;margin-top:8px">
             ${detailJour.map(([key,d])=>{
               const q=(d.nbInitial*(plat.quantite||0)).toFixed(1);
-              return `<div class="cmd-item-row" style="font-size:12px"><span>${d.label}</span><span style="color:#D4AF37">${d.nbInitial} commandée(s) = <b>${q} ${plat.unite}</b></span></div>`;
-            }).join('')||'<div style="color:#666;font-size:12px">Aucune donnée</div>'}
+              return `<div class="cmd-item-row" style="font-size:12px"><span>${d.label}</span><span style="color:var(--gold)">${d.nbInitial} commandée(s) = <b>${q} ${plat.unite}</b></span></div>`;
+            }).join('')||'<div style="color:var(--faint);font-size:12px">Aucune donnée</div>'}
           </div>
         </div>`;
     });
 
     html+=`
-      <div style="background:#1A2A1A;border:1px dashed #2ab54a;border-radius:10px;padding:10px 14px;margin-bottom:10px">
-        <input type="text" id="nouveauPlatFixeNom" placeholder="Nom exact du plat (ex: Fish and Chips)" style="width:100%;background:#111;border:1px solid #444;border-radius:6px;color:#fff;padding:8px;font-size:12px;margin-bottom:6px">
+      <div style="background:var(--green-bg);border:1px dashed var(--green);border-radius:10px;padding:10px 14px;margin-bottom:10px">
+        <input type="text" id="nouveauPlatFixeNom" placeholder="Nom exact du plat (ex: Fish and Chips)" style="width:100%;background:var(--bg-deep);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px;font-size:12px;margin-bottom:6px">
         <div style="display:flex;gap:6px">
-          <input type="number" id="nouveauPlatFixeQte" placeholder="Qté/portion" step="0.1" min="0" style="width:80px;background:#111;border:1px solid #444;border-radius:6px;color:#fff;padding:8px;font-size:12px">
-          <select id="nouveauPlatFixeUnite" style="background:#111;border:1px solid #444;border-radius:6px;color:#fff;padding:8px;font-size:12px">
+          <input type="number" id="nouveauPlatFixeQte" placeholder="Qté/portion" step="0.1" min="0" style="width:80px;background:var(--bg-deep);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px;font-size:12px">
+          <select id="nouveauPlatFixeUnite" style="background:var(--bg-deep);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px;font-size:12px">
             <option value="kg">kg</option>
             <option value="pièces">pièces</option>
             <option value="portions">portions</option>
           </select>
         </div>
         <div style="display:flex;gap:6px;margin-top:6px">
-          <input type="number" id="nouveauPlatFixeCondTaille" placeholder="Taille conditionnement (ex: 40)" step="0.1" min="0" style="width:150px;background:#111;border:1px solid #4ABA80;border-radius:6px;color:#4ABA80;padding:8px;font-size:12px">
-          <input type="text" id="nouveauPlatFixeCondLabel" placeholder="Nom (ex: cartons)" style="flex:1;background:#111;border:1px solid #4ABA80;border-radius:6px;color:#4ABA80;padding:8px;font-size:12px">
+          <input type="number" id="nouveauPlatFixeCondTaille" placeholder="Taille conditionnement (ex: 40)" step="0.1" min="0" style="width:150px;background:var(--bg-deep);border:1px solid var(--green);border-radius:6px;color:var(--green);padding:8px;font-size:12px">
+          <input type="text" id="nouveauPlatFixeCondLabel" placeholder="Nom (ex: cartons)" style="flex:1;background:var(--bg-deep);border:1px solid var(--green);border-radius:6px;color:var(--green);padding:8px;font-size:12px">
         </div>
         <button class="btn-valider-modal" style="width:100%;margin-top:6px;padding:8px" onclick="ajouterPlatQuantiteFixe()">+ Ajouter</button>
       </div>
-      <div style="color:#666;font-size:11px;margin-bottom:10px">💡 Pour un plat avec des quantités variables (ex: nuggets 4pcs enfant / 6pcs ado), ajoutez deux lignes avec des noms distincts s'ils apparaissent différemment sur vos tickets, ou ajustez la quantité en pièces moyennes.</div>
+      <div style="color:var(--faint);font-size:11px;margin-bottom:10px">💡 Pour un plat avec des quantités variables (ex: nuggets 4pcs enfant / 6pcs ado), ajoutez deux lignes avec des noms distincts s'ils apparaissent différemment sur vos tickets, ou ajustez la quantité en pièces moyennes.</div>
     `;
 
     container.innerHTML=html;
@@ -1626,7 +1870,7 @@ function imprimerTicketsJetonAvance(jetons,printWin){
     new QRCode(document.getElementById('qr_${j.numero}'), {
       text: "${baseUrl}?j=${j.token}",
       width: 160, height: 160,
-      colorDark: "#000000", colorLight: "#ffffff",
+      colorDark: "var(--bg-deep)", colorLight: "var(--text)",
       correctLevel: QRCode.CorrectLevel.H
     });`).join('');
 
@@ -1776,7 +2020,7 @@ function renderAlertes(){
     const titre=estServeur?`🙋 Table ${a.table} appelle un serveur`:`🔔 Table ${a.table} demande l'addition`;
     const sub=estServeur
       ?`🕐 ${a.heure||'--:--'}`
-      :`🕐 ${a.heure||'--:--'} — Total estimé : <strong style="color:#D4AF37">${(a.total||0).toFixed(2).replace('.',',')} €</strong>`;
+      :`🕐 ${a.heure||'--:--'} — Total estimé : <strong style="color:var(--gold)">${(a.total||0).toFixed(2).replace('.',',')} €</strong>`;
     return `
     <div class="alerte-card">
       <div class="alerte-info">
@@ -1832,7 +2076,7 @@ function renderCommandes(){
     grid.innerHTML='<div class="empty"><div class="em">🐚</div><p>En attente de commandes...</p></div>';
     return;
   }
-  const statutColors={nouvelle:'#D4AF37',en_addition:'#4ABA80',vue:'#4ABA80',regle:'#555'};
+  const statutColors={nouvelle:'var(--gold)',en_addition:'var(--green)',vue:'var(--green)',regle:'var(--faint)'};
   const statutLabels={nouvelle:'🟡 Nouvelle',en_addition:'📋 En addition',vue:'✅ Vue',regle:'💰 Réglée'};
   grid.innerHTML=cmds.map(cmd=>{
     const items=cmd.items||[];
@@ -1843,7 +2087,7 @@ function renderCommandes(){
         <div class="cmd-table">${libelleTable(cmd.table)} ${estDeux?'<span class="badge-prio">👥 2 pers.</span>':''}</div>
         <div class="cmd-meta">
           <div class="cmd-heure">🕐 ${cmd.heure||'--:--'}</div>
-          <div class="cmd-statut" style="color:${statutColors[cmd.statut]||'#888'}">${statutLabels[cmd.statut]||''}</div>
+          <div class="cmd-statut" style="color:${statutColors[cmd.statut]||'var(--muted)'}">${statutLabels[cmd.statut]||''}</div>
         </div>
       </div>
       <div class="cmd-items">
@@ -1851,16 +2095,16 @@ function renderCommandes(){
           <div class="cmd-item-row" style="flex-direction:column;align-items:stretch">
             <div style="display:flex;justify-content:space-between">
               <span>${item.nom}</span>
-              <span style="color:#D4AF37;font-weight:bold">${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span>
+              <span style="color:var(--gold);font-weight:bold">${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span>
             </div>
-            ${item.choix?`<div style="font-size:11px;color:#4ABA80;padding-left:4px">${item.choix}</div>`:''}
+            ${item.choix?`<div style="font-size:11px;color:var(--green);padding-left:4px">${item.choix}</div>`:''}
           </div>`).join('')}
       </div>
       <div class="cmd-total">Total : ${(cmd.total||0).toFixed(2).replace('.',',')} €</div>
       <div class="cmd-actions">
         ${!estRegle
           ?`<button class="btn-vu" onclick="marquerVuEtAddition('${cmd.id}',${cmd.table})">✓ Vu → Addition</button>`
-          :`<div style="color:#4ABA80;font-size:12px;font-weight:bold;padding:6px 0">✅ Réglée</div>`
+          :`<div style="color:var(--green);font-size:12px;font-weight:bold;padding:6px 0">✅ Réglée</div>`
         }
         ${!estRegle?`<button class="btn-editer" onclick="demanderPwdPuis(()=>ouvrirModalEditCommande('${cmd.id}'))">✏️</button>`:''}
         <button class="btn-archive" onclick="archiverCommande('${cmd.id}',${cmd.table})">🗑 Archiver</button>
@@ -1883,7 +2127,7 @@ function renderCommandesDeux(){
   if(!cmds.length){
     grid.innerHTML='<div class="empty"><div class="em">👥</div><p>Aucune commande de table 2 personnes</p></div>';
   } else {
-    const statutColors={nouvelle:'#D4AF37',vue:'#4ABA80'};
+    const statutColors={nouvelle:'var(--gold)',vue:'var(--green)'};
     const statutLabels={nouvelle:'🟡 Nouvelle',vue:'✅ Vue'};
     grid.innerHTML=cmds.map(cmd=>{
       const items=cmd.items||[];
@@ -1892,7 +2136,7 @@ function renderCommandesDeux(){
           <div class="cmd-table">Table ${cmd.table} <span class="badge-prio">👥 2 pers.</span></div>
           <div class="cmd-meta">
             <div class="cmd-heure">🕐 ${cmd.heure||'--:--'}</div>
-            <div class="cmd-statut" style="color:${statutColors[cmd.statut]||'#888'}">${statutLabels[cmd.statut]||''}</div>
+            <div class="cmd-statut" style="color:${statutColors[cmd.statut]||'var(--muted)'}">${statutLabels[cmd.statut]||''}</div>
           </div>
         </div>
         <div class="cmd-items">
@@ -1900,9 +2144,9 @@ function renderCommandesDeux(){
             <div class="cmd-item-row" style="flex-direction:column;align-items:stretch">
               <div style="display:flex;justify-content:space-between">
                 <span>${item.nom}</span>
-                <span style="color:#D4AF37;font-weight:bold">${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span>
+                <span style="color:var(--gold);font-weight:bold">${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span>
               </div>
-              ${item.choix?`<div style="font-size:11px;color:#4ABA80;padding-left:4px">${item.choix}</div>`:''}
+              ${item.choix?`<div style="font-size:11px;color:var(--green);padding-left:4px">${item.choix}</div>`:''}
             </div>`).join('')}
         </div>
         <div class="cmd-total">Total : ${(cmd.total||0).toFixed(2).replace('.',',')} €</div>
@@ -2004,7 +2248,7 @@ function renderCuisine(){
         ${plats}
         <button onclick="marquerCuisinePret('${cmd.id}')">✓ Prêt</button>
       </div>`;
-    }).join(''):'<span style="color:#666;font-size:12px">Rien en cours ✅</span>';
+    }).join(''):'<span style="color:var(--faint);font-size:12px">Rien en cours ✅</span>';
   }
 
   // Historique : commandes déjà marquées « Prêt » (la plus récente en haut) + possibilité de remettre à faire
@@ -2025,14 +2269,14 @@ function renderCuisine(){
           <div class="cmd-table">${libelleTable(cmd.table)}</div>
           <div class="cmd-meta">
             <div class="cmd-heure">🕐 ${cmd.heure||'--:--'}</div>
-            <div class="cmd-statut" style="color:#4ABA80">✅ Prêt${heurePret(cmd)?' à '+heurePret(cmd):''}</div>
+            <div class="cmd-statut" style="color:var(--green)">✅ Prêt${heurePret(cmd)?' à '+heurePret(cmd):''}</div>
           </div>
         </div>
         <div class="cmd-items">
           ${lignes.map(it=>`
             <div class="cmd-item-row" style="flex-direction:column;align-items:stretch">
               <div style="font-size:14px;font-weight:bold">${it.menuPlat?it.nom:(it.platMenu?it.nom+' → '+it.platMenu:it.nom)}</div>
-              ${it.choix?`<div style="font-size:12px;color:#4ABA80;padding-left:4px">${it.choix}</div>`:''}
+              ${it.choix?`<div style="font-size:12px;color:var(--green);padding-left:4px">${it.choix}</div>`:''}
             </div>`).join('')}
         </div>
         <div class="cmd-actions"><button class="btn-remettre" onclick="remettreCuisineAFaire('${cmd.id}')">↩ Remettre à faire</button></div>
@@ -2094,15 +2338,15 @@ function renderCuisine(){
         <div class="cmd-table">${libelleTable(cmd.table)}</div>
         <div class="cmd-meta">
           <div class="cmd-heure">🕐 ${cmd.heure||'--:--'}</div>
-          <div class="cmd-statut" style="color:#888">${statutLabels[cmd.statut]||''}</div>
+          <div class="cmd-statut" style="color:var(--muted)">${statutLabels[cmd.statut]||''}</div>
         </div>
       </div>
       <div class="cmd-items">
         ${lignes.map(it=>`
           <div class="cmd-item-row" style="flex-direction:column;align-items:stretch">
             <div style="font-size:15px;font-weight:bold">${it.nom}</div>
-            ${it.choix?`<div style="font-size:12px;color:#4ABA80;padding-left:4px">${it.choix}</div>`:''}
-            ${it.aPreciser?`<div style="font-size:12px;color:#ff8a8a;padding-left:4px;font-weight:bold">⚠️ Plat non choisi par le client — demander au serveur</div>`:''}
+            ${it.choix?`<div style="font-size:12px;color:var(--green);padding-left:4px">${it.choix}</div>`:''}
+            ${it.aPreciser?`<div style="font-size:12px;color:var(--red);padding-left:4px;font-weight:bold">⚠️ Plat non choisi par le client — demander au serveur</div>`:''}
           </div>`).join('')}
       </div>
       <div class="cmd-actions">
@@ -2247,12 +2491,12 @@ function imprimerTicketCuisine(cmd,printWin){
       <td style="padding:3px 0 0 0;font-size:11px;font-weight:900;text-align:right;white-space:nowrap">${item.prix===0?'Incl.':item.prix.toFixed(2).replace('.',',')+' €'}</td>
     </tr>`;
     if(item.choix){
-      lignes+=`<tr><td colspan="2" style="padding:0 0 2px 8px;font-size:11px;color:#000;font-weight:900">→ ${item.choix}</td></tr>`;
+      lignes+=`<tr><td colspan="2" style="padding:0 0 2px 8px;font-size:11px;color:var(--bg-deep);font-weight:900">→ ${item.choix}</td></tr>`;
     }
     const idBase=(item.id||'').replace('_inclus','');
     const consigne=carteConsignes[idBase];
     if(consigne){
-      lignes+=`<tr><td colspan="2" style="padding:1px 0 4px 8px;font-size:11px;color:#000;font-weight:900;border-left:3px solid #000;padding-left:8px">🍽️ ${consigne}</td></tr>`;
+      lignes+=`<tr><td colspan="2" style="padding:1px 0 4px 8px;font-size:11px;color:var(--bg-deep);font-weight:900;border-left:3px solid var(--bg-deep);padding-left:8px">🍽️ ${consigne}</td></tr>`;
     }
   });
 
@@ -2378,7 +2622,7 @@ function ouvrirModalEditCommande(id){
 function renderEditItemsList(){
   const container=document.getElementById('editItemsList');
   if(!editionItems.length){
-    container.innerHTML='<div style="color:#888;text-align:center;padding:14px;font-size:13px">Aucun article — ajoutez-en un ci-dessous</div>';
+    container.innerHTML='<div style="color:var(--muted);text-align:center;padding:14px;font-size:13px">Aucun article — ajoutez-en un ci-dessous</div>';
   } else {
     container.innerHTML=editionItems.map((it,idx)=>`
       <div class="edit-item-row">
@@ -2507,7 +2751,7 @@ function renderAdditions(){
     <div class="addition-card ${enRetard?'en-retard':''}">
       <div class="addition-header">
         <div>
-          <div class="addition-table-num">🪑 ${libelleTable(add.table)}${enRetard?`<span class="badge-retard">⏰ ${mins} min</span>`:(demandee?`<span class="badge-retard" style="background:#E67E22">🔔 Demandée · ${mins} min</span>`:'')}</div>
+          <div class="addition-table-num">🪑 ${libelleTable(add.table)}${enRetard?`<span class="badge-retard">⏰ ${mins} min</span>`:(demandee?`<span class="badge-retard" style="background:var(--orange)">🔔 Demandée · ${mins} min</span>`:'')}</div>
           <div class="addition-nb">${(add.commandes||[]).length} commande(s)</div>
         </div>
         <div class="addition-total">${(add.total||0).toFixed(2).replace('.',',')} €</div>
@@ -2523,9 +2767,9 @@ function renderAdditions(){
               <div class="cmd-groupe-item" style="flex-direction:column;align-items:stretch">
                 <div style="display:flex;justify-content:space-between">
                   <span>${item.nom}</span>
-                  <span style="color:#D4AF37">${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span>
+                  <span style="color:var(--gold)">${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span>
                 </div>
-                ${item.choix?`<div style="font-size:10px;color:#4ABA80;padding-left:4px">${item.choix}</div>`:''}
+                ${item.choix?`<div style="font-size:10px;color:var(--green);padding-left:4px">${item.choix}</div>`:''}
               </div>`).join('')}
             <div class="cmd-groupe-subtotal">ss-total : ${(cmd.total||0).toFixed(2).replace('.',',')} €</div>
           </div>`).join('')}
@@ -2699,13 +2943,13 @@ function majPaiementMixte(){
   const btn=document.getElementById('btnValiderMixte');
   if(!el||!btn) return;
   if(e.reste>0.004){
-    el.innerHTML=`Reste à payer : <b style="color:#ff8a8a">${euros(e.reste)}</b>`;
+    el.innerHTML=`Reste à payer : <b style="color:var(--red)">${euros(e.reste)}</b>`;
   } else if(e.surplus>0.004){
     el.innerHTML=e.surplusOk
-      ?`✅ Compte bon — <span style="color:#E6B84A">surplus titres non rendu : ${euros(e.surplus)}</span>`
-      :`<b style="color:#ff8a8a">⚠️ Trop perçu de ${euros(e.surplus)}</b> — en espèces/CB, saisis le montant NET (après rendu de monnaie)`;
+      ?`✅ Compte bon — <span style="color:var(--gold-hi)">surplus titres non rendu : ${euros(e.surplus)}</span>`
+      :`<b style="color:var(--red)">⚠️ Trop perçu de ${euros(e.surplus)}</b> — en espèces/CB, saisis le montant NET (après rendu de monnaie)`;
   } else {
-    el.innerHTML='<b style="color:#4ABA80">✅ Compte bon</b>';
+    el.innerHTML='<b style="color:var(--green)">✅ Compte bon</b>';
   }
   btn.disabled=!e.valide;
 }
@@ -2952,26 +3196,26 @@ function renderHistorique(){
       </div>
       <div class="histo-detail" id="hdet_${i}">
         ${(h.commandes||[]).map(cmd=>`
-          <div style="margin-bottom:8px;padding:8px;background:#2A2A2A;border-radius:6px">
-            <div style="color:#D4AF37;font-size:11px;margin-bottom:4px">🕐 ${cmd.heure||'--:--'}</div>
+          <div style="margin-bottom:8px;padding:8px;background:var(--surface-2);border-radius:6px">
+            <div style="color:var(--gold);font-size:11px;margin-bottom:4px">🕐 ${cmd.heure||'--:--'}</div>
             ${(cmd.items||[]).map(item=>`
               <div style="padding:2px 0">
-                <div style="display:flex;justify-content:space-between;font-size:12px;color:#ddd">
+                <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text)">
                   <span>${item.nom}</span>
                   <span>${item.prix===0?'Inclus':item.prix.toFixed(2).replace('.',',')+' €'}</span>
                 </div>
-                ${item.choix?`<div style="font-size:10px;color:#4ABA80;padding-left:4px">${item.choix}</div>`:''}
+                ${item.choix?`<div style="font-size:10px;color:var(--green);padding-left:4px">${item.choix}</div>`:''}
               </div>`).join('')}
           </div>`).join('')}
         <button onclick="event.stopPropagation();imprimerTicket('hist_${i}')"
-          style="background:#333;border:1px solid #D4AF37;color:#D4AF37;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;margin-top:4px">
+          style="background:var(--surface-3);border:1px solid var(--gold);color:var(--gold);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;margin-top:4px">
           🖨️ Réimprimer
         </button>
         ${h.type!=='employe'&&Array.isArray(h.paiements)&&h.paiements.length?`<button onclick="event.stopPropagation();demanderPwdPuis(()=>ouvrirCorrectionPaiement('${h.id}'))"
-          style="background:#1A2A3A;border:1px solid #2a6ab5;color:#8ac4ff;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;margin-top:4px;margin-left:6px">
+          style="background:var(--blue-bg);border:1px solid var(--blue-deep);color:var(--blue-hi);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;margin-top:4px;margin-left:6px">
           ✏️ Modifier le paiement
         </button>`:''}
-        ${h.paiementCorrigeLeMs?`<div style="font-size:10px;color:#E6B84A;margin-top:6px">✏️ Paiement corrigé à ${new Date(h.paiementCorrigeLeMs).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</div>`:''}
+        ${h.paiementCorrigeLeMs?`<div style="font-size:10px;color:var(--gold-hi);margin-top:6px">✏️ Paiement corrigé à ${new Date(h.paiementCorrigeLeMs).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</div>`:''}
       </div>
     </div>`).join('');
 }
@@ -2979,9 +3223,9 @@ function renderHistorique(){
 // Petites étiquettes « 💳 CB 42,50 € » sous chaque table réglée
 function badgesPaiement(h){
   if(h.type==='employe'||h.modePaiement==='offert') return '<span class="pay-badge">🍽️ Repas offert</span>';
-  if(!h.paiements||!h.paiements.length) return h.heureReglement?'<span class="pay-badge" style="color:#888">Mode non renseigné</span>':'';
+  if(!h.paiements||!h.paiements.length) return h.heureReglement?'<span class="pay-badge" style="color:var(--muted)">Mode non renseigné</span>':'';
   return h.paiements.map(p=>{const m=modePaiementInfo(p.mode);return `<span class="pay-badge">${m.icone} ${m.label} ${euros(p.montant)}</span>`;}).join('')
-    +(h.surplusTitres?`<span class="pay-badge" style="color:#E6B84A">surplus titres ${euros(h.surplusTitres)}</span>`:'');
+    +(h.surplusTitres?`<span class="pay-badge" style="color:var(--gold-hi)">surplus titres ${euros(h.surplusTitres)}</span>`:'');
 }
 
 function toggleDetail(id){
@@ -3036,7 +3280,7 @@ function renderCA(){
   document.getElementById('caCouverts').textContent=totalCouverts;
   document.getElementById('caMoyen').textContent=totalCouverts?(total/totalCouverts).toFixed(2).replace('.',',')+'€':'0 €';
 
-  const statutColors={nouvelle:'#D4AF37',en_addition:'#4ABA80',vue:'#4ABA80',regle:'#555'};
+  const statutColors={nouvelle:'var(--gold)',en_addition:'var(--green)',vue:'var(--green)',regle:'var(--faint)'};
   document.getElementById('caTableBody').innerHTML=cmds
     .sort((a,b)=>(b.timestamp?.seconds||0)-(a.timestamp?.seconds||0))
     .slice(0,50)
@@ -3044,8 +3288,8 @@ function renderCA(){
       <td>${c.heure||'--'}</td>
       <td>Table ${c.table}</td>
       <td>${(c.items||[]).length} article(s)</td>
-      <td style="color:#D4AF37;font-weight:bold">${(c.total||0).toFixed(2).replace('.',',')} €</td>
-      <td style="color:${statutColors[c.statut]||'#888'}">${c.statut||'-'}</td>
+      <td style="color:var(--gold);font-weight:bold">${(c.total||0).toFixed(2).replace('.',',')} €</td>
+      <td style="color:${statutColors[c.statut]||'var(--muted)'}">${c.statut||'-'}</td>
     </tr>`).join('');
 }
 
@@ -3058,17 +3302,17 @@ function imprimerTicket(key){
   const now=new Date().toLocaleString('fr-FR');
   let lignes='';
   (data.commandes||[]).forEach(cmd=>{
-    lignes+=`<tr><td colspan="2" style="padding:4px 0;border-top:1px dashed #000;font-size:9px;color:#000;font-weight:900">🕐 ${cmd.heure||'--:--'}</td></tr>`;
+    lignes+=`<tr><td colspan="2" style="padding:4px 0;border-top:1px dashed var(--bg-deep);font-size:9px;color:var(--bg-deep);font-weight:900">🕐 ${cmd.heure||'--:--'}</td></tr>`;
     (cmd.items||[]).forEach(item=>{
       lignes+=`<tr>
         <td style="padding:2px 0 0 0;font-size:11px;font-weight:900">${item.nom}</td>
         <td style="padding:2px 0 0 0;font-size:11px;font-weight:900;text-align:right;white-space:nowrap">${item.prix===0?'Incl.':item.prix.toFixed(2).replace('.',',')+' €'}</td>
       </tr>`;
       if(item.choix){
-        lignes+=`<tr><td colspan="2" style="padding:0 0 2px 8px;font-size:9px;color:#000;font-weight:900">${item.choix}</td></tr>`;
+        lignes+=`<tr><td colspan="2" style="padding:0 0 2px 8px;font-size:9px;color:var(--bg-deep);font-weight:900">${item.choix}</td></tr>`;
       }
     });
-    lignes+=`<tr><td colspan="2" style="text-align:right;font-size:9px;color:#000;font-weight:900;padding-bottom:4px">ss-total : ${(cmd.total||0).toFixed(2).replace('.',',')} €</td></tr>`;
+    lignes+=`<tr><td colspan="2" style="text-align:right;font-size:9px;color:var(--bg-deep);font-weight:900;padding-bottom:4px">ss-total : ${(cmd.total||0).toFixed(2).replace('.',',')} €</td></tr>`;
   });
 
   const win=window.open('','_blank','width=420,height=650');

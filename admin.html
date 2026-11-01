@@ -4,107 +4,345 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Moule & Smile — Admin Carte</title>
+<meta name="theme-color" content="#0A0C11">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/png" href="icon-admin.png">
 <link rel="apple-touch-icon" href="icon-admin-180.png">
 <style>
+/* ==========================================================================
+   LE MENU — Console admin · thème sombre premium (01/11/2026)
+   Toutes les couleurs passent par les variables ci-dessous.
+   ========================================================================== */
+:root{
+  --bg:#0A0C11;
+  --bg-deep:#06070A;
+  --surface:#11141B;
+  --surface-2:#161A23;
+  --surface-3:#1D222D;
+  --border:#262C39;
+  --line:rgba(255,255,255,.06);
+  --line-strong:rgba(255,255,255,.11);
+  --text:#EDEEF2;
+  --text-2:#B3B8C6;
+  --muted:#868C9C;
+  --faint:#5A6070;
+  --gold:#E2BE6A;
+  --gold-hi:#F3DCA0;
+  --gold-lo:#B8913F;
+  --gold-soft:rgba(226,190,106,.12);
+  --gold-ring:rgba(226,190,106,.35);
+  --ink:#16120A;
+  --green:#3FD18A;
+  --green-deep:#1E8F5C;
+  --green-bg:rgba(63,209,138,.08);
+  --red:#F07575;
+  --danger:#E5484D;
+  --red-bg:rgba(240,117,117,.09);
+  --violet:#A98BFA;
+  --radius:16px;
+  --radius-sm:10px;
+  --shadow:0 1px 0 rgba(255,255,255,.04) inset,0 10px 30px -12px rgba(0,0,0,.6);
+  --grad-gold:linear-gradient(135deg,var(--gold-hi) 0%,var(--gold) 45%,var(--gold-lo) 100%);
+  --font:"Plus Jakarta Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  --font-display:"Instrument Serif",Georgia,serif;
+  --side:240px;
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh;padding-bottom:40px}
-.header{background:#111;padding:12px 20px;border-bottom:2px solid #D4AF37;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
-.header h1{color:#D4AF37;font-size:15px}
-.save-btn{background:#D4AF37;color:#1A1A1A;border:none;padding:8px 16px;border-radius:8px;font-weight:bold;font-size:12px;cursor:pointer}
-.nav-tabs{display:flex;background:#111;border-bottom:2px solid #D4AF37}
-.nav-tab{flex:1;padding:12px 8px;text-align:center;cursor:pointer;font-size:11px;color:#888;border-bottom:3px solid transparent;transition:all .2s;font-weight:bold}
-.nav-tab.active{color:#D4AF37;border-bottom-color:#D4AF37}
-.content{padding:16px;max-width:620px;margin:0 auto}
-.status-bar{background:#1A3A2A;border:1px solid #1A7A50;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#4ABA80;display:flex;align-items:center;gap:8px}
-.dot{width:8px;height:8px;background:#4ABA80;border-radius:50%;animation:blink 1.5s infinite;flex-shrink:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:var(--font);color:var(--text);min-height:100vh;padding-bottom:40px;
+  font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;
+  background:
+    radial-gradient(900px 500px at 8% -10%,rgba(226,190,106,.09),transparent 60%),
+    radial-gradient(700px 420px at 100% 0%,rgba(120,130,255,.07),transparent 60%),
+    var(--bg);
+  background-attachment:fixed;
+}
+::selection{background:var(--gold-soft);color:var(--gold-hi)}
+strong,b{font-weight:700}
+input,select,button{font-family:inherit}
+*::-webkit-scrollbar{width:10px;height:8px}
+*::-webkit-scrollbar-thumb{background:var(--surface-3);border-radius:10px;border:2px solid var(--bg)}
+*::-webkit-scrollbar-track{background:transparent}
+
+/* ---------- BARRE DU HAUT ---------- */
+.header{
+  position:sticky;top:0;z-index:100;height:64px;padding:0 20px;
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+  background:rgba(10,12,17,.72);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);
+  border-bottom:1px solid var(--line);
+}
+.header::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent,var(--gold-ring),transparent);opacity:.6}
+.brand{display:flex;align-items:center;gap:11px;min-width:0}
+.brand-mark{
+  width:36px;height:36px;border-radius:11px;flex-shrink:0;display:grid;place-items:center;
+  background:var(--grad-gold);color:var(--ink);font-family:var(--font-display);font-size:22px;font-style:italic;
+  box-shadow:0 6px 18px -6px rgba(226,190,106,.55),inset 0 1px 0 rgba(255,255,255,.5);
+}
+.brand-name{font-family:var(--font-display);font-size:22px;line-height:1;letter-spacing:.2px;color:var(--text)}
+.brand-name em{color:var(--gold);font-style:italic}
+.brand-sub{font-size:10.5px;color:var(--muted);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-top:3px;white-space:nowrap}
+.header h1{display:none}
+.header-right{display:flex;align-items:center;gap:10px}
+.build{
+  font-size:11px;font-weight:600;color:var(--text-2);font-variant-numeric:tabular-nums;white-space:nowrap;
+  padding:6px 10px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line-strong);
+}
+.build::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:7px;vertical-align:1px;box-shadow:0 0 0 3px var(--green-bg)}
+.save-btn{
+  background:var(--grad-gold);color:var(--ink);border:none;padding:10px 18px;border-radius:11px;
+  font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;letter-spacing:.2px;
+  box-shadow:0 8px 22px -10px rgba(226,190,106,.8),inset 0 1px 0 rgba(255,255,255,.45);
+  transition:transform .15s,box-shadow .2s,filter .2s;
+}
+.save-btn:hover{filter:brightness(1.06);box-shadow:0 10px 28px -10px rgba(226,190,106,.95),inset 0 1px 0 rgba(255,255,255,.45)}
+.save-btn:active{transform:translateY(1px)}
+
+/* ---------- NAVIGATION ---------- */
+.nav-tabs{
+  display:flex;gap:6px;padding:10px 16px;overflow-x:auto;scrollbar-width:none;
+  background:rgba(10,12,17,.6);border-bottom:1px solid var(--line);
+  position:sticky;top:64px;z-index:90;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+}
+.nav-tabs::-webkit-scrollbar{display:none}
+.nav-tab{
+  flex:0 0 auto;padding:8px 14px;border-radius:10px;cursor:pointer;font-size:12.5px;font-weight:600;
+  color:var(--muted);border:1px solid transparent;transition:background .2s,color .2s,border-color .2s;white-space:nowrap;
+}
+.nav-tab:hover{color:var(--text);background:var(--surface-2)}
+.nav-tab.active{
+  color:var(--gold-hi);border-color:rgba(226,190,106,.25);
+  background:linear-gradient(180deg,rgba(226,190,106,.14),rgba(226,190,106,.05));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+}
+
+/* ---------- CONTENU ---------- */
+.content{padding:22px 16px;max-width:760px;margin:0 auto;animation:entree .35s ease}
+@keyframes entree{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.page-head{margin:2px 2px 18px}
+.page-head .eyebrow{font-size:10.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:6px}
+.page-head h2{font-family:var(--font-display);font-weight:400;font-size:32px;line-height:1.05;letter-spacing:.2px;color:var(--text)}
+.page-head p{color:var(--muted);font-size:13px;margin-top:6px;max-width:560px}
+
+.status-bar{
+  display:flex;align-items:center;gap:10px;margin-bottom:18px;padding:10px 14px;border-radius:12px;
+  background:linear-gradient(90deg,var(--green-bg),rgba(63,209,138,.02));
+  border:1px solid rgba(63,209,138,.18);color:var(--text-2);font-size:12.5px;
+}
+.status-bar strong{color:var(--green)}
+.dot{width:8px;height:8px;background:var(--green);border-radius:50%;flex-shrink:0;box-shadow:0 0 0 0 rgba(63,209,138,.6);animation:pulse 2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(63,209,138,.55)}70%{box-shadow:0 0 0 8px rgba(63,209,138,0)}100%{box-shadow:0 0 0 0 rgba(63,209,138,0)}}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-.cat-tabs{display:flex;overflow-x:auto;gap:8px;padding:0 0 12px;scrollbar-width:none;margin-bottom:12px}
+
+.cat-tabs{display:flex;overflow-x:auto;gap:8px;padding:2px 0 14px;scrollbar-width:none;margin-bottom:6px}
 .cat-tabs::-webkit-scrollbar{display:none}
-.cat-tab{flex-shrink:0;padding:7px 12px;background:#2A2A2A;border:2px solid #333;border-radius:20px;font-size:11px;font-weight:bold;cursor:pointer;color:#aaa;white-space:nowrap}
-.cat-tab.active{background:#D4AF37;color:#1A1A1A;border-color:#D4AF37}
-.section{background:#222;border-radius:12px;padding:14px;margin-bottom:14px}
-.section h2{color:#D4AF37;font-size:13px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #333;display:flex;justify-content:space-between;align-items:center}
-.item-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #2A2A2A}
+.cat-tab{
+  flex-shrink:0;padding:8px 14px;background:var(--surface);border:1px solid var(--border);border-radius:999px;
+  font-size:12px;font-weight:600;cursor:pointer;color:var(--text-2);white-space:nowrap;transition:all .2s;
+}
+.cat-tab:hover{border-color:var(--line-strong);color:var(--text);background:var(--surface-2)}
+.cat-tab.active{background:var(--grad-gold);color:var(--ink);border-color:transparent;box-shadow:0 6px 18px -8px rgba(226,190,106,.7)}
+
+/* ---------- CARTES / SECTIONS ---------- */
+.section{
+  position:relative;border-radius:var(--radius);padding:18px;margin-bottom:16px;
+  background:linear-gradient(180deg,rgba(255,255,255,.028),rgba(255,255,255,.008)),var(--surface);
+  border:1px solid var(--line);box-shadow:var(--shadow);
+}
+.section h2{
+  color:var(--text);font-size:14.5px;font-weight:700;letter-spacing:.1px;margin-bottom:12px;padding-bottom:12px;
+  border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px;
+}
+.item-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)}
 .item-row:last-child{border-bottom:none}
-.item-info{flex:1}
-.item-nom{font-size:13px;font-weight:bold}
-.item-detail{font-size:11px;color:#888;margin-top:2px}
-.toggle{position:relative;width:46px;height:24px;flex-shrink:0}
-.toggle input{opacity:0;width:0;height:0}
-.toggle-slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#444;border-radius:24px;transition:.3s}
-.toggle-slider:before{position:absolute;content:"";height:16px;width:16px;left:4px;bottom:4px;background:white;border-radius:50%;transition:.3s}
-.toggle input:checked+.toggle-slider{background:#D4AF37}
-.toggle input:checked+.toggle-slider:before{transform:translateX(22px)}
-.prix-input{background:#333;border:1px solid #D4AF37;border-radius:6px;color:#D4AF37;font-weight:bold;font-size:12px;padding:3px 6px;width:68px;text-align:center;margin-left:6px}
-.del-prod-btn{background:none;border:none;color:#C0392B;font-size:16px;cursor:pointer;padding:0 4px;margin-left:4px}
-.add-form{background:#1E2A1E;border:2px solid #1A7A50;border-radius:12px;padding:16px;margin-bottom:14px}
-.add-form h3{color:#4ABA80;font-size:14px;margin-bottom:12px}
-.form-row{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}
-.form-group{display:flex;flex-direction:column;gap:4px;flex:1;min-width:100px}
-.form-group label{font-size:11px;color:#888;font-weight:bold}
-.form-group input,.form-group select{background:#2A2A2A;border:1px solid #444;border-radius:8px;color:#fff;padding:9px 10px;font-size:13px;width:100%}
-.form-group input:focus,.form-group select:focus{border-color:#D4AF37;outline:none}
-.btn-add-prod{background:#1A7A50;color:white;border:none;padding:11px 20px;border-radius:8px;font-weight:bold;font-size:13px;cursor:pointer;width:100%}
-.import-zone{background:#1A1A2E;border:2px dashed #444;border-radius:12px;padding:24px;text-align:center;margin-bottom:16px;cursor:pointer;transition:all .2s}
-.import-zone:hover,.import-zone.dragover{border-color:#D4AF37;background:#1E1A2E}
-.import-zone .ez{font-size:36px;margin-bottom:8px}
-.import-zone h3{color:#D4AF37;font-size:15px;margin-bottom:4px}
-.import-zone p{color:#888;font-size:12px;margin-bottom:12px;line-height:1.5}
-.import-btn{background:#D4AF37;color:#1A1A1A;border:none;padding:10px 24px;border-radius:8px;font-weight:bold;font-size:13px;cursor:pointer}
-.import-input{display:none}
-.import-preview{background:#222;border-radius:12px;padding:14px;margin-bottom:14px;display:none}
-.import-preview h3{color:#D4AF37;font-size:14px;margin-bottom:10px}
-.preview-item{padding:5px 0;border-bottom:1px solid #2A2A2A;font-size:12px;display:flex;justify-content:space-between}
-.preview-item:last-child{border-bottom:none}
-.btn-confirm{background:#D4AF37;color:#1A1A1A;border:none;padding:12px;border-radius:8px;font-weight:bold;font-size:14px;cursor:pointer;width:100%;margin-top:12px}
-.btn-cancel{background:#333;color:#aaa;border:none;padding:10px;border-radius:8px;font-size:13px;cursor:pointer;width:100%;margin-top:6px}
-.excel-format{background:#2A2A2A;border-radius:10px;padding:12px;margin-bottom:14px;font-size:11px;color:#aaa;line-height:1.8}
-.excel-format strong{color:#D4AF37}
-.actions-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.btn-vert{background:#1A7A50;color:white;border:none;padding:12px;border-radius:10px;font-weight:bold;cursor:pointer;font-size:12px}
-.btn-rouge{background:#C0392B;color:white;border:none;padding:12px;border-radius:10px;font-weight:bold;cursor:pointer;font-size:12px}
-.btn-full{grid-column:1/-1}
-.lien-card{background:#2A2A2A;border-radius:8px;padding:10px 14px;color:#D4AF37;text-decoration:none;font-size:13px;font-weight:bold;display:block;margin-bottom:8px}
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#D4AF37;color:#1A1A1A;padding:10px 22px;border-radius:30px;font-weight:bold;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
-.toast.show{opacity:1}
-.badge{background:#D4AF37;color:#1A1A1A;font-size:10px;font-weight:bold;padding:2px 6px;border-radius:10px;margin-left:6px}
-.version{text-align:center;padding:16px;color:#333;font-size:10px}
-
-/* MODAL ÉDITION PRODUIT */
-.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:500;display:none;align-items:center;justify-content:center;padding:16px}
-.modal-overlay.visible{display:flex}
-.modal-box{background:#1E1E1E;border:2px solid #D4AF37;border-radius:16px;padding:20px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto}
-.modal-box h3{color:#D4AF37;font-size:16px;margin-bottom:14px}
-.modal-actions{display:flex;gap:10px;margin-top:14px}
-.btn-annuler{background:#333;color:#aaa;border:none;padding:11px;border-radius:8px;font-weight:bold;font-size:13px;cursor:pointer;flex:1}
-.item-info{cursor:pointer}
+.item-info{flex:1;min-width:0;cursor:pointer;border-radius:8px;transition:opacity .15s}
 .item-info:active{opacity:.7}
-
-/* GLISSER-DÉPOSER PRODUITS (desktop) */
-.item-row{cursor:default}
-.item-row.dragging{opacity:.4}
-.item-row.drag-over{border-top:2px solid #D4AF37}
-
-/* BOUTONS RÉORDONNER ▲▼ (fonctionne aussi sur mobile) */
-.reorder-btns{display:flex;flex-direction:column;gap:2px;margin-right:6px;flex-shrink:0}
-.reorder-btn{background:#2A2A2A;border:1px solid #444;color:#D4AF37;font-size:10px;width:22px;height:18px;border-radius:4px;cursor:pointer;padding:0;line-height:1;display:flex;align-items:center;justify-content:center}
-.reorder-btn:active{background:#D4AF37;color:#1A1A1A}
-.reorder-btn:disabled{opacity:.25;cursor:default}
-.reorder-btn:disabled:active{background:#2A2A2A;color:#D4AF37}
-.mini-cat-titre{color:#D4AF37;font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:.5px;margin:14px 0 6px;padding-bottom:4px;border-bottom:1px solid #333}
+.item-nom{font-size:13.5px;font-weight:600;color:var(--text)}
+.item-detail{font-size:12px;color:var(--muted);margin-top:3px}
+.mini-cat-titre{color:var(--gold);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.4px;margin:18px 0 6px;padding-bottom:6px;border-bottom:1px solid var(--line)}
 .mini-cat-titre:first-child{margin-top:0}
 
-/* ÉCRAN DE CONNEXION ÉQUIPE (ajouté le 20/09/2026 — sécurisation Firestore) */
-#screenLoginEquipe{position:fixed;inset:0;background:#1A1A1A;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
+/* Interrupteurs */
+.toggle{position:relative;width:44px;height:26px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:var(--surface-3);border:1px solid var(--border);border-radius:26px;transition:.25s}
+.toggle-slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;top:3px;background:#C9CDD7;border-radius:50%;transition:.25s;box-shadow:0 2px 6px rgba(0,0,0,.4)}
+.toggle input:checked+.toggle-slider{background:var(--grad-gold);border-color:transparent;box-shadow:0 0 0 3px var(--gold-soft)}
+.toggle input:checked+.toggle-slider:before{transform:translateX(18px);background:#fff}
+.toggle input:focus-visible+.toggle-slider{box-shadow:0 0 0 3px var(--gold-ring)}
+
+.prix-input{
+  background:var(--bg-deep);border:1px solid rgba(226,190,106,.35);border-radius:8px;color:var(--gold-hi);
+  font-weight:700;font-size:12.5px;padding:6px 8px;width:74px;text-align:center;margin-left:6px;font-variant-numeric:tabular-nums;
+}
+.prix-input:focus{outline:none;box-shadow:0 0 0 3px var(--gold-soft);border-color:var(--gold)}
+.del-prod-btn{background:none;border:none;color:var(--faint);font-size:15px;cursor:pointer;padding:4px 6px;margin-left:2px;border-radius:8px;transition:.15s}
+.del-prod-btn:hover{color:var(--red);background:var(--red-bg)}
+
+/* Formulaires */
+.add-form{
+  border-radius:var(--radius);padding:20px;margin-bottom:16px;box-shadow:var(--shadow);
+  background:linear-gradient(180deg,rgba(226,190,106,.07),rgba(226,190,106,.015) 60%),var(--surface);
+  border:1px solid rgba(226,190,106,.2);
+}
+.add-form h3{color:var(--text);font-size:16px;font-weight:700;margin-bottom:16px}
+.form-row{display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.form-group{display:flex;flex-direction:column;gap:6px;flex:1;min-width:100px}
+.form-group label{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.4px;text-transform:uppercase}
+.form-group input,.form-group select,
+input[type=text],input[type=number],input[type=url],input[type=password],select{
+  background:var(--bg-deep);border:1px solid var(--border);border-radius:10px;color:var(--text);
+  padding:10px 12px;font-size:13.5px;width:100%;transition:border-color .2s,box-shadow .2s;
+}
+input:focus,select:focus{border-color:var(--gold)!important;outline:none;box-shadow:0 0 0 3px var(--gold-soft)}
+input::placeholder{color:var(--faint)}
+input[type=checkbox]{accent-color:var(--gold)}
+input[type=file]{color:var(--text-2)}
+input[type=file]::file-selector-button{background:var(--surface-3);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 10px;margin-right:8px;cursor:pointer;font-weight:600}
+
+/* Boutons */
+.btn-add-prod,.btn-confirm,.import-btn{
+  background:var(--grad-gold);color:var(--ink);border:none;padding:12px 20px;border-radius:11px;font-weight:700;
+  font-size:13.5px;cursor:pointer;width:100%;transition:filter .2s,transform .15s;
+  box-shadow:0 10px 24px -12px rgba(226,190,106,.8),inset 0 1px 0 rgba(255,255,255,.4);
+}
+.btn-add-prod:hover,.btn-confirm:hover,.import-btn:hover{filter:brightness(1.06)}
+.btn-add-prod:active,.btn-confirm:active,.import-btn:active,.btn-vert:active,.btn-rouge:active{transform:translateY(1px)}
+.btn-confirm{margin-top:14px;padding:13px}
+.import-btn{width:auto;padding:11px 26px}
+.btn-cancel,.btn-annuler{
+  background:var(--surface-2);color:var(--text-2);border:1px solid var(--border);padding:11px;border-radius:11px;
+  font-weight:600;font-size:13px;cursor:pointer;width:100%;margin-top:8px;transition:.2s;
+}
+.btn-annuler{margin-top:0;flex:1}
+.btn-cancel:hover,.btn-annuler:hover{color:var(--text);border-color:var(--line-strong)}
+.actions-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn-vert,.btn-rouge{
+  border-radius:11px;padding:12px;font-weight:600;font-size:12.5px;cursor:pointer;transition:.2s;text-align:center;
+}
+.btn-vert{background:var(--green-bg);color:var(--green);border:1px solid rgba(63,209,138,.28)}
+.btn-vert:hover{background:rgba(63,209,138,.14);border-color:rgba(63,209,138,.45)}
+.btn-rouge{background:var(--red-bg);color:var(--red);border:1px solid rgba(240,117,117,.28)}
+.btn-rouge:hover{background:rgba(240,117,117,.15);border-color:rgba(240,117,117,.45)}
+.btn-full{grid-column:1/-1}
+.lien-card{
+  display:flex;align-items:center;justify-content:space-between;background:var(--surface-2);border:1px solid var(--line);
+  border-radius:12px;padding:12px 14px;color:var(--text);text-decoration:none;font-size:13.5px;font-weight:600;margin-bottom:8px;transition:.2s;
+}
+.lien-card::after{content:"↗";color:var(--gold);font-weight:700}
+.lien-card:hover{border-color:rgba(226,190,106,.3);background:var(--surface-3)}
+
+/* Réordonner */
+.item-row{cursor:default}
+.item-row.dragging{opacity:.4}
+.item-row.drag-over{box-shadow:0 -2px 0 var(--gold)}
+.reorder-btns{display:flex;flex-direction:column;gap:3px;margin-right:4px;flex-shrink:0}
+.reorder-btn{
+  background:var(--surface-2);border:1px solid var(--border);color:var(--gold);font-size:9px;width:24px;height:19px;border-radius:6px;
+  cursor:pointer;padding:0;line-height:1;display:flex;align-items:center;justify-content:center;transition:.15s;
+}
+.reorder-btn:hover{border-color:rgba(226,190,106,.4)}
+.reorder-btn:active{background:var(--gold);color:var(--ink)}
+.reorder-btn:disabled{opacity:.25;cursor:default}
+.reorder-btn:disabled:active{background:var(--surface-2);color:var(--gold)}
+
+/* Import Excel */
+.excel-format{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;margin-bottom:16px;
+  font-size:12.5px;color:var(--text-2);line-height:1.75;box-shadow:var(--shadow);
+}
+.excel-format strong{color:var(--gold)}
+.import-zone{
+  border-radius:var(--radius);padding:34px 24px;text-align:center;margin-bottom:16px;cursor:pointer;transition:.25s;
+  background:radial-gradient(420px 160px at 50% 0%,rgba(226,190,106,.08),transparent 70%),var(--surface);
+  border:1.5px dashed var(--border);
+}
+.import-zone:hover,.import-zone.dragover{border-color:var(--gold);background:radial-gradient(420px 180px at 50% 0%,rgba(226,190,106,.14),transparent 70%),var(--surface)}
+.import-zone .ez{font-size:30px;margin:0 auto 12px;width:60px;height:60px;border-radius:16px;display:grid;place-items:center;background:var(--surface-2);border:1px solid var(--line-strong)}
+.import-zone h3{color:var(--text);font-size:16px;font-weight:700;margin-bottom:6px}
+.import-zone p{color:var(--muted);font-size:12.5px;margin-bottom:16px;line-height:1.6}
+.import-input{display:none}
+.import-preview{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:16px;display:none;box-shadow:var(--shadow)}
+.import-preview h3{color:var(--text);font-size:15px;margin-bottom:12px}
+.preview-item{padding:7px 0;border-bottom:1px solid var(--line);font-size:12.5px;display:flex;justify-content:space-between;gap:10px}
+.preview-item:last-child{border-bottom:none}
+
+/* Toast, badge, version */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translate(-50%,10px);z-index:999;opacity:0;pointer-events:none;white-space:nowrap;
+  background:rgba(22,26,35,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:var(--text);
+  border:1px solid rgba(226,190,106,.35);padding:11px 20px;border-radius:999px;font-weight:600;font-size:13px;
+  box-shadow:0 18px 40px -12px rgba(0,0,0,.7);transition:opacity .25s,transform .25s;
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.badge{background:var(--gold-soft);color:var(--gold-hi);border:1px solid rgba(226,190,106,.3);font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;margin-left:6px;font-variant-numeric:tabular-nums}
+.version{text-align:center;padding:24px 16px;color:var(--faint);font-size:11px;letter-spacing:.3px}
+
+/* Fenêtre d'édition */
+.modal-overlay{position:fixed;inset:0;background:rgba(4,5,8,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:500;display:none;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.visible{display:flex}
+.modal-box{
+  width:100%;max-width:460px;max-height:90vh;overflow-y:auto;border-radius:20px;padding:22px;
+  background:linear-gradient(180deg,rgba(255,255,255,.035),transparent 30%),var(--surface);
+  border:1px solid var(--line-strong);box-shadow:0 30px 80px -20px rgba(0,0,0,.85),0 0 0 1px rgba(226,190,106,.08);
+  animation:entree .25s ease;
+}
+.modal-box h3{color:var(--text);font-size:17px;font-weight:700;margin-bottom:16px}
+.modal-actions{display:flex;gap:10px;margin-top:16px}
+
+/* Écran de connexion */
+#screenLoginEquipe{
+  position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;
+  background:radial-gradient(600px 400px at 50% 20%,rgba(226,190,106,.12),transparent 65%),var(--bg-deep);
+}
 #screenLoginEquipe.masque{display:none}
-.login-box{background:#222;border:2px solid #D4AF37;border-radius:16px;padding:32px 28px;max-width:340px;width:100%;text-align:center}
-.login-box h2{color:#D4AF37;font-size:18px;margin-bottom:8px}
-.login-box p{color:#888;font-size:12px;margin-bottom:18px}
-.login-box input{width:100%;background:#111;border:2px solid #444;border-radius:10px;color:#fff;font-size:16px;text-align:center;padding:12px;margin-bottom:12px}
-.login-box input:focus{border-color:#D4AF37;outline:none}
-.login-box button{width:100%;background:#D4AF37;border:none;color:#1A1A1A;padding:13px;border-radius:10px;font-weight:bold;font-size:14px;cursor:pointer}
-.login-erreur{color:#ff8a8a;font-size:12px;margin-top:10px;min-height:16px}
+.login-box{
+  max-width:360px;width:100%;text-align:center;border-radius:22px;padding:36px 28px;
+  background:linear-gradient(180deg,rgba(255,255,255,.04),transparent 40%),var(--surface);
+  border:1px solid var(--line-strong);box-shadow:0 30px 80px -20px rgba(0,0,0,.9);
+}
+.login-box::before{
+  content:"M";display:grid;place-items:center;width:52px;height:52px;margin:0 auto 18px;border-radius:15px;
+  background:var(--grad-gold);color:var(--ink);font-family:var(--font-display);font-style:italic;font-size:30px;
+  box-shadow:0 10px 28px -8px rgba(226,190,106,.6),inset 0 1px 0 rgba(255,255,255,.5);
+}
+.login-box h2{color:var(--text);font-family:var(--font-display);font-weight:400;font-size:28px;margin-bottom:6px}
+.login-box p{color:var(--muted);font-size:13px;margin-bottom:20px}
+.login-box input{text-align:center;font-size:16px;padding:13px;margin-bottom:12px;letter-spacing:2px}
+.login-box button{
+  width:100%;background:var(--grad-gold);border:none;color:var(--ink);padding:13px;border-radius:11px;font-weight:700;font-size:14px;cursor:pointer;
+  box-shadow:0 10px 24px -12px rgba(226,190,106,.8),inset 0 1px 0 rgba(255,255,255,.4);
+}
+.login-erreur{color:var(--red);font-size:12.5px;margin-top:12px;min-height:16px}
+
+/* ---------- ORDINATEUR : barre latérale ---------- */
+@media (min-width:980px){
+  body{padding-left:var(--side)}
+  .header{margin-left:calc(-1 * var(--side));padding:0 28px}
+  .brand{width:calc(var(--side) - 28px)}
+  .nav-tabs{
+    position:fixed;top:64px;left:0;bottom:0;width:var(--side);z-index:80;
+    flex-direction:column;gap:4px;padding:20px 14px;overflow-y:auto;
+    background:linear-gradient(180deg,rgba(17,20,27,.85),rgba(10,12,17,.85));
+    border-bottom:none;border-right:1px solid var(--line);
+  }
+  .nav-tabs::before{content:"Navigation";font-size:10.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--faint);font-weight:700;padding:0 12px 10px}
+  .nav-tab{padding:11px 12px;font-size:13.5px;border-radius:10px}
+  .nav-tab.active{box-shadow:inset 2px 0 0 var(--gold),inset 0 1px 0 rgba(255,255,255,.05)}
+  .content{padding:34px 32px}
+  .page-head h2{font-size:38px}
+}
+@media (max-width:520px){
+  .brand-sub{display:none}
+  .build{font-size:10px;padding:5px 8px}
+  .build::before{display:none}
+  .save-btn{padding:9px 14px}
+  .header{padding:0 14px}
+  .section{padding:16px}
+  .page-head h2{font-size:28px}
+}
+
 </style>
 </head>
 <body>
@@ -121,8 +359,15 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 </div>
 
 <div class="header">
-  <h1>⚙️ Admin — Moule & Smile</h1>
-  <button class="save-btn" onclick="sauvegarder()">💾 Publier</button>
+  <div class="brand">
+    <div class="brand-mark">M</div>
+    <div><div class="brand-name">Moule <em>&amp;</em> Smile</div><div class="brand-sub">Console carte</div></div>
+  </div>
+  <h1>Admin — Moule & Smile</h1>
+  <div class="header-right">
+    <span class="build" title="Version déployée">v.01/11/2026 18:20</span>
+    <button class="save-btn" onclick="sauvegarder()">Publier</button>
+  </div>
 </div>
 <div class="nav-tabs" style="overflow-x:auto;display:flex">
   <div class="nav-tab active" onclick="switchNav('Carte',this)" style="flex-shrink:0">📋 Carte</div>
@@ -155,18 +400,18 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
       <div class="form-group" style="flex:1"><label>🍽️ Points repas employé</label><input type="number" id="editPoints" step="1" min="0" placeholder="0"></div>
     </div>
     <div class="form-row" id="editRegleEnfantRow" style="flex-direction:column;align-items:stretch;gap:6px">
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#ddd;cursor:pointer">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text);cursor:pointer">
         <input type="checkbox" id="editRegleAdulte" onchange="if(this.checked)document.getElementById('editRegleGratuit').checked=false" style="width:20px;height:20px;flex:none">
         🧑 Menu adulte : ouvre droit à 1 enfant gratuit
       </label>
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#ddd;cursor:pointer">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text);cursor:pointer">
         <input type="checkbox" id="editRegleGratuit" onchange="if(this.checked)document.getElementById('editRegleAdulte').checked=false" style="width:20px;height:20px;flex:none">
         👧 Menu enfant gratuit : 1 par menu adulte commandé
       </label>
-      <div style="font-size:11px;color:#888;line-height:1.5">Le détail de la règle est dans Réglages → Règle « enfant gratuit ».</div>
+      <div style="font-size:11px;color:var(--muted);line-height:1.5">Le détail de la règle est dans Réglages → Règle « enfant gratuit ».</div>
     </div>
     <div class="form-row" id="editCuisineRow" style="flex-direction:column;align-items:stretch;gap:6px">
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#ddd;cursor:pointer">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text);cursor:pointer">
         <input type="checkbox" id="editCuisine" onchange="document.getElementById('editCuisineLabelGroup').style.display=this.checked?'flex':'none'" style="width:20px;height:20px;flex:none">
         🍳 Afficher dans l'onglet Cuisine de la caisse
       </label>
@@ -174,19 +419,19 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
         <label>Regrouper sous le nom (facultatif)</label>
         <input type="text" id="editCuisineLabel" placeholder="Ex: Nuggets (pour regrouper poulet + poisson)">
       </div>
-      <div style="font-size:11px;color:#888;line-height:1.5">Les commandes contenant ce produit apparaissent en cuisine avec le nombre total à préparer. Sans nom de regroupement, le nom du produit est utilisé.</div>
+      <div style="font-size:11px;color:var(--muted);line-height:1.5">Les commandes contenant ce produit apparaissent en cuisine avec le nombre total à préparer. Sans nom de regroupement, le nom du produit est utilisé.</div>
     </div>
     <div class="form-row">
       <div class="form-group" style="flex:1">
         <label>📷 Photo</label>
         <div style="display:flex;align-items:center;gap:10px;margin-top:4px">
-          <img id="editPhotoApercu" src="" style="width:56px;height:56px;border-radius:8px;object-fit:cover;background:#111;display:none;border:1px solid #444">
-          <div id="editPhotoPlaceholder" style="width:56px;height:56px;border-radius:8px;background:#111;border:1px dashed #444;display:flex;align-items:center;justify-content:center;color:#555;font-size:20px">🖼️</div>
+          <img id="editPhotoApercu" src="" style="width:56px;height:56px;border-radius:8px;object-fit:cover;background:var(--bg-deep);display:none;border:1px solid var(--border)">
+          <div id="editPhotoPlaceholder" style="width:56px;height:56px;border-radius:8px;background:var(--bg-deep);border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;color:var(--faint);font-size:20px">🖼️</div>
           <div style="flex:1;display:flex;flex-direction:column;gap:6px">
-            <input type="file" id="editPhotoInput" accept="image/*" capture="environment" onchange="gererFichierPhoto(this.files[0])" style="font-size:11px;color:#aaa">
-            <div id="editPhotoStatut" style="font-size:11px;color:#888"></div>
+            <input type="file" id="editPhotoInput" accept="image/*" capture="environment" onchange="gererFichierPhoto(this.files[0])" style="font-size:11px;color:var(--text-2)">
+            <div id="editPhotoStatut" style="font-size:11px;color:var(--muted)"></div>
           </div>
-          <button type="button" id="editPhotoSupprimer" onclick="supprimerPhotoProduit()" style="display:none;background:#3A1A1A;border:1px solid #C0392B;color:#ff8a8a;border-radius:6px;padding:6px 8px;font-size:11px;cursor:pointer">🗑</button>
+          <button type="button" id="editPhotoSupprimer" onclick="supprimerPhotoProduit()" style="display:none;background:var(--red-bg);border:1px solid var(--red);color:var(--red);border-radius:6px;padding:6px 8px;font-size:11px;cursor:pointer">🗑</button>
         </div>
       </div>
     </div>
@@ -199,6 +444,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 
 <!-- CARTE -->
 <div id="navCarte" class="content">
+  <div class="page-head"><div class="eyebrow">Catalogue</div><h2>La carte</h2><p>Activez, masquez et ajustez les prix — chaque changement part en direct sur les téléphones clients.</p></div>
   <div class="status-bar"><div class="dot"></div>Modifications instantanées sur tous les téléphones</div>
   <div class="cat-tabs" id="catTabs"></div>
   <div id="catContent"></div>
@@ -206,6 +452,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 
 <!-- BOISSONS MENU -->
 <div id="navBoissonMenu" class="content" style="display:none">
+  <div class="page-head"><div class="eyebrow">Formules</div><h2>Boissons du menu</h2><p>Les boissons offertes avec les paliers 2 et 3.</p></div>
   <div class="status-bar"><div class="dot"></div>Boissons proposées <strong>gratuitement</strong> dans les paliers 2 et 3</div>
   <div class="section">
     <h2>🍺 Boissons incluses dans les menus</h2>
@@ -222,14 +469,15 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
     </div>
     <button class="btn-add-prod" onclick="ajouterBoissonMenu()">✅ Ajouter au menu</button>
   </div>
-  <div style="background:#2A2A2A;border-radius:10px;padding:12px;margin-top:14px;font-size:12px;color:#888;line-height:1.7">
-    💡 Ces boissons apparaissent <strong style="color:#D4AF37">gratuitement</strong> dans le popup du client quand il choisit le palier 2 ou 3.<br>
-    Les autres boissons restent sur la carte et sont <strong style="color:#D4AF37">facturées normalement</strong>.
+  <div style="background:var(--surface-2);border-radius:10px;padding:12px;margin-top:14px;font-size:12px;color:var(--muted);line-height:1.7">
+    💡 Ces boissons apparaissent <strong style="color:var(--gold)">gratuitement</strong> dans le popup du client quand il choisit le palier 2 ou 3.<br>
+    Les autres boissons restent sur la carte et sont <strong style="color:var(--gold)">facturées normalement</strong>.
   </div>
 </div>
 
 <!-- MENU ENFANT -->
 <div id="navEnfantMenu" class="content" style="display:none">
+  <div class="page-head"><div class="eyebrow">Formules</div><h2>Menu enfant</h2><p>Les choix proposés quand le client confirme un enfant de 0 à 5 ans.</p></div>
   <div class="status-bar"><div class="dot"></div>Choix proposé au client après confirmation d'âge (Enfant 0-5 ans gratuit)</div>
   <div class="section">
     <h2>🧒 Produits du menu enfant</h2>
@@ -246,25 +494,27 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
     </div>
     <button class="btn-add-prod" onclick="ajouterEnfantMenu()">✅ Ajouter au menu enfant</button>
   </div>
-  <div style="background:#2A2A2A;border-radius:10px;padding:12px;margin-top:14px;font-size:12px;color:#888;line-height:1.7">
-    💡 Ces produits apparaissent dans le popup <strong style="color:#D4AF37">Menu Enfant</strong> quand le client confirme un enfant de 0-5 ans.<br>
+  <div style="background:var(--surface-2);border-radius:10px;padding:12px;margin-top:14px;font-size:12px;color:var(--muted);line-height:1.7">
+    💡 Ces produits apparaissent dans le popup <strong style="color:var(--gold)">Menu Enfant</strong> quand le client confirme un enfant de 0-5 ans.<br>
     C'est gratuit — inclus dans l'offre enfant.
   </div>
 </div>
 
 <!-- FAMILLES D'OPTIONS (nappages, sauces, coulis...) -->
 <div id="navOptions" class="content" style="display:none">
+  <div class="page-head"><div class="eyebrow">Personnalisation</div><h2>Options</h2><p>Sauces, coulis, nappages : prix, activation et photos.</p></div>
   <div class="status-bar"><div class="dot"></div>Choix proposés au client pendant sa commande (sauce, coulis, nappage...)</div>
   <div id="famillesOptionsList"></div>
-  <div style="background:#2A2A2A;border-radius:10px;padding:12px;margin-top:14px;font-size:12px;color:#888;line-height:1.7">
+  <div style="background:var(--surface-2);border-radius:10px;padding:12px;margin-top:14px;font-size:12px;color:var(--muted);line-height:1.7">
     💡 Modifie ici le prix, l'activation ou la photo de chaque choix sans repasser par l'Excel.<br>
-    Si tu réimportes un fichier Excel qui contient l'onglet <strong style="color:#D4AF37">"Familles Options"</strong>, ce contenu sera écrasé par le fichier (les photos, elles, sont toujours préservées). Sans cet onglet dans le fichier, tes modifications ici restent intactes.<br>
+    Si tu réimportes un fichier Excel qui contient l'onglet <strong style="color:var(--gold)">"Familles Options"</strong>, ce contenu sera écrasé par le fichier (les photos, elles, sont toujours préservées). Sans cet onglet dans le fichier, tes modifications ici restent intactes.<br>
     Pour créer une toute nouvelle famille d'options, passe encore par l'Excel — cet onglet permet de modifier l'existant, pas d'en créer une nouvelle pour l'instant.
   </div>
 </div>
 
 <!-- RÉGLAGES -->
 <div id="navReglages" class="content" style="display:none">
+  <div class="page-head"><div class="eyebrow">Configuration</div><h2>Réglages</h2><p>Le comportement de l'application client et de la caisse.</p></div>
   <div class="status-bar"><div class="dot"></div>Réglages globaux de l'application client</div>
 
   <div class="section">
@@ -294,7 +544,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
       </div>
       <label class="toggle"><input type="checkbox" id="rechargeFrites" onchange="majRecharge('frites',this.checked)"><span class="toggle-slider"></span></label>
     </div>
-    <div id="rechargeExplication" style="font-size:12px;color:#aaa;line-height:1.6;margin-top:10px"></div>
+    <div id="rechargeExplication" style="font-size:12px;color:var(--text-2);line-height:1.6;margin-top:10px"></div>
   </div>
 
   <div class="section" style="margin-top:14px">
@@ -306,12 +556,12 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
       </div>
       <label class="toggle"><input type="checkbox" id="relanceActif" onchange="majRelance('actif',this.checked)"><span class="toggle-slider"></span></label>
     </div>
-    <div class="item-row"><div class="item-info" style="cursor:default"><div class="item-nom">Verre (bière 25 cl, soft, verre de vin, sirop)</div><div class="item-detail">minutes après la commande</div></div><input type="number" min="1" max="120" id="relanceVerre" onchange="majRelance('verre',this.value)" style="width:70px;padding:8px;border-radius:8px;border:1px solid #444;background:#111;color:#fff;text-align:center"></div>
-    <div class="item-row"><div class="item-info" style="cursor:default"><div class="item-nom">Bière 50 cl</div><div class="item-detail">minutes après la commande</div></div><input type="number" min="1" max="120" id="relanceBiere50" onchange="majRelance('biere50',this.value)" style="width:70px;padding:8px;border-radius:8px;border:1px solid #444;background:#111;color:#fff;text-align:center"></div>
-    <div class="item-row"><div class="item-info" style="cursor:default"><div class="item-nom">Cocktail (spritz, mojito, mule…)</div><div class="item-detail">minutes après la commande</div></div><input type="number" min="1" max="120" id="relanceCocktail" onchange="majRelance('cocktail',this.value)" style="width:70px;padding:8px;border-radius:8px;border:1px solid #444;background:#111;color:#fff;text-align:center"></div>
-    <div class="item-row"><div class="item-info" style="cursor:default"><div class="item-nom">Bouteille de vin</div><div class="item-detail">minutes après la commande</div></div><input type="number" min="1" max="180" id="relanceBouteille" onchange="majRelance('bouteille',this.value)" style="width:70px;padding:8px;border-radius:8px;border:1px solid #444;background:#111;color:#fff;text-align:center"></div>
-    <div class="item-row"><div class="item-info" style="cursor:default"><div class="item-nom">Fenêtre d'affichage</div><div class="item-detail">minutes après l'heure prévue ; au-delà, plus de popup (repas sans doute fini)</div></div><input type="number" min="1" max="180" id="relanceFenetre" onchange="majRelance('fenetre',this.value)" style="width:70px;padding:8px;border-radius:8px;border:1px solid #444;background:#111;color:#fff;text-align:center"></div>
-    <div id="relanceExplication" style="font-size:12px;color:#aaa;line-height:1.6;margin-top:10px"></div>
+    <div class="item-row"><div class="item-info" style="cursor:default"><div class="item-nom">Verre (bière 25 cl, soft, verre de vin, sirop)</div><div class="item-detail">minutes après la commande</div></div><input type="number" min="1" max="120" id="relanceVerre" onchange="majRelance('verre',this.value)" style="width:70px;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--bg-deep);color:var(--text);text-align:center"></div>
+    <div class="item-row"><div class="item-info" style="cursor:default"><div class="item-nom">Bière 50 cl</div><div class="item-detail">minutes après la commande</div></div><input type="number" min="1" max="120" id="relanceBiere50" onchange="majRelance('biere50',this.value)" style="width:70px;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--bg-deep);color:var(--text);text-align:center"></div>
+    <div class="item-row"><div class="item-info" style="cursor:default"><div class="item-nom">Cocktail (spritz, mojito, mule…)</div><div class="item-detail">minutes après la commande</div></div><input type="number" min="1" max="120" id="relanceCocktail" onchange="majRelance('cocktail',this.value)" style="width:70px;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--bg-deep);color:var(--text);text-align:center"></div>
+    <div class="item-row"><div class="item-info" style="cursor:default"><div class="item-nom">Bouteille de vin</div><div class="item-detail">minutes après la commande</div></div><input type="number" min="1" max="180" id="relanceBouteille" onchange="majRelance('bouteille',this.value)" style="width:70px;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--bg-deep);color:var(--text);text-align:center"></div>
+    <div class="item-row"><div class="item-info" style="cursor:default"><div class="item-nom">Fenêtre d'affichage</div><div class="item-detail">minutes après l'heure prévue ; au-delà, plus de popup (repas sans doute fini)</div></div><input type="number" min="1" max="180" id="relanceFenetre" onchange="majRelance('fenetre',this.value)" style="width:70px;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--bg-deep);color:var(--text);text-align:center"></div>
+    <div id="relanceExplication" style="font-size:12px;color:var(--text-2);line-height:1.6;margin-top:10px"></div>
   </div>
 
   <div class="section" style="margin-top:14px">
@@ -322,15 +572,15 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
       <label class="toggle"><input type="checkbox" id="toggleAvisGoogle" onchange="majAvisGoogle('actif',this.checked)"><span class="toggle-slider"></span></label>
     </div>
     <div style="margin-top:10px">
-      <div style="color:#aaa;font-size:12px;margin-bottom:4px">Lien d'avis Google (commence par https://)</div>
-      <input type="url" id="avisGoogleLien" placeholder="https://g.page/r/…/review" onchange="majAvisGoogle('lien',this.value)" style="width:100%;box-sizing:border-box;background:#2A2A2A;border:1px solid #444;border-radius:8px;color:#fff;padding:10px;font-size:13px">
-      <div style="color:#aaa;font-size:12px;margin:10px 0 4px">Message affiché au client</div>
-      <input type="text" id="avisGoogleTexte" maxlength="120" onchange="majAvisGoogle('texte',this.value)" style="width:100%;box-sizing:border-box;background:#2A2A2A;border:1px solid #444;border-radius:8px;color:#fff;padding:10px;font-size:13px">
+      <div style="color:var(--text-2);font-size:12px;margin-bottom:4px">Lien d'avis Google (commence par https://)</div>
+      <input type="url" id="avisGoogleLien" placeholder="https://g.page/r/…/review" onchange="majAvisGoogle('lien',this.value)" style="width:100%;box-sizing:border-box;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px;font-size:13px">
+      <div style="color:var(--text-2);font-size:12px;margin:10px 0 4px">Message affiché au client</div>
+      <input type="text" id="avisGoogleTexte" maxlength="120" onchange="majAvisGoogle('texte',this.value)" style="width:100%;box-sizing:border-box;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px;font-size:13px">
       <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
         <button class="btn-vert" style="padding:8px 12px" onclick="testerLienAvis()">🔗 Tester le lien</button>
-        <span id="avisGoogleStats" style="color:#D4AF37;font-size:12px;align-self:center"></span>
+        <span id="avisGoogleStats" style="color:var(--gold);font-size:12px;align-self:center"></span>
       </div>
-      <div style="color:#777;font-size:11px;margin-top:10px;line-height:1.6">
+      <div style="color:var(--faint);font-size:11px;margin-top:10px;line-height:1.6">
         <b>Règles actives :</b> l'encadré s'affiche sur l'écran « Merci de votre visite » (après l'encaissement) seulement si l'interrupteur est activé <b>et</b> qu'un lien est renseigné · interrupteur coupé = simple écran de remerciement · après un clic, il affiche « Merci pour votre avis 🙏 » · le téléphone reste sur cet écran même si le jeton est rouvert pour d'autres clients · chaque clic est compté (ci-dessus, mois en cours).<br>
         <b>Règles Google à respecter :</b> la même invitation pour tous les clients (ne pas demander d'abord s'ils sont satisfaits) et rien offert en échange d'un avis.<br>
         <b>Trouver le lien :</b> fiche Google Business Profile → « Demander des avis » → « Copier le lien ».
@@ -352,38 +602,38 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
       </div>
       <label class="toggle"><input type="checkbox" id="groupeAperoToggle" onchange="toggleGroupeApero(this.checked)"><span class="toggle-slider"></span></label>
     </div>
-    <div style="color:#888;font-size:12px;margin:12px 0 8px">Choisissez quelles catégories font partie du groupe :</div>
+    <div style="color:var(--muted);font-size:12px;margin:12px 0 8px">Choisissez quelles catégories font partie du groupe :</div>
     <div id="composantsGroupeAperoList"></div>
   </div>
 
   <div class="section" style="margin-top:14px">
     <h2>↕️ Ordre des catégories sur l'accueil</h2>
-    <div style="color:#888;font-size:12px;margin-bottom:10px">Réorganisez l'ordre d'affichage des tuiles côté client</div>
+    <div style="color:var(--muted);font-size:12px;margin-bottom:10px">Réorganisez l'ordre d'affichage des tuiles côté client</div>
     <div id="ordreCategoriesList"></div>
   </div>
 
   <div class="section" style="margin-top:14px">
     <h2>👁️ Catégories visibles sur la carte</h2>
-    <div style="color:#888;font-size:12px;margin-bottom:10px">Désactivez une catégorie entière pour la masquer côté client (ex: pas de cocktails cette saison)</div>
+    <div style="color:var(--muted);font-size:12px;margin-bottom:10px">Désactivez une catégorie entière pour la masquer côté client (ex: pas de cocktails cette saison)</div>
     <div id="categoriesReglagesList"></div>
   </div>
 
   <div class="section" style="margin-top:14px">
     <h2>🚫 Catégories en consultation seule</h2>
-    <div style="color:#888;font-size:12px;margin-bottom:10px">Visible dans la carte mais sans bouton d'ajout (ex: Sauces — choisies uniquement via le popup formule)</div>
+    <div style="color:var(--muted);font-size:12px;margin-bottom:10px">Visible dans la carte mais sans bouton d'ajout (ex: Sauces — choisies uniquement via le popup formule)</div>
     <div id="consultationReglagesList"></div>
   </div>
 
   <div class="section" style="margin-top:14px">
     <h2>🪑 Capacité de la salle (unités de table 90×90)</h2>
-    <div style="color:#888;font-size:12px;margin-bottom:12px">Utilisé pour le compteur d'occupation en temps réel dans la caisse.</div>
+    <div style="color:var(--muted);font-size:12px;margin-bottom:12px">Utilisé pour le compteur d'occupation en temps réel dans la caisse.</div>
     <div class="form-group" style="margin-bottom:12px">
-      <label style="font-size:11px;color:#888;font-weight:bold;display:block;margin-bottom:4px">Salle intérieure — nombre d'unités</label>
-      <input type="number" id="capaciteSalle" min="0" placeholder="Ex: 40" style="width:100%;background:#2A2A2A;border:1px solid #D4AF37;border-radius:8px;color:#fff;padding:10px;font-size:13px" onchange="majCapacite()">
+      <label style="font-size:11px;color:var(--muted);font-weight:bold;display:block;margin-bottom:4px">Salle intérieure — nombre d'unités</label>
+      <input type="number" id="capaciteSalle" min="0" placeholder="Ex: 40" style="width:100%;background:var(--surface-2);border:1px solid var(--gold);border-radius:8px;color:var(--text);padding:10px;font-size:13px" onchange="majCapacite()">
     </div>
     <div class="form-group" style="margin-bottom:12px">
-      <label style="font-size:11px;color:#888;font-weight:bold;display:block;margin-bottom:4px">Terrasse — nombre d'unités</label>
-      <input type="number" id="capaciteTerrasse" min="0" placeholder="Ex: 30" style="width:100%;background:#2A2A2A;border:1px solid #D4AF37;border-radius:8px;color:#fff;padding:10px;font-size:13px" onchange="majCapacite()">
+      <label style="font-size:11px;color:var(--muted);font-weight:bold;display:block;margin-bottom:4px">Terrasse — nombre d'unités</label>
+      <input type="number" id="capaciteTerrasse" min="0" placeholder="Ex: 30" style="width:100%;background:var(--surface-2);border:1px solid var(--gold);border-radius:8px;color:var(--text);padding:10px;font-size:13px" onchange="majCapacite()">
     </div>
     <div class="item-row">
       <div class="item-info" style="cursor:default"><div class="item-nom">Terrasse ouverte aujourd'hui</div></div>
@@ -393,47 +643,48 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 
   <div class="section" style="margin-top:14px">
     <h2>🔗 Correspondance Hiboutik</h2>
-    <div style="color:#888;font-size:12px;margin-bottom:10px">Associe chaque produit de la carte <u>et chaque option (sauce, croquant, coulis...)</u> à son ID Hiboutik (visible dans l'URL de sa fiche produit). Vide = non transmis à Hiboutik lors de l'encaissement.</div>
+    <div style="color:var(--muted);font-size:12px;margin-bottom:10px">Associe chaque produit de la carte <u>et chaque option (sauce, croquant, coulis...)</u> à son ID Hiboutik (visible dans l'URL de sa fiche produit). Vide = non transmis à Hiboutik lors de l'encaissement.</div>
 
-    <div style="background:#1A1A2E;border:1px solid #444;border-radius:10px;padding:14px;margin-bottom:14px;font-size:12px;color:#ccc;line-height:1.7">
-      <strong style="color:#D4AF37">📋 Marche à suivre pour un nouveau produit ou une nouvelle sauce :</strong><br><br>
+    <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;font-size:12px;color:var(--text-2);line-height:1.7">
+      <strong style="color:var(--gold)">📋 Marche à suivre pour un nouveau produit ou une nouvelle sauce :</strong><br><br>
       <strong>1. Crée-le dans ta carte</strong> (Excel réimporté, ou réglages admin habituels) — il aura un nouvel ID (ex: b36, s8...).<br>
       <strong>2. Crée le même produit dans Hiboutik</strong> — même nom exact, même prix (0€ pour une sauce/option gratuite), bonne TVA (10% nourriture/soft, 20% alcool). Note son ID Hiboutik (visible dans l'URL de sa fiche produit).<br>
       <strong>3. Renseigne la correspondance ici</strong> — le nouveau produit apparaît automatiquement dans la liste ci-dessous (champ vide). Tape son ID Hiboutik à côté. Sauvegarde automatique, rien d'autre à faire.<br>
       <strong>4. Teste</strong> — commande avec ce produit, encaisse, vérifie qu'il apparaît bien dans Hiboutik avec le bon prix.<br><br>
-      <strong style="color:#D4AF37">⚠️ Pour une sauce/option (famille "Sauce")</strong> : le rapprochement se fait sur le <u>nom exact</u> (insensible à la casse) entre le choix du client et le nom du produit Hiboutik — pas besoin de toucher au code tant que les noms correspondent mot pour mot.
+      <strong style="color:var(--gold)">⚠️ Pour une sauce/option (famille "Sauce")</strong> : le rapprochement se fait sur le <u>nom exact</u> (insensible à la casse) entre le choix du client et le nom du produit Hiboutik — pas besoin de toucher au code tant que les noms correspondent mot pour mot.
     </div>
 
     <div id="mappingHiboutikList"></div>
-    <div style="background:#1A2A1A;border:1px dashed #2ab54a;border-radius:10px;padding:10px 14px;margin-top:10px">
-      <div style="color:#888;font-size:11px;margin-bottom:6px">Entrée technique "SUPPLEMENT" (produit générique +0,50€ pour les suppléments payants) :</div>
-      <input type="number" id="mappingSupplementInput" placeholder="ID Hiboutik du produit Supplément" style="width:100%;background:#111;border:1px solid #4ABA80;border-radius:8px;color:#4ABA80;padding:8px 10px;font-size:13px" onchange="majMappingSupplement(this.value)">
+    <div style="background:var(--green-bg);border:1px dashed var(--green);border-radius:10px;padding:10px 14px;margin-top:10px">
+      <div style="color:var(--muted);font-size:11px;margin-bottom:6px">Entrée technique "SUPPLEMENT" (produit générique +0,50€ pour les suppléments payants) :</div>
+      <input type="number" id="mappingSupplementInput" placeholder="ID Hiboutik du produit Supplément" style="width:100%;background:var(--bg-deep);border:1px solid var(--green);border-radius:8px;color:var(--green);padding:8px 10px;font-size:13px" onchange="majMappingSupplement(this.value)">
     </div>
   </div>
 
   <div class="section" style="margin-top:14px">
     <h2>🍽️ Consignes de service (ticket cuisine)</h2>
-    <div style="color:#888;font-size:12px;margin-bottom:10px">Ex: "Apporter une marmite" pour les moules, "Apporter une assiette" pour les calamars/nuggets. Laissez vide si rien à ajouter. Imprimé automatiquement sous le plat sur le ticket cuisine.</div>
+    <div style="color:var(--muted);font-size:12px;margin-bottom:10px">Ex: "Apporter une marmite" pour les moules, "Apporter une assiette" pour les calamars/nuggets. Laissez vide si rien à ajouter. Imprimé automatiquement sous le plat sur le ticket cuisine.</div>
     <div id="consignesServiceList"></div>
   </div>
 
   <div class="section" style="margin-top:14px">
     <h2>🍮 Popup avant addition (dessert/café)</h2>
-    <div style="color:#888;font-size:12px;margin-bottom:10px">Familles entières affichées en tuile (ex: "Desserts") — le client clique sur la tuile puis choisit dedans</div>
+    <div style="color:var(--muted);font-size:12px;margin-bottom:10px">Familles entières affichées en tuile (ex: "Desserts") — le client clique sur la tuile puis choisit dedans</div>
     <div id="famillesSuggestionAdditionList"></div>
-    <div style="color:#888;font-size:12px;margin:14px 0 10px">Ou produits individuels précis à proposer</div>
+    <div style="color:var(--muted);font-size:12px;margin:14px 0 10px">Ou produits individuels précis à proposer</div>
     <div id="suggestionAdditionList"></div>
   </div>
 
   <div class="section" style="margin-top:14px">
     <h2>🧒 Menu Ado (6-17 ans)</h2>
-    <div style="color:#888;font-size:12px;margin-bottom:10px">Choisissez les formules proposées quand un client ajoute le menu Enfant/Ado</div>
+    <div style="color:var(--muted);font-size:12px;margin-bottom:10px">Choisissez les formules proposées quand un client ajoute le menu Enfant/Ado</div>
     <div id="menuAdoOptionsList"></div>
   </div>
 </div>
 
 <!-- AJOUTER -->
 <div id="navAjouter" class="content" style="display:none">
+  <div class="page-head"><div class="eyebrow">Catalogue</div><h2>Nouveau produit</h2><p>Ajoutez un produit à la carte en quelques secondes.</p></div>
   <div class="add-form">
     <h3>➕ Ajouter un produit</h3>
     <div class="form-row">
@@ -451,8 +702,8 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
   <div class="section">
     <h2>💡 Conseils</h2>
-    <div style="color:#aaa;font-size:13px;line-height:1.8">
-      • Le produit apparaît <strong style="color:#4ABA80">immédiatement</strong> sur les téléphones clients<br>
+    <div style="color:var(--text-2);font-size:13px;line-height:1.8">
+      • Le produit apparaît <strong style="color:var(--green)">immédiatement</strong> sur les téléphones clients<br>
       • Prix 0 € = produit inclus (ex: sauces)<br>
       • Pour ajouter plusieurs produits → onglet Excel<br>
       • Pour masquer temporairement → onglet Carte → toggle OFF
@@ -462,15 +713,16 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 
 <!-- IMPORTER EXCEL -->
 <div id="navImporter" class="content" style="display:none">
+  <div class="page-head"><div class="eyebrow">Import</div><h2>Import Excel</h2><p>Remplacez toute la carte à partir d'un fichier.</p></div>
   <div class="excel-format">
     <strong>Format attendu — colonnes dans l'ordre :</strong><br>
-    A: ID · B: Catégorie · C: Nom · D: Description · E: Emoji · F: Prix EUR · G: Actif (OUI/NON) · ... · J: ID Hiboutik (optionnel) · <span style="color:#D4AF37">K: Cuisine (OUI/NON, optionnel) · L: Libellé cuisine (optionnel)</span><br><br>
-    🍳 <strong style="color:#D4AF37">Colonnes "Cuisine"</strong> : mets <b>OUI</b> en colonne K pour qu'un produit s'affiche dans l'onglet Cuisine de la caisse (un nouveau produit est ainsi pris en compte dès l'import, sans rien cocher ici). Colonne L : nom de regroupement facultatif (ex. « Nuggets » pour regrouper poulet + poisson). <b>NON</b> retire le produit de la cuisine. <b>Case vide</b> = on garde le réglage fait dans l'admin. Les plats du menu enfant se cochent à la main (Carte → Menu enfant → clique le plat).<br><br>
+    A: ID · B: Catégorie · C: Nom · D: Description · E: Emoji · F: Prix EUR · G: Actif (OUI/NON) · ... · J: ID Hiboutik (optionnel) · <span style="color:var(--gold)">K: Cuisine (OUI/NON, optionnel) · L: Libellé cuisine (optionnel)</span><br><br>
+    🍳 <strong style="color:var(--gold)">Colonnes "Cuisine"</strong> : mets <b>OUI</b> en colonne K pour qu'un produit s'affiche dans l'onglet Cuisine de la caisse (un nouveau produit est ainsi pris en compte dès l'import, sans rien cocher ici). Colonne L : nom de regroupement facultatif (ex. « Nuggets » pour regrouper poulet + poisson). <b>NON</b> retire le produit de la cuisine. <b>Case vide</b> = on garde le réglage fait dans l'admin. Les plats du menu enfant se cochent à la main (Carte → Menu enfant → clique le plat).<br><br>
     <strong>Catégories valides :</strong> formules · sauces · softs · bieres · vins_blancs · vins_roses · vins_rouges · cocktails · sangria · desserts · digestifs · chauds<br><br>
-    🔗 <strong style="color:#4ABA80">Colonne "ID Hiboutik"</strong> : si elle est remplie (dernière colonne de chaque onglet produit, et de l'onglet Familles Options), la Correspondance Hiboutik est mise à jour automatiquement à l'import — plus besoin de la ressaisir à la main dans l'écran "🔗 Correspondance Hiboutik".<br><br>
-    🧒 <strong style="color:#D4AF37">Colonne M "Enfant gratuit"</strong> (facultative) : <b>ADULTE</b> = ce menu ouvre droit à 1 enfant gratuit · <b>GRATUIT</b> = menu enfant gratuit (1 par menu adulte) · <b>NON</b> = hors règle · <b>case vide</b> = on garde le réglage de l'admin (Réglages → Règle « enfant gratuit »).<br><br>
-    🗂️ <strong style="color:#D4AF37">Onglet "Catégories"</strong> (fichiers créés par l'Import de carte IA) : s'il est présent, il fixe les tuiles du client, leurs titres, leurs emojis et leur ordre (ex. 🍕 Pizzas, 🥞 Galettes). Sans cet onglet, les catégories habituelles de Moule & Smile sont utilisées.<br><br>
-    ⚠️ <strong style="color:#C0392B">L'import remplace toute la carte.</strong> Utilisez MouleSmile_Carte_Admin.xlsx comme base.
+    🔗 <strong style="color:var(--green)">Colonne "ID Hiboutik"</strong> : si elle est remplie (dernière colonne de chaque onglet produit, et de l'onglet Familles Options), la Correspondance Hiboutik est mise à jour automatiquement à l'import — plus besoin de la ressaisir à la main dans l'écran "🔗 Correspondance Hiboutik".<br><br>
+    🧒 <strong style="color:var(--gold)">Colonne M "Enfant gratuit"</strong> (facultative) : <b>ADULTE</b> = ce menu ouvre droit à 1 enfant gratuit · <b>GRATUIT</b> = menu enfant gratuit (1 par menu adulte) · <b>NON</b> = hors règle · <b>case vide</b> = on garde le réglage de l'admin (Réglages → Règle « enfant gratuit »).<br><br>
+    🗂️ <strong style="color:var(--gold)">Onglet "Catégories"</strong> (fichiers créés par l'Import de carte IA) : s'il est présent, il fixe les tuiles du client, leurs titres, leurs emojis et leur ordre (ex. 🍕 Pizzas, 🥞 Galettes). Sans cet onglet, les catégories habituelles de Moule & Smile sont utilisées.<br><br>
+    ⚠️ <strong style="color:var(--red)">L'import remplace toute la carte.</strong> Utilisez MouleSmile_Carte_Admin.xlsx comme base.
   </div>
   <div class="import-zone" id="importZone" onclick="document.getElementById('importInput').click()"
     ondragover="event.preventDefault();this.classList.add('dragover')"
@@ -492,6 +744,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
 
 <!-- ACTIONS -->
 <div id="navActions" class="content" style="display:none">
+  <div class="page-head"><div class="eyebrow">Pilotage</div><h2>Actions</h2><p>Raccourcis, chiffre du jour, jetons et liens utiles.</p></div>
   <div class="section">
     <h2>⚡ Actions rapides</h2>
     <div class="actions-grid">
@@ -504,23 +757,23 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
   <div class="section" style="margin-top:14px">
     <h2>📊 CA du jour</h2>
-    <div id="statsJour" style="color:#aaa;font-size:13px;margin-top:8px">Chargement...</div>
+    <div id="statsJour" style="color:var(--text-2);font-size:13px;margin-top:8px">Chargement...</div>
   </div>
   <div class="section" style="margin-top:14px">
     <h2>📅 CA du mois</h2>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px">
-      <input type="month" id="moisCA" style="background:#2A2A2A;border:1px solid #444;border-radius:8px;color:#fff;padding:8px 10px;font-size:14px">
+      <input type="month" id="moisCA" style="background:var(--surface-2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 10px;font-size:14px">
       <button class="btn-vert" style="padding:9px 14px" onclick="chargerCAMois()">📊 Afficher</button>
     </div>
-    <div id="statsMois" style="color:#aaa;font-size:13px;margin-top:12px"></div>
-    <div style="color:#777;font-size:11px;margin-top:10px;line-height:1.5">
+    <div id="statsMois" style="color:var(--text-2);font-size:13px;margin-top:12px"></div>
+    <div style="color:var(--faint);font-size:11px;margin-top:10px;line-height:1.5">
       Calculé sur les <b>tables encaissées</b> (historique de la caisse) du mois choisi. Les repas employés et les additions offertes ne comptent pas dans le CA (ils sont indiqués à part).<br>
       ⚠️ Ne pas utiliser « Vider l'historique » dans la caisse : les mois passés seraient perdus.
     </div>
   </div>
   <div class="section" style="margin-top:14px">
     <h2>🎫 Sécurité — Jetons de table</h2>
-    <div style="color:#aaa;font-size:12px;margin-bottom:12px;line-height:1.6">
+    <div style="color:var(--text-2);font-size:12px;margin-bottom:12px;line-height:1.6">
       L'accès à la commande client est désormais protégé par des jetons physiques réutilisables (un par table), plutôt que par un token global.<br><br>
       • Générez vos jetons (une fois) depuis <strong>qrcodes.html</strong><br>
       • Activez un jeton sur une table depuis l'onglet <strong>🎫 Jetons</strong> de la caisse<br>
@@ -537,7 +790,7 @@ body{font-family:Arial,sans-serif;background:#1A1A1A;color:#fff;min-height:100vh
   </div>
 </div>
 
-<div class="version">v.31/10/2026 18:15 — Moule & Smile Admin</div>
+<div class="version">v.01/11/2026 18:20 — Moule & Smile · Console carte</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -619,6 +872,7 @@ db.collection('config').doc('carte_v2').onSnapshot(doc=>{
 function switchNav(tab,el){
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
+  try{el.scrollIntoView({block:'nearest',inline:'nearest',behavior:'smooth'})}catch(e){}
   ['navCarte','navBoissonMenu','navEnfantMenu','navOptions','navReglages','navAjouter','navImporter','navActions'].forEach(id=>document.getElementById(id).style.display='none');
   document.getElementById('nav'+tab).style.display='block';
   if(tab==='BoissonMenu') renderBoissonMenu();
@@ -656,7 +910,7 @@ function render(){
       </div>
       <div class="item-info" onclick="ouvrirModalEdition('${catActive}',${idx})"><div class="item-nom">${p.photo?`<img src="${p.photo}" style="width:20px;height:20px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px">`:''}${p.emoji||''} ${p.nom}</div><div class="item-detail">${p.desc||''}${p.subcat?' · '+p.subcat:''}${p.points?` · 🍽️${p.points}pt`:''}${p.cuisine?' · 🍳'+(p.cuisineLabel?' '+p.cuisineLabel:''):''}</div></div>
       <div style="display:flex;align-items:center;gap:4px">
-        ${p.prix>0?`<input type="number" class="prix-input" value="${p.prix}" step="0.10" onchange="updatePrix('${catActive}',${idx},this.value)"> €`:'<span style="color:#1A7A50;font-size:10px;font-weight:bold">Inclus</span>'}
+        ${p.prix>0?`<input type="number" class="prix-input" value="${p.prix}" step="0.10" onchange="updatePrix('${catActive}',${idx},this.value)"> €`:'<span style="color:var(--green-deep);font-size:10px;font-weight:bold">Inclus</span>'}
         <label class="toggle"><input type="checkbox" ${p.actif?'checked':''} onchange="toggleItem('${catActive}',${idx},this.checked)"><span class="toggle-slider"></span></label>
         <button class="del-prod-btn" onclick="supprimerProduit('${catActive}',${idx})">🗑</button>
       </div>
@@ -1087,21 +1341,21 @@ function parseRows(rows){
   if(importedFamillesOptions){
     const nbFamilles=Object.keys(importedFamillesOptions).length;
     const nbOptions=Object.values(importedFamillesOptions).reduce((s,f)=>s+f.options.length,0);
-    extraInfo+=`<div style="color:#4ABA80;font-size:11px;padding:4px 0">🎛️ ${nbFamilles} famille(s) d'options détectée(s) (${nbOptions} choix)</div>`;
+    extraInfo+=`<div style="color:var(--green);font-size:11px;padding:4px 0">🎛️ ${nbFamilles} famille(s) d'options détectée(s) (${nbOptions} choix)</div>`;
   }
   if(importedCategories){
-    extraInfo+=`<div style="color:#4ABA80;font-size:11px;padding:4px 0">🗂️ ${importedCategories.length} catégorie(s) du fichier : ${importedCategories.map(c=>c.nom).join(' · ')}</div>`;
+    extraInfo+=`<div style="color:var(--green);font-size:11px;padding:4px 0">🗂️ ${importedCategories.length} catégorie(s) du fichier : ${importedCategories.map(c=>c.nom).join(' · ')}</div>`;
   }
   if(importedOptionsProduits){
     const nbAssign=Object.keys(importedOptionsProduits).length;
-    extraInfo+=`<div style="color:#4ABA80;font-size:11px;padding:4px 0">🔗 ${nbAssign} produit(s) avec options assignées</div>`;
+    extraInfo+=`<div style="color:var(--green);font-size:11px;padding:4px 0">🔗 ${nbAssign} produit(s) avec options assignées</div>`;
   }
   document.getElementById('previewList').innerHTML=extraInfo+produits.slice(0,25).map(p=>`
     <div class="preview-item">
-      <span style="color:#888;font-size:10px">[${p.cat}${p.subcat?' / '+p.subcat:''}]</span>
-      <span style="color:#ddd;margin-left:6px">${p.emoji||''} ${p.nom}</span>
-      <span style="color:#D4AF37;font-weight:bold">${p.prix===0?'Inclus':p.prix.toFixed(2).replace('.',',')+' €'} ${p.actif?'✅':'❌'}</span>
-    </div>`).join('')+(produits.length>25?`<div style="color:#888;font-size:11px;padding:6px">...et ${produits.length-25} autres</div>`:'');
+      <span style="color:var(--muted);font-size:10px">[${p.cat}${p.subcat?' / '+p.subcat:''}]</span>
+      <span style="color:var(--text);margin-left:6px">${p.emoji||''} ${p.nom}</span>
+      <span style="color:var(--gold);font-weight:bold">${p.prix===0?'Inclus':p.prix.toFixed(2).replace('.',',')+' €'} ${p.actif?'✅':'❌'}</span>
+    </div>`).join('')+(produits.length>25?`<div style="color:var(--muted);font-size:11px;padding:6px">...et ${produits.length-25} autres</div>`:'');
   document.getElementById('importPreview').style.display='block';
 }
 
@@ -1315,7 +1569,7 @@ function renderBoissonMenu() {
   const bm = carte.boissonsMenu || [];
   const container = document.getElementById('boissonMenuList');
   if (!bm.length) {
-    container.innerHTML = '<div style="color:#888;text-align:center;padding:20px">Aucune boisson configurée</div>';
+    container.innerHTML = '<div style="color:var(--muted);text-align:center;padding:20px">Aucune boisson configurée</div>';
     return;
   }
   container.innerHTML = bm.map((b, idx) => `
@@ -1379,7 +1633,7 @@ function renderEnfantMenu() {
   const em = carte.enfantMenu || [];
   const container = document.getElementById('enfantMenuList');
   if (!em.length) {
-    container.innerHTML = '<div style="color:#888;text-align:center;padding:20px">Aucun produit configuré</div>';
+    container.innerHTML = '<div style="color:var(--muted);text-align:center;padding:20px">Aucun produit configuré</div>';
     return;
   }
   container.innerHTML = em.map((p, idx) => `
@@ -1392,7 +1646,7 @@ function renderEnfantMenu() {
       </div>
       <div class="item-info" onclick="ouvrirModalEdition(null,${idx},'enfantMenu')">
         <div class="item-nom">${p.photo?`<img src="${p.photo}" style="width:20px;height:20px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px">`:''}${p.emoji||'🧒'} ${p.nom}</div>
-        <div class="item-detail">${p.desc||''}${p.cuisine?` <span style="color:#D4AF37">🍳 ${p.cuisineLabel||'Cuisine'}</span>`:''}</div>
+        <div class="item-detail">${p.desc||''}${p.cuisine?` <span style="color:var(--gold)">🍳 ${p.cuisineLabel||'Cuisine'}</span>`:''}</div>
       </div>
       <div style="display:flex;align-items:center;gap:6px">
         <label class="toggle">
@@ -1478,7 +1732,7 @@ function renderFamillesOptions(){
   const container=document.getElementById('famillesOptionsList');
   const ids=Object.keys(familles);
   if(!ids.length){
-    container.innerHTML='<div style="color:#888;text-align:center;padding:20px">Aucune famille d\'options pour l\'instant — importe un fichier Excel avec l\'onglet "Familles Options" pour en créer.</div>';
+    container.innerHTML='<div style="color:var(--muted);text-align:center;padding:20px">Aucune famille d\'options pour l\'instant — importe un fichier Excel avec l\'onglet "Familles Options" pour en créer.</div>';
     return;
   }
   container.innerHTML=ids.map(fid=>{
@@ -1490,10 +1744,10 @@ function renderFamillesOptions(){
         ${opts.map(o=>`
           <div class="item-row">
             <div class="item-info" onclick="ouvrirModalEdition('${fid}',${(f.options||[]).indexOf(o)},'optionFamille')">
-              <div class="item-nom">${o.photo?`<img src="${o.photo}" style="width:20px;height:20px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px">`:''}${o.nom}${o.points?` <span style="color:#8E44AD;font-size:11px">🍽️${o.points}pt</span>`:''}</div>
+              <div class="item-nom">${o.photo?`<img src="${o.photo}" style="width:20px;height:20px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px">`:''}${o.nom}${o.points?` <span style="color:var(--violet);font-size:11px">🍽️${o.points}pt</span>`:''}</div>
             </div>
             <div style="display:flex;align-items:center;gap:6px">
-              <input type="number" value="${o.supplement||0}" step="0.10" min="0" style="width:60px;background:#1A1A1A;border:1px solid #444;border-radius:6px;color:#fff;padding:4px" onchange="updateSupplementOption('${fid}','${o.id}',this.value)">
+              <input type="number" value="${o.supplement||0}" step="0.10" min="0" style="width:60px;background:var(--ink);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:4px" onchange="updateSupplementOption('${fid}','${o.id}',this.value)">
               <label class="toggle">
                 <input type="checkbox" ${o.actif?'checked':''} onchange="toggleOptionFamille('${fid}','${o.id}',this.checked)">
                 <span class="toggle-slider"></span>
@@ -1599,11 +1853,11 @@ function renderRegleEnfant(){
   const tous=[]; carte.categories.forEach(c=>(c.produits||[]).forEach((p,idx)=>tous.push({c,p,idx})));
   const adultes=tous.filter(x=>regleEnfantEffective(x.p)==='adulte');
   const gratuits=tous.filter(x=>regleEnfantEffective(x.p)==='gratuit');
-  const nomsListe=l=>l.length?l.map(x=>`<strong style="color:#D4AF37">${x.p.nom}</strong>`).join(', '):'<em style="color:#C0392B">aucun</em>';
+  const nomsListe=l=>l.length?l.map(x=>`<strong style="color:var(--gold)">${x.p.nom}</strong>`).join(', '):'<em style="color:var(--red)">aucun</em>';
   const lignes=tous.filter(x=>!CATS_BOISSONS_REGLE.includes(x.c.id)||regleEnfantEffective(x.p));
   zone.innerHTML=`
-    <div style="color:#ccc;font-size:12px;line-height:1.7;margin-bottom:10px">
-      <strong style="color:#D4AF37">Règles actives (contrôlées sur le téléphone du client) :</strong><br>
+    <div style="color:var(--text-2);font-size:12px;line-height:1.7;margin-bottom:10px">
+      <strong style="color:var(--gold)">Règles actives (contrôlées sur le téléphone du client) :</strong><br>
       • <b>1 menu enfant gratuit maximum par menu adulte payant</b> de la table.<br>
       • Les menus adultes comptés : ceux du panier <b>et</b> ceux déjà envoyés pour la table (commandes non réglées).<br>
       • Ajout d'un enfant gratuit <b>refusé sans menu adulte</b> (« Ajoutez un menu adulte en premier ! »).<br>
@@ -1613,13 +1867,13 @@ function renderRegleEnfant(){
       • Le menu enfant/ado payant n'ouvre pas droit à un enfant gratuit (sauf si vous cochez la case).<br><br>
       🧑 Ouvrent droit à 1 enfant gratuit : ${nomsListe(adultes)}<br>
       👧 Menus enfant gratuits : ${nomsListe(gratuits)}<br>
-      <span style="color:#888">${regleEnfantReglee()?'Réglage : cases cochées ci-dessous (ou colonne M de l\'Excel).':'Réglage par défaut Moule & Smile (aucune case encore modifiée).'}</span>
+      <span style="color:var(--muted)">${regleEnfantReglee()?'Réglage : cases cochées ci-dessous (ou colonne M de l\'Excel).':'Réglage par défaut Moule & Smile (aucune case encore modifiée).'}</span>
     </div>
     ${lignes.map(x=>{const r=regleEnfantEffective(x.p);return `
       <div class="item-row" style="flex-wrap:wrap;gap:6px">
         <div class="item-info" style="cursor:default;min-width:140px"><div class="item-nom">${x.p.emoji||''} ${x.p.nom}</div><div class="item-detail">${x.c.nom}${x.p.prix?' · '+Number(x.p.prix).toFixed(2).replace('.',',')+' €':' · gratuit'}</div></div>
-        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#ddd;cursor:pointer"><input type="checkbox" ${r==='adulte'?'checked':''} onchange="changerRegleEnfant('${x.c.id}',${x.idx},'adulte',this.checked)" style="width:18px;height:18px">🧑 Adulte</label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#ddd;cursor:pointer"><input type="checkbox" ${r==='gratuit'?'checked':''} onchange="changerRegleEnfant('${x.c.id}',${x.idx},'gratuit',this.checked)" style="width:18px;height:18px">👧 Enfant gratuit</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text);cursor:pointer"><input type="checkbox" ${r==='adulte'?'checked':''} onchange="changerRegleEnfant('${x.c.id}',${x.idx},'adulte',this.checked)" style="width:18px;height:18px">🧑 Adulte</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text);cursor:pointer"><input type="checkbox" ${r==='gratuit'?'checked':''} onchange="changerRegleEnfant('${x.c.id}',${x.idx},'gratuit',this.checked)" style="width:18px;height:18px">👧 Enfant gratuit</label>
       </div>`;}).join('')}`;
 }
 
@@ -1677,7 +1931,7 @@ function renderRechargeAppli(){
   document.getElementById('rechargeActif').checked=r.actif!==false;
   document.getElementById('rechargeFrites').checked=r.frites!==false;
   document.getElementById('rechargeExplication').innerHTML=
-    `<b style="color:#D4AF37">Règles actives${r.actif===false?' (recharge par l\'appli désactivée)':''} :</b><br>`+
+    `<b style="color:var(--gold)">Règles actives${r.actif===false?' (recharge par l\'appli désactivée)':''} :</b><br>`+
     `• Le bouton « 🔁 Je reprends » apparaît dès que la table a commandé une formule <b>à volonté</b> payante (nom ou description contenant « volonté »).<br>`+
     `• Le client choisit le plat, la <b>sauce</b> (famille d'options du plat) ${r.frites!==false?'et <b>avec ou sans frites</b>':'(frites non demandées)'} ; la recharge part en cuisine à <b>0 €</b>.<br>`+
     `• Limite : <b>1 recharge en cours par couvert à volonté</b> (adultes et enfants) ; « en cours » = pas encore marquée « ✓ Prêt » en cuisine.<br>`+
@@ -1707,7 +1961,7 @@ function renderRelanceBoisson(){
   document.getElementById('relanceBouteille').value=r.bouteille;
   document.getElementById('relanceFenetre').value=r.fenetre;
   document.getElementById('relanceExplication').innerHTML=
-    `<b style="color:#D4AF37">Règles actives${r.actif===false?' (relance désactivée)':''} :</b><br>`+
+    `<b style="color:var(--gold)">Règles actives${r.actif===false?' (relance désactivée)':''} :</b><br>`+
     `• Délais après la 1re commande de boissons : verre <b>${r.verre} min</b> · bière 50 cl <b>${r.biere50} min</b> · cocktail <b>${r.cocktail} min</b> · bouteille de vin <b>${r.bouteille} min</b>. Si la table a pris plusieurs types, c'est le délai le plus court qui compte.<br>`+
     `• Fenêtre d'affichage : <b>${r.fenetre} min</b> après l'heure prévue, puis plus de popup.<br>`+
     `• <b>1 seul popup</b> par table et par repas (par téléphone).<br>`+
@@ -1910,8 +2164,8 @@ function renderMappingHiboutik(){
     (cat.produits||[]).forEach(p=>{
       const val=mappingHiboutik[p.id]||'';
       html+=`<div class="item-row">
-        <div class="item-info" style="cursor:default;flex:0 0 auto;min-width:140px"><div class="item-nom">${p.nom} <span style="color:#666;font-size:10px">(${p.id})</span></div></div>
-        <input type="number" id="mapping-${p.id}" name="mapping-${p.id}" autocomplete="off" value="${val}" placeholder="ID Hiboutik" style="width:140px;background:#2A2A2A;border:1px solid #444;border-radius:8px;color:#fff;padding:8px 10px;font-size:12px;margin-left:8px"
+        <div class="item-info" style="cursor:default;flex:0 0 auto;min-width:140px"><div class="item-nom">${p.nom} <span style="color:var(--faint);font-size:10px">(${p.id})</span></div></div>
+        <input type="number" id="mapping-${p.id}" name="mapping-${p.id}" autocomplete="off" value="${val}" placeholder="ID Hiboutik" style="width:140px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 10px;font-size:12px;margin-left:8px"
           onchange="majMappingHiboutik('${p.id}',this.value)">
       </div>`;
     });
@@ -1922,12 +2176,12 @@ function renderMappingHiboutik(){
   const famillesOptions=carte.famillesOptions||{};
   Object.values(famillesOptions).forEach(famille=>{
     if(!famille.options||!famille.options.length)return;
-    html+=`<div style="color:#D4AF37;font-size:12px;font-weight:bold;margin:12px 0 4px">— ${famille.nom||'Options'} —</div>`;
+    html+=`<div style="color:var(--gold);font-size:12px;font-weight:bold;margin:12px 0 4px">— ${famille.nom||'Options'} —</div>`;
     famille.options.forEach(o=>{
       const val=mappingHiboutik[o.id]||'';
       html+=`<div class="item-row">
-        <div class="item-info" style="cursor:default;flex:0 0 auto;min-width:140px"><div class="item-nom">${o.nom} <span style="color:#666;font-size:10px">(${o.id})</span></div></div>
-        <input type="number" id="mapping-${o.id}" name="mapping-${o.id}" autocomplete="off" value="${val}" placeholder="ID Hiboutik" style="width:140px;background:#2A2A2A;border:1px solid #444;border-radius:8px;color:#fff;padding:8px 10px;font-size:12px;margin-left:8px"
+        <div class="item-info" style="cursor:default;flex:0 0 auto;min-width:140px"><div class="item-nom">${o.nom} <span style="color:var(--faint);font-size:10px">(${o.id})</span></div></div>
+        <input type="number" id="mapping-${o.id}" name="mapping-${o.id}" autocomplete="off" value="${val}" placeholder="ID Hiboutik" style="width:140px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 10px;font-size:12px;margin-left:8px"
           onchange="majMappingHiboutik('${o.id}',this.value)">
       </div>`;
     });
@@ -1968,7 +2222,7 @@ function renderConsignesService(){
       const val=consignes[p.id]||'';
       html+=`<div class="item-row">
         <div class="item-info" style="cursor:default;flex:0 0 auto;min-width:140px"><div class="item-nom">${p.nom}</div></div>
-        <input type="text" value="${val.replace(/"/g,'&quot;')}" placeholder="Ex: Apporter une marmite" style="flex:1;background:#2A2A2A;border:1px solid #444;border-radius:8px;color:#fff;padding:8px 10px;font-size:12px;margin-left:8px"
+        <input type="text" value="${val.replace(/"/g,'&quot;')}" placeholder="Ex: Apporter une marmite" style="flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 10px;font-size:12px;margin-left:8px"
           onchange="majConsigneService('${p.id}',this.value)">
       </div>`;
     });
@@ -2011,8 +2265,8 @@ function renderFamillesSuggestionAddition(){
     const coche=selectionnees.includes(cat.id);
     const idx=selectionnees.indexOf(cat.id);
     const fleches=coche?`
-      <button type="button" onclick="deplacerFamilleSuggestionAddition('${cat.id}',-1)" ${idx<=0?'disabled':''} style="background:none;border:none;color:${idx<=0?'#444':'#D4AF37'};font-size:16px;cursor:${idx<=0?'default':'pointer'};padding:0 4px" title="Monter">▲</button>
-      <button type="button" onclick="deplacerFamilleSuggestionAddition('${cat.id}',1)" ${idx>=selectionnees.length-1?'disabled':''} style="background:none;border:none;color:${idx>=selectionnees.length-1?'#444':'#D4AF37'};font-size:16px;cursor:${idx>=selectionnees.length-1?'default':'pointer'};padding:0 4px" title="Descendre">▼</button>`:'<span style="display:inline-block;width:44px"></span>';
+      <button type="button" onclick="deplacerFamilleSuggestionAddition('${cat.id}',-1)" ${idx<=0?'disabled':''} style="background:none;border:none;color:${idx<=0?'var(--border)':'var(--gold)'};font-size:16px;cursor:${idx<=0?'default':'pointer'};padding:0 4px" title="Monter">▲</button>
+      <button type="button" onclick="deplacerFamilleSuggestionAddition('${cat.id}',1)" ${idx>=selectionnees.length-1?'disabled':''} style="background:none;border:none;color:${idx>=selectionnees.length-1?'var(--border)':'var(--gold)'};font-size:16px;cursor:${idx>=selectionnees.length-1?'default':'pointer'};padding:0 4px" title="Descendre">▼</button>`:'<span style="display:inline-block;width:44px"></span>';
     return `<div class="item-row">
       ${fleches}
       <div class="item-info" style="cursor:default"><div class="item-nom">${cat.nom}</div></div>
@@ -2158,21 +2412,21 @@ async function chargerCAMois(){
     });
     const nomMois=debut.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
     if(!nb&&!nbEmploye&&!nbOffert){ zone.innerHTML=`Aucun encaissement en ${nomMois}.`; return; }
-    const lignesModes=Object.entries(parMode).sort((x,y)=>y[1]-x[1]).map(([k,v])=>`<div class="item-row" style="padding:6px 10px"><span>${MODES_CA[k]||k}</span><b style="color:#D4AF37">${eurosCA(v)}</b></div>`).join('')
-      +(sansMode>0.004?`<div class="item-row" style="padding:6px 10px"><span>❔ Sans moyen de paiement (anciens encaissements)</span><b style="color:#D4AF37">${eurosCA(sansMode)}</b></div>`:'');
+    const lignesModes=Object.entries(parMode).sort((x,y)=>y[1]-x[1]).map(([k,v])=>`<div class="item-row" style="padding:6px 10px"><span>${MODES_CA[k]||k}</span><b style="color:var(--gold)">${eurosCA(v)}</b></div>`).join('')
+      +(sansMode>0.004?`<div class="item-row" style="padding:6px 10px"><span>❔ Sans moyen de paiement (anciens encaissements)</span><b style="color:var(--gold)">${eurosCA(sansMode)}</b></div>`:'');
     const jours=Object.keys(parJour).map(Number).sort((x,y)=>x-y);
     const maxJ=Math.max(...jours.map(j=>parJour[j]),1);
-    const lignesJours=jours.map(j=>`<div style="display:flex;align-items:center;gap:8px;font-size:12px;margin:3px 0"><span style="width:58px;color:#aaa">${String(j).padStart(2,'0')}/${String(m).padStart(2,'0')}</span><span style="flex:1;background:#2A2A2A;border-radius:4px;height:10px;overflow:hidden"><span style="display:block;height:100%;width:${Math.round(parJour[j]/maxJ*100)}%;background:#D4AF37"></span></span><span style="width:80px;text-align:right;color:#ddd">${eurosCA(parJour[j])}</span></div>`).join('');
+    const lignesJours=jours.map(j=>`<div style="display:flex;align-items:center;gap:8px;font-size:12px;margin:3px 0"><span style="width:58px;color:var(--text-2)">${String(j).padStart(2,'0')}/${String(m).padStart(2,'0')}</span><span style="flex:1;background:var(--surface-2);border-radius:4px;height:10px;overflow:hidden"><span style="display:block;height:100%;width:${Math.round(parJour[j]/maxJ*100)}%;background:var(--gold)"></span></span><span style="width:80px;text-align:right;color:var(--text)">${eurosCA(parJour[j])}</span></div>`).join('');
     zone.innerHTML=`
-      <div style="color:#D4AF37;font-weight:bold;margin-bottom:8px;text-transform:capitalize">${nomMois}</div>
+      <div style="color:var(--gold);font-weight:bold;margin-bottom:8px;text-transform:capitalize">${nomMois}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
-        <div style="text-align:center"><div style="font-size:22px;font-weight:bold;color:#D4AF37">${eurosCA(ca)}</div><div style="font-size:10px;color:#888">CA du mois</div></div>
-        <div style="text-align:center"><div style="font-size:22px;font-weight:bold;color:#D4AF37">${nb}</div><div style="font-size:10px;color:#888">Tables encaissées</div></div>
-        <div style="text-align:center"><div style="font-size:22px;font-weight:bold;color:#D4AF37">${nb?eurosCA(ca/nb):'—'}</div><div style="font-size:10px;color:#888">Ticket moy. / table</div></div>
+        <div style="text-align:center"><div style="font-size:22px;font-weight:bold;color:var(--gold)">${eurosCA(ca)}</div><div style="font-size:10px;color:var(--muted)">CA du mois</div></div>
+        <div style="text-align:center"><div style="font-size:22px;font-weight:bold;color:var(--gold)">${nb}</div><div style="font-size:10px;color:var(--muted)">Tables encaissées</div></div>
+        <div style="text-align:center"><div style="font-size:22px;font-weight:bold;color:var(--gold)">${nb?eurosCA(ca/nb):'—'}</div><div style="font-size:10px;color:var(--muted)">Ticket moy. / table</div></div>
       </div>
-      <div style="font-size:12px;color:#888;margin-bottom:4px">Par moyen de paiement</div>${lignesModes||'<div style="color:#777">—</div>'}
-      ${(nbEmploye||nbOffert)?`<div style="font-size:12px;color:#888;margin-top:8px">Hors CA : ${nbEmploye?`🍽️ ${nbEmploye} repas employé(s) (${eurosCA(montantEmploye)})`:''}${nbEmploye&&nbOffert?' · ':''}${nbOffert?`🎁 ${nbOffert} addition(s) offerte(s) (${eurosCA(montantOffert)})`:''}</div>`:''}
-      <div style="font-size:12px;color:#888;margin:12px 0 4px">Par jour</div>${lignesJours}`;
+      <div style="font-size:12px;color:var(--muted);margin-bottom:4px">Par moyen de paiement</div>${lignesModes||'<div style="color:var(--faint)">—</div>'}
+      ${(nbEmploye||nbOffert)?`<div style="font-size:12px;color:var(--muted);margin-top:8px">Hors CA : ${nbEmploye?`🍽️ ${nbEmploye} repas employé(s) (${eurosCA(montantEmploye)})`:''}${nbEmploye&&nbOffert?' · ':''}${nbOffert?`🎁 ${nbOffert} addition(s) offerte(s) (${eurosCA(montantOffert)})`:''}</div>`:''}
+      <div style="font-size:12px;color:var(--muted);margin:12px 0 4px">Par jour</div>${lignesJours}`;
   }catch(e){ console.error('CA du mois',e); zone.textContent='❌ Erreur chargement : '+(e.code||e.message); }
 }
 
@@ -2182,9 +2436,9 @@ async function loadStats(){
     let total=0,nb=0;snap.forEach(d=>{const x=d.data();total+=x.total||0;nb++;});
     document.getElementById('statsJour').innerHTML=`
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
-        <div style="text-align:center"><div style="font-size:22px;font-weight:bold;color:#D4AF37">${nb}</div><div style="font-size:10px;color:#888">Commandes</div></div>
-        <div style="text-align:center"><div style="font-size:22px;font-weight:bold;color:#D4AF37">${total.toFixed(0)} €</div><div style="font-size:10px;color:#888">CA</div></div>
-        <div style="text-align:center"><div style="font-size:22px;font-weight:bold;color:#D4AF37">${nb?(total/nb).toFixed(0):0} €</div><div style="font-size:10px;color:#888">Ticket moy.</div></div>
+        <div style="text-align:center"><div style="font-size:22px;font-weight:bold;color:var(--gold)">${nb}</div><div style="font-size:10px;color:var(--muted)">Commandes</div></div>
+        <div style="text-align:center"><div style="font-size:22px;font-weight:bold;color:var(--gold)">${total.toFixed(0)} €</div><div style="font-size:10px;color:var(--muted)">CA</div></div>
+        <div style="text-align:center"><div style="font-size:22px;font-weight:bold;color:var(--gold)">${nb?(total/nb).toFixed(0):0} €</div><div style="font-size:10px;color:var(--muted)">Ticket moy.</div></div>
       </div>`;
   }catch(e){document.getElementById('statsJour').textContent='Erreur chargement stats';}
 }
