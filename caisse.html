@@ -507,7 +507,7 @@ input,select,button,textarea{font-family:inherit}
 
 <!-- HEADER -->
 <div class="header">
-  <h1><span class="brand-mark">M</span><span class="brand-txt"><span class="brand-name">Moule <em>&amp;</em> Smile</span><span id="motCaisse" onclick="tapMotCaisse()" style="cursor:default;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent">CAISSE</span></span><span class="build-tag">v.02/11/2026 10:45</span></h1>
+  <h1><span class="brand-mark">M</span><span class="brand-txt"><span class="brand-name">Moule <em>&amp;</em> Smile</span><span id="motCaisse" onclick="tapMotCaisse()" style="cursor:default;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent">CAISSE</span></span><span class="build-tag">v.02/11/2026 10:50</span></h1>
   <div class="stats-row">
     <div class="stat"><div class="num" id="statNouv">0</div><div class="lbl">Nouvelles</div></div>
     <div class="stat"><div class="num" id="statAdd">0</div><div class="lbl">Additions</div></div>
@@ -797,7 +797,7 @@ input,select,button,textarea{font-family:inherit}
   </div>
 </div>
 
-<div class="version">v.02/11/2026 10:45 — Moule & Smile · Caisse</div>
+<div class="version">v.02/11/2026 10:50 — Moule & Smile · Caisse</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -1901,7 +1901,7 @@ ${etiquettes}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
 <script>
 ${scriptsQr}
-var TOTAL=${jetons.length}, idx=-1, enCours=false, tDebut=0;
+var TOTAL=${jetons.length}, idx=-1, enCours=false, tDebut=0, attente=false;
 function majEtat(){
   var e=document.getElementById('etat'), b=document.getElementById('bSuiv');
   if(idx>=TOTAL-1 && !enCours){ e.textContent='✅ '+TOTAL+' ticket'+(TOTAL>1?'s':'')+' imprimé'+(TOTAL>1?'s':''); b.style.display='none'; }
@@ -1909,7 +1909,7 @@ function majEtat(){
 }
 function imprimerSuivant(){
   if(enCours || idx>=TOTAL-1) return;
-  idx++; enCours=true;
+  idx++; enCours=true; attente=false;
   for(var i=0;i<TOTAL;i++) document.getElementById('t_'+i).classList.toggle('on', i===idx);
   majEtat();
   setTimeout(function(){
@@ -1918,7 +1918,7 @@ function imprimerSuivant(){
     // Ordinateur : print() attend la fin de l'impression -> on enchaîne.
     // Tablette : print() rend la main tout de suite -> on attend le bouton « ticket suivant ».
     if(Date.now()-tDebut>800) finImpression(true);
-    else { enCours=false; majEtat(); }
+    else { enCours=false; attente=true; majEtat(); } // le bouton marche tout de suite ; afterprint enchaînera si le dialogue reste ouvert
   },150);
 }
 function finImpression(auto){
@@ -1929,7 +1929,15 @@ function finImpression(auto){
   if(idx<TOTAL-1) setTimeout(imprimerSuivant,700);
   else setTimeout(function(){ try{window.close();}catch(e){} },2000);
 }
-window.addEventListener('afterprint', function(){ finImpression(); });
+window.addEventListener('afterprint', function(){
+  if(enCours){ finImpression(); return; }
+  // Chrome récent : print() rend la main tout de suite, afterprint arrive à la fermeture du dialogue
+  if(attente && Date.now()-tDebut>800){
+    attente=false;
+    if(idx<TOTAL-1) setTimeout(imprimerSuivant,700);
+    else setTimeout(function(){ try{window.close();}catch(e){} },2000);
+  }
+});
 window.onload=function(){ setTimeout(imprimerSuivant,400); };
 <\/script>
 </body></html>`);
