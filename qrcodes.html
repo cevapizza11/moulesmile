@@ -119,7 +119,7 @@
   <a href="outils.html">← Outils</a>
   <div style="display:flex;gap:10px;align-items:center">
     <button class="btn-deco" onclick="deconnexion()">Déconnexion</button>
-    <span class="version">v.17/10/2026 09:00</span>
+    <span class="version">v.02/11/2026 11:40</span>
   </div>
 </div>
 
@@ -217,7 +217,7 @@
 <!-- 3. Lot plastifié réutilisable -->
 <div class="section">
   <h2>♻️ Jetons plastifiés réutilisables</h2>
-  <div class="aide">Optionnel : un lot de jetons imprimés une fois, plastifiés, et remis en circulation après chaque encaissement. Seuls ces jetons sont imprimés par le bouton « Imprimer le lot ».</div>
+  <div class="aide">Optionnel : un lot de jetons imprimés une fois, plastifiés, et remis en circulation après chaque encaissement. Seuls ces jetons sont imprimés par les boutons « Imprimer le lot » : en tickets 80 mm un par un (imprimante à tickets), ou sur une feuille A4 à découper.</div>
 
   <div class="controls">
     <label class="adresse">Adresse dans les QR :
@@ -231,7 +231,8 @@
   <div class="controls">
     <input type="number" id="nbJetons" value="10" min="1" max="150">
     <button class="btn btn-or" id="btnGenerer" onclick="genererLot()">➕ Ajouter des jetons au lot</button>
-    <button class="btn btn-outline" onclick="window.print()">🖨️ Imprimer le lot</button>
+    <button class="btn btn-outline" onclick="imprimerLotTickets()">🧾 Imprimer le lot en tickets (1 par 1)</button>
+    <button class="btn btn-outline" onclick="window.print()">📄 Imprimer le lot sur feuille A4</button>
     <button class="btn btn-rouge" onclick="supprimerLot()">🗑️ Supprimer tout le lot</button>
   </div>
 
@@ -652,25 +653,88 @@ window.onload=function(){setTimeout(function(){window.print();setTimeout(functio
   win.document.close();
 }
 
-function imprimerPlusieurs(win, jetons){
+// Imprime une série de tickets 80 mm TICKET PAR TICKET (une impression séparée par jeton),
+// exactement comme la caisse : enchaînement automatique sur ordinateur, bouton
+// « Imprimer le ticket suivant » sur tablette / téléphone.
+// tickets = [{numero, token, sub, footer}]
+function imprimerSerie(win, tickets){
   const base=baseUrl();
-  const etiquettes=jetons.map(j=>`<div class="etiquette"><div class="title">🐚 MOULE & SMILE</div>
-<div class="sub">Bienvenue ! Votre table va vous être attribuée</div><div id="qr_${j.numero}" class="qr"></div>
-<div class="footer">Jeton n°${j.numero}<br>À usage unique — ne pas transférer</div></div>`).join('');
-  const scripts=jetons.map(j=>`new QRCode(document.getElementById('qr_${j.numero}'),{text:"${base}?j=${j.token}",width:160,height:160,colorDark:"#000000",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.H});`).join('');
-  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Jetons à l'avance</title>
-<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,Helvetica,sans-serif;color:#000;background:white}
-.etiquette{width:80mm;margin:0 auto;padding:8mm;text-align:center;page-break-after:always;font-weight:900}
-.etiquette:last-child{page-break-after:auto}.title{font-size:15px;margin-bottom:4px}
+  const etiquettes=tickets.map((t,i)=>`<div class="etiquette" id="t_${i}"><div class="title">🐚 MOULE & SMILE</div>
+<div class="sub">${t.sub}</div><div id="qr_${t.numero}" class="qr"></div>
+<div class="footer">Jeton n°${t.numero}<br>${t.footer}</div></div>`).join('');
+  const scripts=tickets.map(t=>`new QRCode(document.getElementById('qr_${t.numero}'),{text:"${base}?j=${t.token}",width:160,height:160,colorDark:"#000000",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.H});`).join('');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Impression des jetons</title>
+<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,Helvetica,sans-serif;color:#000;background:white;-webkit-print-color-adjust:exact}
+.etiquette{width:80mm;margin:0 auto;padding:8mm;text-align:center;font-weight:900;display:none}
+.etiquette.on{display:block}.title{font-size:15px;margin-bottom:4px}
 .sub{font-size:10px;margin-bottom:10px;border-bottom:2px dashed black;padding-bottom:6px}
 .qr{display:flex;justify-content:center;margin:10px 0}.footer{font-size:10px;margin-top:10px;border-top:2px dashed black;padding-top:6px}
-@media print{.etiquette{margin:0;padding:6mm}@page{margin:0;size:80mm auto}}</style></head><body>
+.ctrl{font-family:Arial,sans-serif;text-align:center;padding:12px;background:#111;color:#fff}
+.ctrl b{display:block;font-size:16px;margin-bottom:8px}
+.ctrl button{font-size:17px;font-weight:700;border:0;border-radius:10px;padding:14px 18px;margin:4px;background:#D4A017;color:#111;cursor:pointer}
+.ctrl button.sec{background:#444;color:#fff;font-size:14px;padding:10px 14px}
+@media print{.ctrl{display:none!important}.etiquette{width:80mm;margin:0;padding:6mm}@page{margin:0;size:80mm auto}}</style></head><body>
+<div class="ctrl"><b id="etat">Préparation…</b>
+  <button id="bSuiv" onclick="imprimerSuivant()">🖨️ Imprimer le ticket suivant</button><br>
+  <button class="sec" onclick="window.close()">Fermer</button>
+</div>
 ${etiquettes}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
 <script>${scripts}
-window.onload=function(){setTimeout(function(){window.print();setTimeout(function(){window.close()},1500)},400)};<\/script>
+var TOTAL=${tickets.length}, idx=-1, enCours=false, tDebut=0, attente=false;
+function majEtat(){
+  var e=document.getElementById('etat'), b=document.getElementById('bSuiv');
+  if(idx>=TOTAL-1 && !enCours){ e.textContent='✅ '+TOTAL+' ticket'+(TOTAL>1?'s':'')+' imprimé'+(TOTAL>1?'s':''); b.style.display='none'; }
+  else { e.textContent='Ticket '+(idx+1)+' / '+TOTAL; b.style.display=TOTAL>1?'':'none'; }
+}
+function fermer(){ setTimeout(function(){ try{window.close();}catch(e){} },2000); }
+function imprimerSuivant(){
+  if(enCours || idx>=TOTAL-1) return;
+  idx++; enCours=true; attente=false;
+  for(var i=0;i<TOTAL;i++) document.getElementById('t_'+i).classList.toggle('on', i===idx);
+  majEtat();
+  setTimeout(function(){
+    tDebut=Date.now();
+    window.print();
+    // Ordinateur (ancien Chrome) : print() attend la fin -> on enchaîne.
+    // Chrome récent / tablette : print() rend la main tout de suite -> afterprint ou le bouton prennent le relais.
+    if(Date.now()-tDebut>800) finImpression(true);
+    else { enCours=false; attente=true; majEtat(); }
+  },150);
+}
+function finImpression(auto){
+  if(!enCours) return;
+  var bloquant = auto===true || (Date.now()-tDebut>800);
+  enCours=false; majEtat();
+  if(!bloquant) return;
+  if(idx<TOTAL-1) setTimeout(imprimerSuivant,700); else fermer();
+}
+window.addEventListener('afterprint', function(){
+  if(enCours){ finImpression(); return; }
+  if(attente && Date.now()-tDebut>800){
+    attente=false;
+    if(idx<TOTAL-1) setTimeout(imprimerSuivant,700); else fermer();
+  }
+});
+window.onload=function(){ setTimeout(imprimerSuivant,400); };
+<\/script>
 </body></html>`);
   win.document.close();
+}
+
+function imprimerPlusieurs(win, jetons){
+  imprimerSerie(win, jetons.map(j=>({numero:j.numero, token:j.token,
+    sub:'Bienvenue ! Votre table va vous être attribuée', footer:'À usage unique — ne pas transférer'})));
+}
+
+// Lot plastifié en tickets 80 mm, un par un (imprimante à tickets)
+function imprimerLotTickets(){
+  if(!dernierLot.length){ alert('Aucun jeton plastifié dans le lot.'); return; }
+  if(!confirm(`Imprimer les ${dernierLot.length} jeton(s) du lot, un ticket par jeton ?`)) return;
+  const win=window.open('','_blank','width=420,height=560');
+  if(!win){ alert('Fenêtre d\'impression bloquée : autorisez les popups pour ce site.'); return; }
+  imprimerSerie(win, dernierLot.map(j=>({numero:j.numero, token:j.token,
+    sub:'Scannez pour commander depuis votre table', footer:'Jeton réutilisable — merci de le laisser sur la table'})));
 }
 
 function imprimerUnJeton(numero, token){
