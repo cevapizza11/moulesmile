@@ -507,7 +507,7 @@ input,select,button,textarea{font-family:inherit}
 
 <!-- HEADER -->
 <div class="header">
-  <h1><span class="brand-mark">M</span><span class="brand-txt"><span class="brand-name">Moule <em>&amp;</em> Smile</span><span id="motCaisse" onclick="tapMotCaisse()" style="cursor:default;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent">CAISSE</span></span><span class="build-tag">v.01/11/2026 18:20</span></h1>
+  <h1><span class="brand-mark">M</span><span class="brand-txt"><span class="brand-name">Moule <em>&amp;</em> Smile</span><span id="motCaisse" onclick="tapMotCaisse()" style="cursor:default;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent">CAISSE</span></span><span class="build-tag">v.02/11/2026 10:30</span></h1>
   <div class="stats-row">
     <div class="stat"><div class="num" id="statNouv">0</div><div class="lbl">Nouvelles</div></div>
     <div class="stat"><div class="num" id="statAdd">0</div><div class="lbl">Additions</div></div>
@@ -797,7 +797,7 @@ input,select,button,textarea{font-family:inherit}
   </div>
 </div>
 
-<div class="version">v.01/11/2026 18:20 — Moule & Smile · Caisse</div>
+<div class="version">v.02/11/2026 10:30 — Moule & Smile · Caisse</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -1870,7 +1870,7 @@ function imprimerTicketsJetonAvance(jetons,printWin){
     new QRCode(document.getElementById('qr_${j.numero}'), {
       text: "${baseUrl}?j=${j.token}",
       width: 160, height: 160,
-      colorDark: "var(--bg-deep)", colorLight: "var(--text)",
+      colorDark: "#000000", colorLight: "#ffffff",
       correctLevel: QRCode.CorrectLevel.H
     });`).join('');
 
