@@ -40,6 +40,9 @@ body{margin:0;font-family:Lato,Arial,sans-serif;background:var(--bg);color:var(-
 .l .p{margin-left:auto;font-weight:700;white-space:nowrap}
 .l .pts{flex:1;border-bottom:.25mm dotted #999;transform:translateY(-1mm);min-width:3mm}
 .d{font-size:8.2pt;color:#555;margin:-.3mm 0 1mm;font-style:italic}
+.sup{font-size:8.2pt;color:#333;margin:-.2mm 0 1mm;padding-left:3mm;line-height:1.3}
+.sup b{font-weight:700}
+.sup .px{white-space:nowrap;font-weight:700}
 .v{display:flex;gap:1.5mm;font-size:9pt;padding-left:3mm;margin:.3mm 0}
 .v .pts{flex:1;border-bottom:.25mm dotted #bbb;transform:translateY(-1mm)}
 .v .p{font-weight:700;white-space:nowrap}
@@ -72,7 +75,7 @@ body{margin:0;font-family:Lato,Arial,sans-serif;background:var(--bg);color:var(-
 <div class="app">
  <aside class="panneau" id="panneau">
   <h2>🖨️ Imprimer la carte</h2>
-  <div class="aide" style="margin-bottom:6px">v.10/11/2026 16:20 — Moule &amp; Smile</div>
+  <div class="aide" style="margin-bottom:6px">v.10/11/2026 17:30 — Moule &amp; Smile</div>
   <div id="etat" class="etat">Chargement de la carte…</div>
   <button class="btn" onclick="window.print()">🖨️ Imprimer (A4, 2 pages)</button>
   <button class="btn sec" onclick="telechargerExcel()">📥 Télécharger la carte en Excel</button>
@@ -85,6 +88,12 @@ body{margin:0;font-family:Lato,Arial,sans-serif;background:var(--bg);color:var(-
     <option value="2">19,90 €</option><option value="2n">19,90</option><option value="auto">19,9 €</option><option value="0">20 € (arrondi, si prix entiers)</option>
    </select></label>
   <label><input type="checkbox" id="optAVolonte" checked onchange="maj()"> Mettre en avant « à volonté »</label>
+
+  <h3>Options & suppléments</h3>
+  <label><input type="checkbox" id="optSupplements" checked onchange="maj()"> Suppléments payants sous chaque produit</label>
+  <label><input type="checkbox" id="optChoixGratuits" checked onchange="maj()"> Choix inclus (sans supplément)</label>
+  <p class="aide"><b>Règles :</b> les options viennent de l'admin (onglet Options). Seuls les choix <b>actifs</b> sont imprimés. Un choix avec supplément est imprimé avec son prix (« + 0,50 € ») : le client doit connaître le prix total avant de commander, à laisser coché. Les choix à 0 € sont imprimés en « au choix », sauf les sauces des plats, déjà listées dans « Nos sauces ».</p>
+  <div id="etatOptions" class="aide"></div>
 
   <h3>Rubriques à imprimer</h3>
   <div id="listeCats"></div>
@@ -145,7 +154,7 @@ const MENTIONS_DEFAUT=[
  {id:'mediateur',page:2,on:true,titre:'Médiateur de la consommation',
   texte:'Médiation de la consommation : en cas de litige, vous pouvez recourir gratuitement au médiateur [nom, adresse et site web du médiateur à compléter].'}
 ];
-const DEFAUT={prix:'2',avolonte:true,sauces:true,enfant:true,date:true,
+const DEFAUT={prix:'2',avolonte:true,supplements:true,choixGratuits:true,sauces:true,enfant:true,date:true,
  titre:'Moule & Smile',sousTitre:'Moules-frites à volonté',pied:'SAS Smoke and Smile — Moule & Smile — Narbonne',
  cats:{},mentions:{}};
 const KEY='ms_carte_impression_v1';
@@ -155,6 +164,8 @@ function chargerCfg(){
  try{cfg=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){cfg=null}
  if(!cfg) cfg=JSON.parse(JSON.stringify(DEFAUT));
  cfg.cats=cfg.cats||{};cfg.mentions=cfg.mentions||{};
+ if(cfg.supplements===undefined) cfg.supplements=true;
+ if(cfg.choixGratuits===undefined) cfg.choixGratuits=true;
 }
 function sauverCfg(){try{localStorage.setItem(KEY,JSON.stringify(cfg))}catch(e){}}
 function reinit(){if(!confirm('Remettre tous les réglages par défaut ?'))return;try{localStorage.removeItem(KEY)}catch(e){}chargerCfg();initPanneau();maj();}
@@ -211,6 +222,8 @@ const actifs=c=>(c.produits||[]).filter(p=>p.actif!==false);
 function initPanneau(){
  document.getElementById('optPrix').value=cfg.prix;
  document.getElementById('optAVolonte').checked=cfg.avolonte;
+ document.getElementById('optSupplements').checked=cfg.supplements;
+ document.getElementById('optChoixGratuits').checked=cfg.choixGratuits;
  document.getElementById('optSauces').checked=cfg.sauces;
  document.getElementById('optEnfant').checked=cfg.enfant;
  document.getElementById('optDate').checked=cfg.date;
@@ -238,6 +251,40 @@ function initPanneau(){
 }
 
 const norm=s=>String(s||'').toLowerCase().replace(/\s+/g,'');
+// ===== Options d'un produit (familles d'options de l'admin : nappage, coulis, croquant, sauce…) =====
+// Même lecture que l'appli client : carte.optionsProduits[idProduit] = étapes, carte.famillesOptions[idFamille].options = choix.
+// Renvoie, par famille : les choix actifs payants (avec leur supplément) et les choix actifs gratuits.
+function optionsDuProduit(p){
+ const etapes=((carte.optionsProduits||{})[p.id]||[]).slice().sort((a,b)=>(a.etape||0)-(b.etape||0));
+ const fam=carte.famillesOptions||{}, out=[];
+ etapes.forEach(e=>{
+  const f=fam[e.idFamille]; if(!f) return;
+  const opts=(f.options||[]).filter(o=>o.actif!==false&&o.nom).slice().sort((a,b)=>(a.ordre||9999)-(b.ordre||9999));
+  if(!opts.length) return;
+  out.push({nom:sansEmoji(f.nom)||f.nom||e.idFamille,
+   payants:opts.filter(o=>Number(o.supplement)>0),
+   gratuits:opts.filter(o=>!(Number(o.supplement)>0)&&!/^(sans|pas de|aucun)/i.test(String(o.nom).trim()))});
+ });
+ return out;
+}
+function nbProduitsAvecSupplement(){
+ let n=0;((carte&&carte.categories)||[]).forEach(c=>actifs(c).forEach(p=>{if(optionsDuProduit(p).some(f=>f.payants.length))n++;}));
+ return n;
+}
+function blocOptions(p,formule){
+ let h='';
+ optionsDuProduit(p).forEach(f=>{
+  if(cfg.supplements&&f.payants.length){
+   const prixUnique=f.payants.every(o=>Number(o.supplement)===Number(f.payants[0].supplement));
+   if(prixUnique) h+='<div class="sup"><b>'+esc(f.nom)+'</b> <span class="px">(+ '+fmt(f.payants[0].supplement)+')</span> : '+f.payants.map(o=>esc(o.nom)).join(' · ')+'</div>';
+   else h+='<div class="sup"><b>'+esc(f.nom)+'</b> : '+f.payants.map(o=>esc(o.nom)+' <span class="px">+ '+fmt(o.supplement)+'</span>').join(' · ')+'</div>';
+  }
+  // Sauces des plats : déjà imprimées dans « Nos sauces » quand cette rubrique est cochée
+  if(cfg.choixGratuits&&f.gratuits.length&&!(formule&&cfg.sauces))
+   h+='<div class="sup"><b>'+esc(f.nom)+'</b> au choix'+(f.payants.length?' (sans supplément)':'')+' : '+f.gratuits.map(o=>esc(o.nom)).join(' · ')+'</div>';
+ });
+ return h;
+}
 function ligne(p,formule){
  const prix=Number(p.prix)||0;
  let ptxt=prix===0?(formule?'Gratuit':''):fmt(prix);
@@ -262,10 +309,11 @@ function blocCategorie(r,c){
  subs.forEach(s=>{
   if(afficherSub&&s.k) h+='<h4>'+esc(s.k)+'</h4>';
   s.noms.forEach(g=>{
-   if(g.items.length===1){h+=ligne(g.items[0],formule);}
+   if(g.items.length===1){h+=ligne(g.items[0],formule)+blocOptions(g.items[0],formule);}
    else{
     h+='<div class="l"><span class="n">'+esc(g.nom)+'</span></div>';
     g.items.forEach(p=>{h+='<div class="v"><span>'+esc(p.desc||'')+'</span><span class="pts"></span><span class="p">'+fmt(p.prix)+'</span></div>';});
+    h+=blocOptions(g.items[0],formule);
    }
   });
  });
@@ -305,6 +353,8 @@ function maj(){
  if(!carte) return;
  cfg.prix=document.getElementById('optPrix').value;
  cfg.avolonte=document.getElementById('optAVolonte').checked;
+ cfg.supplements=document.getElementById('optSupplements').checked;
+ cfg.choixGratuits=document.getElementById('optChoixGratuits').checked;
  cfg.sauces=document.getElementById('optSauces').checked;
  cfg.enfant=document.getElementById('optEnfant').checked;
  cfg.date=document.getElementById('optDate').checked;
@@ -320,6 +370,10 @@ function maj(){
   if(r.page===1){p1+=b;if(r.id==='formules')p1+=blocFormulesExtra();}
   else{p2+=b;if(r.alcool)alcool=true;}
  });
+ const eo=document.getElementById('etatOptions');
+ if(eo){const n=nbProduitsAvecSupplement();
+  eo.innerHTML=source==='copie'?'⚠️ Copie de secours : les options ne sont pas disponibles, les suppléments ne sont <b>pas</b> imprimés. Ouvre la page depuis l\'admin connecté.'
+   :(n?'✅ '+n+' produit'+(n>1?'s':'')+' avec supplément payant dans la carte.':'Aucun supplément payant dans la carte publiée.');}
  document.getElementById('zone').innerHTML=page(1,p1||'<p class="vide">Aucun produit actif.</p>',false)+page(2,p2||'<p class="vide">Aucun produit actif.</p>',alcool);
 }
 function telechargerExcel(){
@@ -331,6 +385,7 @@ function telechargerExcel(){
   actifs(c).forEach(p=>{
    const d=(p.desc||'').trim();
    rows.push([titreRub(r,c),p.subcat||'',p.nom||'',d.toLowerCase()==='na'?'':d,Number(p.prix)||0]);
+   if(cfg.supplements) optionsDuProduit(p).forEach(f=>f.payants.forEach(o=>rows.push([titreRub(r,c),'Supplément',(p.nom||'')+' — '+f.nom+' : '+o.nom,'en plus du prix du produit',Number(o.supplement)||0])));
   });
  });
  if(cfg.enfant&&carte.enfantMenu) carte.enfantMenu.filter(x=>x.actif!==false).forEach(x=>rows.push(['Menu enfant','',x.nom||'',x.desc||'','']));
