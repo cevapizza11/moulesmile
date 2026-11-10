@@ -140,6 +140,23 @@
   a.tuile.principale .ico{background:rgba(22,18,10,.12);border-color:rgba(22,18,10,.12)}
   a.tuile.principale .nom{color:var(--ink)}
   a.tuile.principale .desc{color:rgba(22,18,10,.7)}
+  .crayon{
+    position:absolute;top:10px;right:10px;z-index:2;width:34px;height:34px;border-radius:10px;cursor:pointer;font-size:15px;
+    background:var(--surface-2);border:1px solid var(--line-strong);color:var(--text);
+  }
+  .crayon:hover{border-color:var(--gold-ring)}
+  .voile{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(4,5,8,.75);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  .voile.visible{display:flex}
+  .boite{width:100%;max-width:460px;border-radius:20px;padding:22px;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 30px 80px -20px rgba(0,0,0,.85)}
+  .boite h3{font-size:17px;margin-bottom:8px}
+  .boite p{font-size:12.5px;color:var(--muted);line-height:1.55;margin-bottom:12px}
+  .boite label{display:block;font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.4px;text-transform:uppercase;margin:12px 0 6px}
+  .boite input{width:100%;font-family:inherit;font-size:14px;padding:11px 12px;border-radius:10px;background:var(--bg-deep);border:1px solid var(--border);color:var(--text)}
+  .boite input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-soft)}
+  .boite .erreur{color:var(--red);font-size:12.5px;min-height:18px;margin-top:10px}
+  .boite .actions{display:flex;gap:10px;margin-top:10px}
+  .boite button.b{flex:1;font-family:inherit;font-weight:700;font-size:13.5px;padding:12px;border-radius:11px;cursor:pointer;border:1px solid var(--border);background:var(--surface-2);color:var(--text-2)}
+  .boite button.b.or{flex:2;background:var(--grad-gold);color:var(--ink);border-color:transparent}
   footer{text-align:center;color:var(--faint);font-size:11.5px;margin-top:34px}
   @media (max-width:420px){
     .brand-sub{display:none}
@@ -157,7 +174,7 @@
     <div class="brand-mark">M</div>
     <div><div class="brand-name">Moule <em>&amp;</em> Smile</div><div class="brand-sub">Outils du restaurant</div></div>
   </div>
-  <div class="version">v.01/11/2026 18:47</div>
+  <div class="version">v.10/11/2026 16:45</div>
 </header>
 
 <div class="horloge">
@@ -207,6 +224,11 @@
     <div class="ico">📈</div>
     <div><div class="nom">Prévisions</div><div class="desc">Fréquentation et chiffre d'affaires</div></div>
   </a>
+  <a class="tuile" href="#" id="tuileAdministratif" onclick="return ouvrirDossierAdministratif(event)">
+    <button type="button" class="crayon" title="Modifier le lien" onclick="event.preventDefault();event.stopPropagation();ouvrirReglageLien()">✏️</button>
+    <div class="ico">📁</div>
+    <div><div class="nom">Dossier administratif</div><div class="desc" id="descAdministratif">Hygiène, permis d'exploitation, licence III…</div></div>
+  </a>
 </div>
 
 <h2>Réglages</h2>
@@ -244,6 +266,111 @@
 <footer>Chaque outil s'ouvre dans son propre onglet — cette page reste ouverte en permanence.</footer>
 </div>
 
+<!-- Réglage du lien « Dossier administratif » -->
+<div class="voile" id="voileLien">
+  <div class="boite">
+    <h3>📁 Dossier administratif</h3>
+    <p>Colle ici le lien du dossier Google Drive de la société (Drive → clic droit sur le dossier → « Partager » → « Copier le lien »). Il est enregistré en ligne : la tuile ouvrira ce dossier depuis n'importe quel appareil.</p>
+    <label for="champLien">Lien Google Drive (commence par https://)</label>
+    <input type="url" id="champLien" placeholder="https://drive.google.com/drive/folders/…" autocomplete="off">
+    <div id="blocMdp">
+      <label for="champMdp">Mot de passe équipe (le même que l'admin)</label>
+      <input type="password" id="champMdp" autocomplete="current-password" onkeydown="if(event.key==='Enter')enregistrerLien()">
+    </div>
+    <div class="erreur" id="erreurLien"></div>
+    <div class="actions">
+      <button type="button" class="b" onclick="fermerReglageLien()">Annuler</button>
+      <button type="button" class="b or" id="btnEnregistrerLien" onclick="enregistrerLien()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script>
+  // ============================================================
+  // DOSSIER ADMINISTRATIF — lien Google Drive enregistré en ligne (config/carte_v2, champ lienAdministratif)
+  // Lecture : tout appareil. Modification : compte équipe (même mot de passe que l'admin).
+  // Une copie est gardée sur l'appareil pour que la tuile marche même si la lecture en ligne échoue.
+  // ============================================================
+  const CLE_LIEN='ms_lien_administratif';
+  const EMAIL_EQUIPE='mouleandsmile11@gmail.com';
+  let lienAdministratif='';
+  try{ lienAdministratif=localStorage.getItem(CLE_LIEN)||''; }catch(e){}
+  let fbOk=false;
+  try{
+    firebase.initializeApp({apiKey:"AIzaSyDUb3LtVsMAq986DgtHwkMBeQFr8A8A2nU",authDomain:"commandemoulesmile.firebaseapp.com",projectId:"commandemoulesmile",storageBucket:"commandemoulesmile.firebasestorage.app",messagingSenderId:"303564394584",appId:"1:303564394584:web:cbde6960f99cac83517a2d"});
+    fbOk=true;
+  }catch(e){ console.error('Firebase indisponible',e); }
+  const docCarte=()=>firebase.firestore().collection('config').doc('carte_v2');
+  const lienValide=l=>/^https:\/\/\S+$/i.test(l||'');
+  function estEquipe(){ const u=fbOk&&firebase.auth().currentUser; return !!(u&&!u.isAnonymous); }
+  function majTuileAdministratif(){
+    document.getElementById('descAdministratif').textContent=lienAdministratif
+      ? "Hygiène, permis d'exploitation, licence III…"
+      : 'Lien à renseigner — touche ici';
+  }
+  function retenirLien(l){
+    lienAdministratif=l||'';
+    try{ if(lienAdministratif) localStorage.setItem(CLE_LIEN,lienAdministratif); else localStorage.removeItem(CLE_LIEN); }catch(e){}
+    majTuileAdministratif();
+  }
+  let ecouteLien=null;
+  function ecouterLien(){
+    if(ecouteLien) ecouteLien();
+    ecouteLien=docCarte().onSnapshot(d=>{
+      if(!d.exists) return;
+      const l=d.data().lienAdministratif;
+      retenirLien(lienValide(l)?l:'');
+    },e=>console.warn('Lecture du lien administratif impossible',e&&e.code));
+  }
+  if(fbOk){
+    firebase.auth().onAuthStateChanged(u=>{
+      if(u) ecouterLien();
+      else firebase.auth().signInAnonymously().catch(e=>console.warn('Connexion anonyme impossible',e&&e.code));
+    });
+  }
+  function ouvrirDossierAdministratif(ev){
+    ev.preventDefault();
+    if(lienValide(lienAdministratif)) window.open(lienAdministratif,'ms_administratif','noopener');
+    else ouvrirReglageLien();
+    return false;
+  }
+  function ouvrirReglageLien(){
+    document.getElementById('champLien').value=lienAdministratif;
+    document.getElementById('champMdp').value='';
+    document.getElementById('erreurLien').textContent='';
+    document.getElementById('blocMdp').style.display=estEquipe()?'none':'block';
+    document.getElementById('voileLien').classList.add('visible');
+    document.getElementById('champLien').focus();
+  }
+  function fermerReglageLien(){ document.getElementById('voileLien').classList.remove('visible'); }
+  async function enregistrerLien(){
+    const err=document.getElementById('erreurLien'), btn=document.getElementById('btnEnregistrerLien');
+    const l=document.getElementById('champLien').value.trim();
+    err.textContent='';
+    if(l&&!lienValide(l)){ err.textContent='Le lien doit commencer par https:// (sans espace).'; return; }
+    if(!fbOk){ err.textContent='Connexion internet indisponible — réessaie plus tard.'; return; }
+    btn.disabled=true; btn.textContent='Enregistrement…';
+    try{
+      if(!estEquipe()){
+        const mdp=document.getElementById('champMdp').value;
+        if(!mdp){ err.textContent='Entre le mot de passe équipe.'; return; }
+        try{ await firebase.auth().signInWithEmailAndPassword(EMAIL_EQUIPE,mdp); }
+        catch(e){ err.textContent='❌ Mot de passe incorrect.'; return; }
+      }
+      // update() : on ne touche QUE ce champ, le reste de la carte n'est pas modifié
+      await docCarte().update({lienAdministratif:l});
+      retenirLien(l);
+      fermerReglageLien();
+    }catch(e){
+      console.error('Enregistrement du lien',e);
+      err.textContent="❌ Enregistrement impossible ("+(e.code||e.message)+").";
+    }finally{ btn.disabled=false; btn.textContent='Enregistrer'; }
+  }
+  majTuileAdministratif();
+</script>
 <script>
   function majHorloge(){
     const d = new Date();
