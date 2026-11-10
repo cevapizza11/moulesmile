@@ -365,7 +365,7 @@ input[type=file]::file-selector-button{background:var(--surface-3);color:var(--t
   </div>
   <h1>Admin — Moule & Smile</h1>
   <div class="header-right">
-    <span class="build" title="Version déployée">v.01/11/2026 19:10</span>
+    <span class="build" title="Version déployée">v.10/11/2026 16:20</span>
     <button class="save-btn" onclick="sauvegarder()">Publier</button>
   </div>
 </div>
@@ -452,7 +452,7 @@ input[type=file]::file-selector-button{background:var(--surface-3);color:var(--t
 
 <!-- BOISSONS MENU -->
 <div id="navBoissonMenu" class="content" style="display:none">
-  <div class="page-head"><div class="eyebrow">Formules</div><h2>Boissons du menu</h2><p>Les boissons offertes avec les paliers 2 et 3.</p></div>
+  <div class="page-head"><div class="eyebrow">Plats</div><h2>Boissons du menu</h2><p>Les boissons offertes avec les paliers 2 et 3.</p></div>
   <div class="status-bar"><div class="dot"></div>Boissons proposées <strong>gratuitement</strong> dans les paliers 2 et 3</div>
   <div class="section">
     <h2>🍺 Boissons incluses dans les menus</h2>
@@ -477,7 +477,7 @@ input[type=file]::file-selector-button{background:var(--surface-3);color:var(--t
 
 <!-- MENU ENFANT -->
 <div id="navEnfantMenu" class="content" style="display:none">
-  <div class="page-head"><div class="eyebrow">Formules</div><h2>Menu enfant</h2><p>Les choix proposés quand le client confirme un enfant de 0 à 5 ans.</p></div>
+  <div class="page-head"><div class="eyebrow">Plats</div><h2>Menu enfant</h2><p>Les choix proposés quand le client confirme un enfant de 0 à 5 ans.</p></div>
   <div class="status-bar"><div class="dot"></div>Choix proposé au client après confirmation d'âge (Enfant 0-5 ans gratuit)</div>
   <div class="section">
     <h2>🧒 Produits du menu enfant</h2>
@@ -783,14 +783,28 @@ input[type=file]::file-selector-button{background:var(--surface-3);color:var(--t
   </div>
 
   <div class="section" style="margin-top:14px">
+    <h2>🖨️ Imprimer la carte du restaurant</h2>
+    <div style="color:var(--text-2);font-size:12px;margin-bottom:12px;line-height:1.6">
+      Édite la carte A4 (2 pages) à partir de la carte publiée, avec les prix affichés aux clients et les mentions obligatoires :<br>
+      • prix nets, service compris, TTC<br>
+      • allergènes (14) disponibles sur demande · carafe d'eau gratuite<br>
+      • alcool : abus dangereux pour la santé, interdit aux mineurs, grossesse<br>
+      • médiateur de la consommation (à compléter dans la page)<br>
+      Seuls les produits <strong>actifs</strong> sont imprimés. Un bouton permet aussi de télécharger la carte en Excel.
+    </div>
+    <a href="carte-imprimable.html" target="_blank" class="lien-card">🖨️ Ouvrir la page d'impression de la carte</a>
+  </div>
+
+  <div class="section" style="margin-top:14px">
     <h2>🔗 Liens</h2>
     <a href="index.html" target="_blank" class="lien-card">🐚 App client</a>
     <a href="caisse.html" target="_blank" class="lien-card">💰 Écran caisse</a>
     <a href="qrcodes.html" target="_blank" class="lien-card">📱 QR codes tables</a>
+    <a href="carte-imprimable.html" target="_blank" class="lien-card">🖨️ Imprimer la carte</a>
   </div>
 </div>
 
-<div class="version">v.01/11/2026 19:10 — Moule & Smile · Console carte</div>
+<div class="version">v.10/11/2026 16:20 — Moule & Smile · Console carte</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -830,7 +844,7 @@ let carte=null,catActive=null,importedData=null;
 let mappingHiboutik={},mappingHiboutikCharge=false;
 
 const CATS=[
-  {id:"formules",nom:"🐚 Formules"},{id:"sauces",nom:"🌿 Sauces"},{id:"softs",nom:"🥤 Softs"},
+  {id:"formules",nom:"🐚 Plats"},{id:"sauces",nom:"🌿 Sauces"},{id:"softs",nom:"🥤 Softs"},
   {id:"bieres",nom:"🍺 Bières"},{id:"vins",nom:"🍷 Vins"},{id:"cocktails",nom:"🍹 Cocktails & Sangria"},
   {id:"desserts",nom:"🍮 Desserts"},{id:"digestifs",nom:"✨ Digestifs"},{id:"chauds",nom:"☕ Chauds"},
 ];
