@@ -75,7 +75,7 @@ body{margin:0;font-family:Lato,Arial,sans-serif;background:var(--bg);color:var(-
 <div class="app">
  <aside class="panneau" id="panneau">
   <h2>🖨️ Imprimer la carte</h2>
-  <div class="aide" style="margin-bottom:6px">v.10/11/2026 17:30 — Moule &amp; Smile</div>
+  <div class="aide" style="margin-bottom:6px">v.12/11/2026 13:45 — Moule &amp; Smile</div>
   <div id="etat" class="etat">Chargement de la carte…</div>
   <button class="btn" onclick="window.print()">🖨️ Imprimer (A4, 2 pages)</button>
   <button class="btn sec" onclick="telechargerExcel()">📥 Télécharger la carte en Excel</button>
@@ -300,22 +300,25 @@ function ligne(p,formule){
 function blocCategorie(r,c){
  const prods=actifs(c);if(!prods.length) return '';
  const formule=r.id==='formules';
- // regrouper par sous-catégorie, puis par nom (variantes de format)
- const subs=[];
- prods.forEach(p=>{const k=p.subcat||'';let s=subs.find(x=>x.k===k);if(!s){s={k,noms:[]};subs.push(s)}
-  let g=s.noms.find(x=>x.nom===p.nom);if(!g){g={nom:p.nom,items:[]};s.noms.push(g)}g.items.push(p);});
+ // Ordre EXACT de l'admin (flèches ▲▼) : on suit la liste produit par produit.
+ // Le titre de sous-catégorie s'affiche quand elle change ; un produit sans sous-catégorie reste sous le titre en cours.
+ // Seuls les formats d'un même produit qui se suivent (25 cl / 50 cl…) sont regroupés sur une ligne.
+ const groupes=[];
+ prods.forEach(p=>{const g=groupes[groupes.length-1];
+  if(g&&g.nom===p.nom&&(p.subcat||'')===(g.items[0].subcat||'')) g.items.push(p); else groupes.push({nom:p.nom,items:[p]});});
+ const subsDistinctes=new Set(prods.map(p=>p.subcat||'').filter(x=>x));
+ const afficherSub=subsDistinctes.size>1||(subsDistinctes.size===1&&[...subsDistinctes][0]!==(c.nom||''));
  let h='<section class="cat"><h2>'+esc(titreRub(r,c))+'</h2>';
- const afficherSub=subs.length>1||(subs[0]&&subs[0].k&&subs[0].k!==(c.nom||''));
- subs.forEach(s=>{
-  if(afficherSub&&s.k) h+='<h4>'+esc(s.k)+'</h4>';
-  s.noms.forEach(g=>{
-   if(g.items.length===1){h+=ligne(g.items[0],formule)+blocOptions(g.items[0],formule);}
-   else{
-    h+='<div class="l"><span class="n">'+esc(g.nom)+'</span></div>';
-    g.items.forEach(p=>{h+='<div class="v"><span>'+esc(p.desc||'')+'</span><span class="pts"></span><span class="p">'+fmt(p.prix)+'</span></div>';});
-    h+=blocOptions(g.items[0],formule);
-   }
-  });
+ let subEnCours='';
+ groupes.forEach(g=>{
+  const k=g.items[0].subcat||'';
+  if(afficherSub&&k&&k!==subEnCours){h+='<h4>'+esc(k)+'</h4>';subEnCours=k;}
+  if(g.items.length===1){h+=ligne(g.items[0],formule)+blocOptions(g.items[0],formule);}
+  else{
+   h+='<div class="l"><span class="n">'+esc(g.nom)+'</span></div>';
+   g.items.forEach(p=>{h+='<div class="v"><span>'+esc(p.desc||'')+'</span><span class="pts"></span><span class="p">'+fmt(p.prix)+'</span></div>';});
+   h+=blocOptions(g.items[0],formule);
+  }
  });
  return h+'</section>';
 }
