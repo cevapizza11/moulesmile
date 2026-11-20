@@ -141,7 +141,7 @@
   a.tuile.principale .nom{color:var(--ink)}
   a.tuile.principale .desc{color:rgba(22,18,10,.7)}
   /* Accès caché à « Mes outils » */
-  .brand-mark{cursor:pointer;user-select:none;-webkit-user-select:none}
+  .brand-mark{cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation;-webkit-touch-callout:none}
   .voile{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(4,5,8,.8);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
   .voile.visible{display:flex}
   .boite{width:100%;max-width:340px;border-radius:20px;padding:22px;text-align:center;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 30px 80px -20px rgba(0,0,0,.85)}
@@ -171,7 +171,7 @@
     <div class="brand-mark" id="logoM">M</div>
     <div><div class="brand-name">Moule <em>&amp;</em> Smile</div><div class="brand-sub">Outils de l'équipe</div></div>
   </div>
-  <div class="version">v.20/11/2026 17:00</div>
+  <div class="version">v.20/11/2026 17:05</div>
 </header>
 
 <div class="horloge">
@@ -231,10 +231,16 @@
   const HUB_EMPREINTE='281ae574312f498e2126653cf57c5de288d6a0f4ba5779a7c654300ef8bdc824';
   const HUB_URL='https://cevapizza11.github.io/hub/';
   let touches=[], essais=0, bloqueJusqua=0;
-  document.getElementById('logoM').addEventListener('click',()=>{
-    const t=Date.now(); touches=touches.filter(x=>t-x<3000); touches.push(t);
+  // pointerdown (et non click) : sur iPhone, des touches rapides sont prises pour un double-tap
+  // et une partie des « click » n'arrive jamais. pointerdown arrive à chaque touche.
+  function toucheLogo(ev){
+    if(ev && ev.cancelable) ev.preventDefault();
+    const t=Date.now(); touches=touches.filter(x=>t-x<4000); touches.push(t);
     if(touches.length>=5){ touches=[]; ouvrirCode(); }
-  });
+  }
+  const logo=document.getElementById('logoM');
+  if(window.PointerEvent) logo.addEventListener('pointerdown',toucheLogo);
+  else logo.addEventListener('touchstart',toucheLogo,{passive:false});
   function ouvrirCode(){
     document.getElementById('champCode').value='';
     document.getElementById('erreurCode').textContent='';
