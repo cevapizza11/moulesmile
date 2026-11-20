@@ -140,6 +140,20 @@
   a.tuile.principale .ico{background:rgba(22,18,10,.12);border-color:rgba(22,18,10,.12)}
   a.tuile.principale .nom{color:var(--ink)}
   a.tuile.principale .desc{color:rgba(22,18,10,.7)}
+  /* Accès caché à « Mes outils » */
+  .brand-mark{cursor:pointer;user-select:none;-webkit-user-select:none}
+  .voile{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(4,5,8,.8);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  .voile.visible{display:flex}
+  .boite{width:100%;max-width:340px;border-radius:20px;padding:22px;text-align:center;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 30px 80px -20px rgba(0,0,0,.85)}
+  .boite h3{font-size:16px;margin-bottom:14px}
+  .boite input{width:100%;font-family:inherit;font-size:26px;letter-spacing:10px;text-align:center;padding:12px;border-radius:12px;background:var(--bg-deep);border:1px solid var(--border);color:var(--text)}
+  .boite input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-soft)}
+  .boite .erreur{color:var(--red);font-size:12.5px;min-height:18px;margin-top:10px}
+  .boite .actions{display:flex;gap:10px;margin-top:8px}
+  .boite button{flex:1;font-family:inherit;font-weight:700;font-size:14px;padding:12px;border-radius:11px;cursor:pointer;border:1px solid var(--border);background:var(--surface-2);color:var(--text-2)}
+  .boite button.or{background:var(--grad-gold);color:var(--ink);border-color:transparent}
+  .secoue{animation:secoue .35s}
+  @keyframes secoue{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
   footer{text-align:center;color:var(--faint);font-size:11.5px;margin-top:34px}
   @media (max-width:420px){
     .brand-sub{display:none}
@@ -154,10 +168,10 @@
 <div class="page">
 <header>
   <div class="marque">
-    <div class="brand-mark">M</div>
+    <div class="brand-mark" id="logoM">M</div>
     <div><div class="brand-name">Moule <em>&amp;</em> Smile</div><div class="brand-sub">Outils de l'équipe</div></div>
   </div>
-  <div class="version">v.20/11/2026 11:50</div>
+  <div class="version">v.20/11/2026 17:00</div>
 </header>
 
 <div class="horloge">
@@ -197,6 +211,60 @@
 <footer>Page de l'équipe — chaque outil s'ouvre dans son propre onglet, cette page reste ouverte en permanence.</footer>
 </div>
 
+<!-- Accès caché à « Mes outils » : 5 touches rapides sur le logo M -->
+<div class="voile" id="voileCode">
+  <div class="boite" id="boiteCode">
+    <h3>🔒 Code</h3>
+    <input type="password" id="champCode" inputmode="numeric" autocomplete="off" maxlength="12" onkeydown="if(event.key==='Enter')validerCode()">
+    <div class="erreur" id="erreurCode"></div>
+    <div class="actions">
+      <button type="button" onclick="fermerCode()">Annuler</button>
+      <button type="button" class="or" onclick="validerCode()">OK</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Le code n'est jamais écrit ici : seulement sa version brouillée (PBKDF2-SHA256).
+  // Réglages identiques dans hub/index.html — à changer aux deux endroits.
+  const HUB_SEL='b9ab6e18af6cc23368a0de46c4ffabf4';
+  const HUB_EMPREINTE='281ae574312f498e2126653cf57c5de288d6a0f4ba5779a7c654300ef8bdc824';
+  const HUB_URL='https://cevapizza11.github.io/hub/';
+  let touches=[], essais=0, bloqueJusqua=0;
+  document.getElementById('logoM').addEventListener('click',()=>{
+    const t=Date.now(); touches=touches.filter(x=>t-x<3000); touches.push(t);
+    if(touches.length>=5){ touches=[]; ouvrirCode(); }
+  });
+  function ouvrirCode(){
+    document.getElementById('champCode').value='';
+    document.getElementById('erreurCode').textContent='';
+    document.getElementById('voileCode').classList.add('visible');
+    setTimeout(()=>document.getElementById('champCode').focus(),50);
+  }
+  function fermerCode(){ document.getElementById('voileCode').classList.remove('visible'); }
+  async function empreinte(code){
+    const sel=new Uint8Array(HUB_SEL.match(/../g).map(h=>parseInt(h,16)));
+    const cle=await crypto.subtle.importKey('raw',new TextEncoder().encode(code),'PBKDF2',false,['deriveBits']);
+    const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:sel,iterations:200000,hash:'SHA-256'},cle,256);
+    return [...new Uint8Array(bits)].map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+  async function validerCode(){
+    const err=document.getElementById('erreurCode');
+    if(Date.now()<bloqueJusqua){ err.textContent='Trop d\'essais — attends 30 secondes.'; return; }
+    const code=document.getElementById('champCode').value.trim();
+    if(!code) return;
+    let e=''; try{ e=await empreinte(code); }catch(x){ err.textContent='Navigateur non compatible.'; return; }
+    if(e===HUB_EMPREINTE){
+      try{ sessionStorage.setItem('hub_cle',JSON.stringify({e:e,t:Date.now()})); }catch(x){}
+      location.href=HUB_URL;
+    }else{
+      essais++; document.getElementById('champCode').value='';
+      const b=document.getElementById('boiteCode'); b.classList.remove('secoue'); void b.offsetWidth; b.classList.add('secoue');
+      if(essais>=5){ essais=0; bloqueJusqua=Date.now()+30000; err.textContent='Trop d\'essais — attends 30 secondes.'; }
+      else err.textContent='Code incorrect.';
+    }
+  }
+</script>
 <script>
   function majHorloge(){
     const d = new Date();
